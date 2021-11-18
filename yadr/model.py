@@ -8,7 +8,8 @@ from enum import Enum
 from typing import Generic, NamedTuple, TypeVar
 
 # Common data.
-OPERATORS = '+ - * / ^ d'.split()
+OPERATORS = '+ - * / ^'.split()
+DICE_OPERATORS = 'd d!'.split()
 
 
 class Token(Enum):
@@ -18,7 +19,8 @@ class Token(Enum):
     WHITESPACE = 3
     OPEN_GROUP = 4
     CLOSE_GROUP = 5
-    END = 6
+    DICE_OPERATOR = 6
+    END = 7
 
 
 # Types.

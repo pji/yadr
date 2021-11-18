@@ -47,10 +47,22 @@ class LexTestCase(ut.TestCase):
         """
         exp = (
             (lex.Token.NUMBER, 20),
-            (lex.Token.OPERATOR, 'd'),
+            (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
         )
         data = '20d10'
+        self.lex_test(exp, data)
+
+    def test_basic_exploding_die(self):
+        """Given a basic exploding die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'd!'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20d!10'
         self.lex_test(exp, data)
 
     def test_basic_division(self):

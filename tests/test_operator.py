@@ -5,6 +5,7 @@ test_operator
 Dice operators for the `yadr` package.
 """
 import unittest as ut
+from unittest.mock import patch
 
 from yadr import operator as op
 
@@ -32,3 +33,22 @@ class DieTestCase(ut.TestCase):
         }
         seed = 'spam12'
         self.die_test(exp, kwargs=kwargs, seed=seed)
+
+
+class ExplodingDie(ut.TestCase):
+    def exploding_die_test(self, exp, num, size):
+        """Common test for the die function."""
+        act = op.exploding_die(num, size)
+        self.assertEqual(exp, act)
+
+    @patch('random.randint')
+    def test_exploding_die(self, mock_randint):
+        """Given a number of dice and the size of the die,
+        roll that many exploding dice and return the result.
+        """
+        exp = 25
+        mock_randint.side_effect = [2, 1, 4, 4, 3, 1, 4, 4, 2]
+        num = 5
+        size = 4
+        self.exploding_die_test(exp, num, size)
+        

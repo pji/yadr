@@ -7,10 +7,15 @@ Parse dice notation.
 import operator
 from typing import Optional, Sequence
 
+from yadr import operator as yo
 from yadr.model import Token, TokenInfo
 
 
 # Data.
+DICE_OPERATORS = {
+    'd': yo.die,
+    'd!': yo.exploding_die,
+}
 OPERATORS = {
     '^': operator.pow,
     '*': operator.mul,
@@ -75,6 +80,18 @@ class Parser:
         return left
 
     def _rule_4(self, trees: list['Tree']) -> 'Tree':
+        """Rule for dice operators."""
+        left = self._rule_5(trees)
+
+        while (trees and trees[-1].kind == Token.DICE_OPERATOR):
+            tree = trees.pop()
+            tree.left = left
+            tree.right = self._rule_5(trees)
+            left = tree
+
+        return left
+    
+    def _rule_5(self, trees: list['Tree']) -> 'Tree':
         """Rule for numbers and groups."""
 
         if trees[-1].kind == Token.NUMBER:
@@ -108,5 +125,8 @@ class Tree:
             return self.value
         left = self.left.compute()
         right = self.right.compute()
-        op = OPERATORS[self.value]
+        if self.kind == Token.OPERATOR:
+            op = OPERATORS[self.value]
+        elif self.kind == Token.DICE_OPERATOR:
+            op = DICE_OPERATORS[self.value]
         return op(left, right)

@@ -4,7 +4,7 @@ lex
 
 A lexer for `yadr` dice notation.
 """
-from yadr.model import OPERATORS, Token, TokenInfo
+from yadr.model import DICE_OPERATORS, OPERATORS, Token, TokenInfo
 
 
 # Classes.
@@ -26,6 +26,7 @@ class Lexer:
             Token.WHITESPACE: self._whitespace,
             Token.OPEN_GROUP: self._open_group,
             Token.CLOSE_GROUP: self._close_group,
+            Token.DICE_OPERATOR: self._dice_operator,
             Token.END: self._start
         }
         self.process = self._start
@@ -70,10 +71,29 @@ class Lexer:
             new_state = Token.WHITESPACE
         elif char in OPERATORS:
             new_state = Token.OPERATOR
+        elif char == 'd':
+            new_state = Token.DICE_OPERATOR
         else:
             msg = f'An open group cannot be followed by {char}.'
             raise ValueError(msg)
         self._change_state(new_state, char)
+
+    def _dice_operator(self, char: str) -> None:
+        """Processing an operator."""
+        valid_char = [s[1] for s in DICE_OPERATORS[1:]]
+        new_state: Token | None = None
+        if char in valid_char:
+            self.buffer += char
+        elif char.isdigit() or char == '-':
+            new_state = Token.NUMBER
+        elif char.isspace():
+            char = ''
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow dice operator.'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char)
 
     def _number(self, char: str) -> None:
         """Processing a number."""
@@ -85,6 +105,8 @@ class Lexer:
             new_state = Token.WHITESPACE
         elif char in OPERATORS:
             new_state = Token.OPERATOR
+        elif char == 'd':
+            new_state = Token.DICE_OPERATOR
         elif char == '(':
             new_state = Token.OPEN_GROUP
         elif char == ')':
@@ -156,6 +178,10 @@ class Lexer:
             new_state = Token.OPERATOR
         elif char in OPERATORS and previous == Token.CLOSE_GROUP:
             new_state = Token.OPERATOR
+        elif char == 'd' and previous == Token.NUMBER:
+            new_state = Token.DICE_OPERATOR
+        elif char == 'd' and previous == Token.CLOSE_GROUP:
+            new_state = Token.DICE_OPERATOR
         elif char == ')' and previous == Token.NUMBER:
             new_state = Token.CLOSE_GROUP
         elif char.isspace():

@@ -8,6 +8,7 @@ import unittest as ut
 
 from yadr import parse as p
 from yadr.model import Token
+from yadr import operator as yo
 
 
 # Test cases.
@@ -79,6 +80,29 @@ class ParserTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test dice operators.
+    def test_die(self):
+        """Roll a die."""
+        yo._seed('spam')
+        exp = 5
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'd'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+    
+    def test_exploding_die(self):
+        """Roll a die."""
+        yo._seed('spam')
+        exp = 5
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'd!'),
+            (Token.NUMBER, 4),
+        )
+        self.parser_test(exp, tokens)
+    
     # Test order of precedence.
     def test_can_perform_multiple_operations(self):
         """The parser can parse statements with multiple operators."""
