@@ -14,6 +14,7 @@ from yadr.model import Token, TokenInfo
 # Data.
 DICE_OPERATORS = {
     'd': yo.die,
+    'dp': yo.dice_pool,
     'd!': yo.exploding_die,
     'dh': yo.keep_high_die,
     'dl': yo.keep_low_die,

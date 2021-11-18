@@ -11,6 +11,25 @@ from yadr import operator as op
 
 
 # Test cases.
+class DicePoolTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_dice_pool(self, mock_randint):
+        """Generate a dice pool."""
+        # Expected value.
+        exp = (3, 5, 1, 10, 8, 4, 3)
+
+        # Test data and state.
+        mock_randint.side_effect = exp
+        num = 7
+        size = 10
+
+        # Run test.
+        act = op.dice_pool(num, size)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
 class DieTestCase(ut.TestCase):
     def die_test(self, exp, args=None, kwargs=None, seed='spam'):
         """Common test for the die function."""

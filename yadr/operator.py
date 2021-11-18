@@ -19,11 +19,11 @@ def _seed(seed: int | str | bytes) -> None:
 
 def die(num: int, size: int) -> int:
     """Roll a number of same-sized dice and return the result."""
-    pool = die_pool(num, size)
+    pool = dice_pool(num, size)
     return sum(pool)
 
 
-def die_pool(num: int, size: int) -> tuple[int, ...]:
+def dice_pool(num: int, size: int) -> tuple[int, ...]:
     """Roll a die pool."""
     return tuple(random.randint(1, size) for _ in range(num))
 
@@ -36,18 +36,18 @@ def exploding_die(num: int, size: int) -> int:
             value += explode(explode_value)
         return value
 
-    pool: Sequence[int] = die_pool(num, size)
+    pool: Sequence[int] = dice_pool(num, size)
     pool = [explode(n) for n in pool]
     return sum(pool)
 
 
 def keep_high_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the highest."""
-    pool = die_pool(num, size)
+    pool = dice_pool(num, size)
     return max(pool)
 
 
 def keep_low_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the lowest."""
-    pool = die_pool(num, size)
+    pool = dice_pool(num, size)
     return min(pool)

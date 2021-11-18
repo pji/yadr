@@ -93,6 +93,18 @@ class ParserTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    @patch('random.randint')
+    def test_dice_pool(self, mock_randint):
+        """Roll dice and keep the highest."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = (1, 5, 3)
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'dp'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
     def test_exploding_die(self):
         """Roll an exploding die."""
         yo._seed('spam')
