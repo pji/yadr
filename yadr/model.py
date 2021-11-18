@@ -9,7 +9,7 @@ from typing import Generic, NamedTuple, TypeVar
 
 # Common data.
 OPERATORS = '+ - * / ^'.split()
-DICE_OPERATORS = 'd d! dh'.split()
+DICE_OPERATORS = 'd d! dh dl'.split()
 
 
 class Token(Enum):

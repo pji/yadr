@@ -94,7 +94,7 @@ class ParserTestCase(ut.TestCase):
         self.parser_test(exp, tokens)
 
     def test_exploding_die(self):
-        """Roll a die."""
+        """Roll an exploding die."""
         yo._seed('spam')
         exp = 5
         tokens = (
@@ -106,12 +106,24 @@ class ParserTestCase(ut.TestCase):
 
     @patch('random.randint')
     def test_keep_high_die(self, mock_randint):
-        """Roll a die."""
+        """Roll dice and keep the highest."""
         mock_randint.side_effect = [1, 5, 3]
         exp = 5
         tokens = (
             (Token.NUMBER, 3),
             (Token.DICE_OPERATOR, 'dh'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
+    @patch('random.randint')
+    def test_keep_low_die(self, mock_randint):
+        """Roll dice and keep the lowest."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = 1
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'dl'),
             (Token.NUMBER, 6),
         )
         self.parser_test(exp, tokens)

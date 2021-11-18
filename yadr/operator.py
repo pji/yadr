@@ -45,3 +45,9 @@ def keep_high_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the highest."""
     pool = die_pool(num, size)
     return max(pool)
+
+
+def keep_low_die(num: int, size: int) -> int:
+    """Roll a number of dice and keep the lowest."""
+    pool = die_pool(num, size)
+    return min(pool)

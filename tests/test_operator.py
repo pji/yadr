@@ -69,3 +69,21 @@ class KeepHighDie(ut.TestCase):
 
         # Determine test result.
         self.assertEqual(exp, act)
+
+
+class KeepLowDie(ut.TestCase):
+    @patch('random.randint')
+    def test_keep_high_die(self, mock_randint):
+        # Expected value.
+        exp = 3
+
+        # Test data and state.
+        mock_randint.side_effect = [15, 3, 6, 18, 10]
+        num = 5
+        size = 20
+
+        # Run test.
+        act = op.keep_low_die(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)

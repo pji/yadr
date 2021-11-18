@@ -16,6 +16,7 @@ DICE_OPERATORS = {
     'd': yo.die,
     'd!': yo.exploding_die,
     'dh': yo.keep_high_die,
+    'dl': yo.keep_low_die,
 }
 OPERATORS = {
     '^': operator.pow,
