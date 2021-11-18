@@ -10,7 +10,182 @@ from unittest.mock import patch
 from yadr import operator as op
 
 
-# Test cases.
+# Roll test cases.
+class RollTestCase(ut.TestCase):
+    def test_derives_value_from_pool(self):
+        """Given a dice pool, value is the sum of the numbers in
+        the pool.
+        """
+        # Expected value.
+        exp = 10
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+
+        # Run test.
+        act = roll.value
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_addition_with_int_uses_value(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 12
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+        value = 2
+
+        # Run tests.
+        act = roll + 2
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_exponentiation_with_int_uses_value(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 100
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+        value = 2
+
+        # Run tests.
+        act = roll ** 2
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_floor_division_with_int_uses_value(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 5
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+        value = 2
+
+        # Run tests.
+        act = roll // 2
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_multiplication_with_int_uses_value(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 20
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+        value = 2
+
+        # Run tests.
+        act = roll * 2
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_subtraction_with_int_uses_value(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 8
+
+        # Test data and state.
+        pool = (3, 3, 4)
+        roll = op.Roll(pool)
+        value = 2
+
+        # Run tests.
+        act = roll - 2
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_addition_with_class(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 18
+
+        # Test data and state.
+        a = op.Roll((3, 3, 4))
+        b = op.Roll((5, 3))
+
+        # Run tests.
+        act = a + b
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_exponentiation_with_class(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 100000000
+
+        # Test data and state.
+        a = op.Roll((3, 3, 4))
+        b = op.Roll((3, 5))
+
+        # Run tests.
+        act = a ** b
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_floor_division_with_class(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 3
+
+        # Test data and state.
+        a = op.Roll((3, 3, 4))
+        b = op.Roll((1, 2))
+
+        # Run tests.
+        act = a // b
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_multiplication_with_class(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 80
+
+        # Test data and state.
+        a = op.Roll((3, 3, 4))
+        b = op.Roll((5, 3))
+
+        # Run tests.
+        act = a * b
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_subtraction_with_class(self):
+        """Basic arithmetic with integers uses the value attribute."""
+        # Expected value:
+        exp = 2
+
+        # Test data and state.
+        a = op.Roll((3, 3, 4))
+        b = op.Roll((3, 5))
+
+        # Run tests.
+        act = a - b
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
+# Dice operation test cases.
 class DicePoolTestCase(ut.TestCase):
     @patch('random.randint')
     def test_dice_pool(self, mock_randint):

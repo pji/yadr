@@ -8,6 +8,60 @@ import random
 from typing import Sequence
 
 
+# Classes.
+class Roll:
+    """A dice roll."""
+    # Magic methods.
+    def __init__(self, pool: Sequence[int]) -> None:
+        self.pool = tuple(pool)
+
+    def __add__(self, other):
+        cls = self.__class__
+        if isinstance(other, cls):
+            return self.value + other.value
+        if isinstance(other, int):
+            return self.value + other
+        return NotImplemented
+
+    def __floordiv__(self, other):
+        cls = self.__class__
+        if isinstance(other, cls):
+            return self.value // other.value
+        if isinstance(other, int):
+            return self.value // other
+        return NotImplemented
+
+    def __mul__(self, other):
+        cls = self.__class__
+        if isinstance(other, cls):
+            return self.value * other.value
+        if isinstance(other, int):
+            return self.value * other
+        return NotImplemented
+
+    def __pow__(self, other):
+        cls = self.__class__
+        if isinstance(other, cls):
+            return self.value ** other.value
+        if isinstance(other, int):
+            return self.value ** other
+        return NotImplemented
+
+    def __sub__(self, other):
+        cls = self.__class__
+        if isinstance(other, cls):
+            return self.value - other.value
+        if isinstance(other, int):
+            return self.value - other
+        return NotImplemented
+
+    # Properties.
+    @property
+    def value(self):
+        return sum(self.pool)
+
+
+# Dice operations.
 def _seed(seed: int | str | bytes) -> None:
     """Seed the random number generator for testing purposes."""
     if isinstance(seed, str):
