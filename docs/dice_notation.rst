@@ -74,8 +74,11 @@ BNF)::
 
     DIGIT ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
     NUMBER ::= DIGIT | DIGIT NUMBER
-    MEMBER ::= NUMBER | NUMBER , MEMBER
-    POOL ::= { MEMBER }
+    MEMBER_DELIMITER ::= ,
+    MEMBER ::= NUMBER | NUMBER MEMBER_DELIMITER MEMBER
+    POOL_OPEN ::= {
+    POOL_CLOSE ::= }
+    POOL ::= POOL_OPEN MEMBER POOL_CLOSE
     OPERATOR ::= ^ | * | / | + | -
     DICE_OPERATOR ::= d | d! | dh | dl | dp
     ROLL_OPERATOR ::= c | f | h | l | s | !
