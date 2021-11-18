@@ -126,7 +126,7 @@ The dice operators are defined in YADN as follows:
 
 *x* dh *y* (keep high die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    the integer with the highest value. For example:
+    the integer with the highest value. For example::
     
         n = 2dh20
         n = {1, 17}
@@ -134,7 +134,7 @@ The dice operators are defined in YADN as follows:
 
 *x* dl *y* (keep low die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    the integer with the lowest value. For example:
+    the integer with the lowest value. For example::
     
         n = 2dl20
         n = {1, 17}
