@@ -91,9 +91,9 @@ BNF)::
     ROLL_EXPRESSION ::= DICE_EXPRESSION ROLL_OPERATOR EXPRESSION
 
 The majority of the rules follow the rules of basic integer arithmetic,
-with the addition of operators for rolling dice. Dice operators are
-resolved first in the order of operations, which then follows the
-standard PEMDAS order after.
+with the addition of operators for rolling dice. Dice and roll operators
+are resolved first in the order of operations, which then follows the
+standard PEMDAS order thereafter.
 
 
 Dice Operators
