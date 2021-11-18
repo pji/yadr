@@ -5,6 +5,7 @@ operator
 Operators for handling the dice part of dice notation.
 """
 import random
+from typing import Sequence
 
 
 def _seed(seed: int | str | bytes) -> None:
@@ -29,8 +30,8 @@ def exploding_die(num: int, size: int) -> int:
             explode_value = random.randint(1, size)
             value += explode(explode_value)
         return value
-    
-    pool = die_pool(num, size)
+
+    pool: Sequence[int] = die_pool(num, size)
     pool = [explode(n) for n in pool]
     return sum(pool)
 

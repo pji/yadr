@@ -90,7 +90,7 @@ class Parser:
             left = tree
 
         return left
-    
+
     def _rule_5(self, trees: list['Tree']) -> 'Tree':
         """Rule for numbers and groups."""
 

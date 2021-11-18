@@ -91,7 +91,7 @@ class ParserTestCase(ut.TestCase):
             (Token.NUMBER, 6),
         )
         self.parser_test(exp, tokens)
-    
+
     def test_exploding_die(self):
         """Roll a die."""
         yo._seed('spam')
@@ -102,7 +102,7 @@ class ParserTestCase(ut.TestCase):
             (Token.NUMBER, 4),
         )
         self.parser_test(exp, tokens)
-    
+
     # Test order of precedence.
     def test_can_perform_multiple_operations(self):
         """The parser can parse statements with multiple operators."""

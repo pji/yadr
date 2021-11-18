@@ -51,4 +51,4 @@ class ExplodingDie(ut.TestCase):
         num = 5
         size = 4
         self.exploding_die_test(exp, num, size)
-        
+
