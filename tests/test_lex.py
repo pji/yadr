@@ -65,6 +65,18 @@ class LexTestCase(ut.TestCase):
         data = '20d!10'
         self.lex_test(exp, data)
 
+    def test_basic_keep_high_die(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dh'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dh10'
+        self.lex_test(exp, data)
+
     def test_basic_division(self):
         """Given a basic division equation, return the tokens that
         represent the equation.

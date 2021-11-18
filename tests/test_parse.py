@@ -5,6 +5,7 @@ test_parse
 Unit tests for the yadr.parse module.
 """
 import unittest as ut
+from unittest.mock import patch
 
 from yadr import parse as p
 from yadr.model import Token
@@ -100,6 +101,18 @@ class ParserTestCase(ut.TestCase):
             (Token.NUMBER, 3),
             (Token.DICE_OPERATOR, 'd!'),
             (Token.NUMBER, 4),
+        )
+        self.parser_test(exp, tokens)
+
+    @patch('random.randint')
+    def test_keep_high_die(self, mock_randint):
+        """Roll a die."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = 5
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'dh'),
+            (Token.NUMBER, 6),
         )
         self.parser_test(exp, tokens)
 

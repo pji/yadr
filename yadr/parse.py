@@ -15,6 +15,7 @@ from yadr.model import Token, TokenInfo
 DICE_OPERATORS = {
     'd': yo.die,
     'd!': yo.exploding_die,
+    'dh': yo.keep_high_die,
 }
 OPERATORS = {
     '^': operator.pow,

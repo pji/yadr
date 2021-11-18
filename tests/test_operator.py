@@ -51,3 +51,21 @@ class ExplodingDie(ut.TestCase):
         num = 5
         size = 4
         self.exploding_die_test(exp, num, size)
+
+
+class KeepHighDie(ut.TestCase):
+    @patch('random.randint')
+    def test_keep_high_die(self, mock_randint):
+        # Expected value.
+        exp = 18
+
+        # Test data and state.
+        mock_randint.side_effect = [15, 3, 6, 18, 10]
+        num = 5
+        size = 20
+
+        # Run test.
+        act = op.keep_high_die(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)

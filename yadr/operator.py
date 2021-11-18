@@ -23,6 +23,11 @@ def die(num: int, size: int) -> int:
     return sum(pool)
 
 
+def die_pool(num: int, size: int) -> tuple[int, ...]:
+    """Roll a die pool."""
+    return tuple(random.randint(1, size) for _ in range(num))
+
+
 def exploding_die(num: int, size: int) -> int:
     """Roll a number of exploding same-sized dice."""
     def explode(value: int) -> int:
@@ -36,6 +41,7 @@ def exploding_die(num: int, size: int) -> int:
     return sum(pool)
 
 
-def die_pool(num: int, size: int) -> tuple[int, ...]:
-    """Roll a die pool."""
-    return tuple(random.randint(1, size) for _ in range(num))
+def keep_high_die(num: int, size: int) -> int:
+    """Roll a number of dice and keep the highest."""
+    pool = die_pool(num, size)
+    return max(pool)
