@@ -100,7 +100,7 @@ Dice Operators
 ==============
 The dice operators are defined in YADN as follows:
 
-*x* d *y* (dice sum):
+x **d** y (dice sum):
     Generate x random integers n within the range 1 ≤ n ≤ y. Unless
     modified by a roll operator, the result is treated as the sum
     of the integers. Roll operators are allowed to interact with the
@@ -111,7 +111,7 @@ The dice operators are defined in YADN as follows:
         n = {11}
         n = 11
 
-*x* d! *y* (exploding dice sum):
+x **d!** y (exploding dice sum):
     Like `dice sum` but if any n = y, it explodes (a new integer in the
     same range is generated and added to n). New integers generated
     from explosions also explode if they equal y. For example::
@@ -124,7 +124,7 @@ The dice operators are defined in YADN as follows:
         n = {1, 5, 3, 13, 6, 1}
         n = 29
 
-*x* dh *y* (keep high die):
+x **dh** y (keep high die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the highest value. For example::
     
@@ -132,7 +132,7 @@ The dice operators are defined in YADN as follows:
         n = {1, 17}
         n = 17
 
-*x* dl *y* (keep low die):
+x **dl** y (keep low die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the lowest value. For example::
     
@@ -140,7 +140,7 @@ The dice operators are defined in YADN as follows:
         n = {1, 17}
         n = 1
 
-*x* dp *y* (dice pool):
+x **dp** y (dice pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     all integers as individual values. Arithmetic operators act on
     each value in the pool individually. For example::
