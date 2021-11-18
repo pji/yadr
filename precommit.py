@@ -53,13 +53,21 @@ def check_doctests(names):
 
 def check_requirements():
     """Check requirements."""
+    def clean_requirements(lines):
+        lines = [line for line in lines if not line.startswith('#')]
+        lines = [line for line in lines if not line.startswith('-')]
+        lines = [line for line in lines if line]
+        return lines
+
     print('Checking requirements...')
     os.putenv('PIPENV_VERBOSITY', '-1')
     cmd = '.venv/bin/python -m pipenv lock -r'
     current = os.popen(cmd).readlines()
+    current = clean_requirements(current)
     current = wrap_lines(current, 35, '', '  ')
     with open('requirements.txt') as fh:
         old = fh.readlines()
+    old = clean_requirements(old)
     old = wrap_lines(old, 35, '', '  ')
 
     # If the packages installed don't match the requirements, it's
@@ -90,13 +98,13 @@ def check_rst(file_paths, ignore):
                 lines = fh.read()
             result = list(rstcheck.check(lines))
             if result:
-                results.append(file, *result)
+                results.append((file, *result))
         return results
 
     def result_handler(result):
         if result:
             for line in result:
-                print(' ' * 4 + line)
+                print(' ' * 4, *line)
 
     title = 'Checking RSTs'
     file_ext = '.rst'
@@ -275,6 +283,7 @@ def main():
         check_doctests(doctest_modules)
         check_style(python_files, ignore)
         check_rst(rst_files, ignore)
+        # Waiting for mypy to support match.
         check_type_hints(get_module_dir())
 
     else:
