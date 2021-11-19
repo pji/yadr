@@ -196,8 +196,7 @@ x dp y (dice pool):
 
 Pool Operators
 ==============
-Note::
-
+.. note::
     The initial design of YADN used "roll operators" rather than
     "pool operators" that would act on any dice expression as a
     pool, even those resulting in integers. Implementation of
