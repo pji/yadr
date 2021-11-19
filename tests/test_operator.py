@@ -125,3 +125,54 @@ class PoolCapTestCase(ut.TestCase):
 
         # Determine test result.
         self.assertTupleEqual(exp, act)
+
+
+class PoolFloorTestCase(ut.TestCase):
+    def test_pool_floor(self):
+        """Dice in the pool are floored at the given value."""
+        # Expected value.
+        exp = (3, 3, 3, 10, 5, 6, 7, 8, 9, 4)
+
+        # Test data and state.
+        pool = (1, 2, 3, 10, 5, 6, 7, 8, 9, 4)
+        cap = 3
+
+        # Run test.
+        act = op.pool_floor(pool, cap)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
+class PoolKeepHigh(ut.TestCase):
+    def test_pool_keep_high(self):
+        """Keep the given number of highest dice from the pool."""
+        # Expected value.
+        exp = (6, 6, 6, 5, 5)
+        
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        keep = 5
+        
+        # Run test.
+        act = op.pool_keep_high(pool, keep)
+        
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
+class PoolKeepLow(ut.TestCase):
+    def test_pool_keep_low(self):
+        """Keep the given number of highest dice from the pool."""
+        # Expected value.
+        exp = (1, 1, 2)
+        
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        keep = 3
+        
+        # Run test.
+        act = op.pool_keep_high(pool, keep)
+        
+        # Determine test result.
+        self.assertTupleEqual(exp, act)

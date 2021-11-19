@@ -4,7 +4,13 @@ lex
 
 A lexer for `yadr` dice notation.
 """
-from yadr.model import DICE_OPERATORS, OPERATORS, Token, TokenInfo
+from yadr.model import (
+    DICE_OPERATORS,
+    OPERATORS,
+    POOL_OPERATORS,
+    Token,
+    TokenInfo
+)
 
 
 # Classes.
@@ -28,6 +34,7 @@ class Lexer:
             Token.CLOSE_GROUP: self._close_group,
             Token.DICE_OPERATOR: self._dice_operator,
             Token.POOL: self._pool,
+            Token.POOL_OPERATOR: self._pool_operator,
             Token.END: self._start
         }
         self.process = self._start
@@ -68,7 +75,7 @@ class Lexer:
         self.state = new_state
         self.process = self.state_map[new_state]
 
-    # Private state methods.
+    # Lexing rules.
     def _close_group(self, char: str) -> None:
         """Processing a close group token."""
         if char.isdigit():
@@ -148,16 +155,36 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _pool(self, char:str) -> None:
+    def _pool(self, char: str) -> None:
         """Processing a pool open."""
         new_state = None
-        if (char.isdigit() or char in '-,}'):
+        if (char.isdigit() or char.isspace() or char in '-,}'):
             self.buffer += char
+        elif char == 'p':
+            new_state = Token.POOL_OPERATOR
         else:
             msg = f'{char} cannot be in a pool.'
+            raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char)
 
+    def _pool_operator(self, char: str) -> None:
+        """Lex pool operators."""
+        new_state = None
+        valid_char = [s[1] for s in POOL_OPERATORS[1:]]
+        if char in valid_char:
+            self.buffer += char
+        elif char.isdigit() or char == '-':
+            new_state = Token.NUMBER
+        elif char.isspace():
+            char = ''
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow dice operator.'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char)
+    
     def _start(self, char: str) -> None:
         """The starting state."""
         if self.tokens:
@@ -223,6 +250,7 @@ class PoolLexer:
             Token.POOL_CLOSE: self._pool_close,
             Token.POOL_OPEN: self._pool_open,
             Token.START: self._start,
+            Token.WHITESPACE: self._whitespace,
         }
         self.process = self._start
 
@@ -258,6 +286,8 @@ class PoolLexer:
             new_state = Token.POOL_CLOSE
         elif char.isdigit():
             self.buffer += char
+        elif char.isspace():
+            new_state = Token.WHITESPACE
         else:
             msg = f'{char} cannot follow a member'
             raise ValueError(msg)
@@ -268,6 +298,8 @@ class PoolLexer:
         """Lex a member delimiter."""
         if char.isdigit() or char == '-':
             new_state = Token.MEMBER
+        elif char.isspace():
+            new_state = Token.WHITESPACE
         else:
             msg = f'{char} cannot follow a ,'
             raise ValueError(msg)
@@ -282,6 +314,8 @@ class PoolLexer:
         """Lex a pool open."""
         if char.isdigit() or char == '-':
             new_state = Token.MEMBER
+        elif char.isspace():
+            new_state = Token.WHITESPACE
         else:
             msg = '{} cannot follow a \x007b'.format(char)
             raise ValueError(msg)
@@ -295,3 +329,18 @@ class PoolLexer:
             msg = f'{char} cannot start a pool.'
             raise ValueError(msg)
         self._change_state(new_state, char, False)
+
+    def _whitespace(self, char: str) -> None:
+        """Processing whitespace."""
+        new_state = None
+        if char.isdigit() or char == '-':
+            new_state = Token.MEMBER
+        elif char == ',':
+            new_state = Token.MEMBER_DELIMITER
+        elif char == '}':
+            new_state = Token.POOL_CLOSE
+        else:
+            msg = f'{char} cannot follow white space.'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char, False)

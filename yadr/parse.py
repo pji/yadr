@@ -27,6 +27,11 @@ OPERATORS = {
     '+': operator.add,
     '-': operator.sub,
 }
+POOL_OPERATORS = {
+    'pc': yo.pool_cap,
+    'pf': yo.pool_floor,
+    'ph': yo.pool_keep_high,
+}
 
 
 # Utility classes and functions.
@@ -43,7 +48,7 @@ class Tree:
         self.right = right
 
     def compute(self):
-        if self.kind == Token.NUMBER:
+        if self.kind in [Token.NUMBER, Token.POOL]:
             return self.value
         left = self.left.compute()
         right = self.right.compute()
@@ -51,10 +56,12 @@ class Tree:
             op = OPERATORS[self.value]
         elif self.kind == Token.DICE_OPERATOR:
             op = DICE_OPERATORS[self.value]
+        elif self.kind == Token.POOL_OPERATOR:
+            op = POOL_OPERATORS[self.value]
         return op(left, right)
 
 
-def parsing_rule(next_rule: Callable) -> Callable:
+def next_rule(next_rule: Callable) -> Callable:
     """A decorator for simplifying parsing rules."""
     def outer_wrapper(fn: Callable) -> Callable:
         @wraps(fn)
@@ -79,7 +86,7 @@ def parse(tokens: Sequence[TokenInfo]) -> int | None:
 # Parsing rules.
 def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers and groups."""
-    if trees[-1].kind == Token.NUMBER:
+    if trees[-1].kind in [Token.NUMBER, Token.POOL]:
         return trees.pop()
     if trees[-1].kind == Token.OPEN_GROUP:
         _ = trees.pop()
@@ -89,7 +96,20 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
     return expression
 
 
-@parsing_rule(groups_and_numbers)
+@next_rule(groups_and_numbers)
+def pool_operators(next_rule: Callable,
+                   left: Tree,
+                   trees: list[Tree]):
+    """Parse dice operations."""
+    while (trees and trees[-1].kind == Token.POOL_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@next_rule(pool_operators)
 def dice_operators(next_rule: Callable,
                    left: Tree,
                    trees: list[Tree]):
@@ -102,7 +122,7 @@ def dice_operators(next_rule: Callable,
     return left
 
 
-@parsing_rule(dice_operators)
+@next_rule(dice_operators)
 def exponents(next_rule: Callable,
               left: Tree,
               trees: list[Tree]):
@@ -117,7 +137,7 @@ def exponents(next_rule: Callable,
     return left
 
 
-@parsing_rule(exponents)
+@next_rule(exponents)
 def mul_div(next_rule: Callable,
             left: Tree,
             trees: list[Tree]):
@@ -132,7 +152,7 @@ def mul_div(next_rule: Callable,
     return left
 
 
-@parsing_rule(mul_div)
+@next_rule(mul_div)
 def add_sub(next_rule: Callable,
             left: Tree,
             trees: list[Tree]):

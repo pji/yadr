@@ -27,6 +27,15 @@ class LexTestCase(ut.TestCase):
         data = '{5,1,9}'
         self.lex_test(exp, data)
 
+    def test_pool_with_whitespace(self):
+        """A pool of dice that has whitespace."""
+        exp = ((
+            lex.Token.POOL,
+            (5, 1, 9),
+        ),)
+        data = '{ 5 , 1 , 9 }'
+        self.lex_test(exp, data)
+
     # Operators.
     def test_basic_addition(self):
         """Given a basic addition equation, return the tokens that
@@ -163,15 +172,34 @@ class LexTestCase(ut.TestCase):
         self.lex_test(exp, data)
 
     # Pool operators.
-    @ut.skip
     def test_basic_pool_cap(self):
         """Cap the maximum value in a pool."""
         exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'dl'),
-            (lex.Token.NUMBER, 10),
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pc'),
+            (lex.Token.NUMBER, 7),
         )
-        data = '20dl10'
+        data = '{5,1,9}pc7'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_keep_high(self):
+        """Cap the maximum value in a pool."""
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'ph'),
+            (lex.Token.NUMBER, 2),
+        )
+        data = '{5,1,9}ph2'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_floor(self):
+        """Floor the minimum value in a pool."""
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pf'),
+            (lex.Token.NUMBER, 2),
+        )
+        data = '{5,1,9}pf2'
         self.lex_test(exp, data)
 
     # Grouping.

@@ -57,6 +57,29 @@ def pool_cap(pool: Sequence[int], cap: int) -> tuple[int, ...]:
     return tuple(result)
 
 
+def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
+    """Floor the minimum value in a pool."""
+    result = []
+    for value in pool:
+        if value < floor:
+            value = floor
+        result.append(value)
+    return tuple(result)
+
+
+def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
+    """Keep a number of the highest dice."""
+    sorted_pool = sorted(n for n in pool)
+    sorted_pool = sorted_pool[::-1]
+    return tuple(sorted_pool)[:keep]
+
+
+def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
+    """Keep a number of the lowest dice."""
+    sorted_pool = sorted(n for n in pool)
+    return tuple(sorted_pool)[:keep]
+
+
 # Utility functions.
 def _seed(seed: int | str | bytes) -> None:
     """Seed the random number generator for testing purposes."""
