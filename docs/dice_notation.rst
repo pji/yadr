@@ -75,37 +75,64 @@ accomplishing that goal, since this is the first time I'm trying to write
 BNF)::
 
     DIGIT ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-    NUMBER ::= DIGIT | DIGIT NUMBER
-    MEMBER_DELIMITER ::= ,
-    POOL_SUM_DELIMITER ::= :
-    MEMBER ::= NUMBER | NUMBER MEMBER_DELIMITER MEMBER
-    POOL_SUM ::= NUMBER
-    POOL_OPEN ::= {
-    POOL_CLOSE ::= }
-    POOL ::= POOL_OPEN MEMBER POOL_CLOSE | 
-             POOL_OPEN POOL_SUM POOL_SUM_DELMITER MEMBER POOL_CLOSE
-    OPERATOR ::= ^ | * | / | + | -
-    DICE_OPERATOR ::= d | d! | dh | dl | dp
-    ROLL_OPERATOR ::= rc | rf | rh | rl | rs
+    NEGATIVE_SIGN ::= -
+    NUMBER ::= DIGIT | DIGIT NUMBER | NEGATIVE_SIGN NUMBER
     GROUP_OPEN ::= (
     GROUP_CLOSE ::= )
+    OPERATOR ::= ^ | * | / | + | -
+    DICE_OPERATOR ::= d | d! | dh | dl
     GROUP ::= GROUP_OPEN EXPRESSION GROUP_CLOSE
-    EXPRESSION ::= NUMBER | POOL | GROUP | DICE_EXPRESSION | 
-                   ROLL_EXPRESSION | EXPRESSION OPERATOR EXPRESSION
     DICE_EXPRESSION ::= EXPRESSION DICE_OPERATOR EXPRESSION
-    ROLL_EXPRESSION ::= DICE_EXPRESSION ROLL_OPERATOR EXPRESSION
+    EXPRESSION ::= NUMBER | GROUP | DICE_EXPRESSION | POOL_DEGEN_EXPRESSION
+                   EXPRESSION OPERATOR EXPRESSION
 
-The majority of the rules follow the rules of basic integer arithmetic,
-with the addition of operators for rolling dice. Dice and roll operators
-are resolved first in the order of operations, which then follows the
-standard PEMDAS order thereafter.
+    MEMBER_DELIMITER ::= ,
+    MEMBER ::= NUMBER | NUMBER MEMBER_DELIMITER MEMBER
+    POOL_OPEN ::= {
+    POOL_CLOSE ::= }
+    POOL ::= POOL_OPEN MEMBER POOL_CLOSE
+    
+    POOL_GEN_OPERATOR ::= dp
+    POOL_GEN_EXPRESSION ::= EXPRESSION POOL_GEN_OPERATOR EXPRESSION
+    
+    POOL_OPERATOR ::= pc | pf | ph | pl
+    POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION |
+                        POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION
+
+    U_POOL_DEGEN_OPERATOR ::= S | ∑
+    POOL_DEGEN_OPERATOR ::= ps | pb
+    POOL_DEGEN_EXPRESSION ::= U_POOL_DEGEN_OPERATOR POOL |
+                              U_POOL_DEGEN_OPERATOR POOL_EXPRESSION |
+                              POOL POOL_DEGEN_OPERATOR EXPRESSION |
+                              POOL_EXPRESSION POOL_DEGEN_OPERATOR EXPRESSION
+
+
+Order of Operations
+===================
+The order of operations in YADN is as follows:
+
+#.  Grouping
+#.  Pool generation operations
+#.  Pool operations
+#.  Pool degeneration operations
+#.  Dice operations
+#.  Exponentiation
+#.  Multiplication and division
+#.  Addition and subtraction
+
+Operations involving pools are placed high in the order to allow them
+to be generated, acted on, and collapsed before they would acted on
+by operations and dice operators that can't handle pools. However,
+this leads to potential errors where a pool is generated but not
+collapsed before it is passed to an operator. The trade-off seems
+worthwhile here, but this may be reviewed in the future.
 
 
 Dice Operators
 ==============
 The dice operators are defined in YADN as follows:
 
-x **d** y (dice sum):
+x d y (dice sum):
     Generate x random integers n within the range 1 ≤ n ≤ y. Unless
     modified by a roll operator, the result is treated as the sum
     of the integers. Roll operators are allowed to interact with the
@@ -116,7 +143,7 @@ x **d** y (dice sum):
         n = {11}
         n = 11
 
-x **d!** y (exploding dice sum):
+x d! y (exploding dice):
     Like `dice sum` but if any n = y, it explodes (a new integer in the
     same range is generated and added to n). New integers generated
     from explosions also explode if they equal y. For example::
@@ -129,7 +156,7 @@ x **d!** y (exploding dice sum):
         n = {1, 5, 3, 13, 6, 1}
         n = 29
 
-x **dh** y (keep high die):
+x dh y (keep high die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the highest value. For example::
     
@@ -137,7 +164,7 @@ x **dh** y (keep high die):
         n = {1, 17}
         n = 17
 
-x **dl** y (keep low die):
+x dl y (keep low die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the lowest value. For example::
     
@@ -145,61 +172,94 @@ x **dl** y (keep low die):
         n = {1, 17}
         n = 1
 
-x **dp** y (dice pool):
+
+Pool Generation Operator
+========================
+The operator that generates dice pools is defined as:
+
+x dp y (dice pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    all integers as individual values. Arithmetic operators act on
-    each value in the pool individually. For example::
+    all integers as individual values. For example::
     
-        n = 5dp10 + 2
-        n = {3, 4, 7, 10, 3} + 2
-        n = {5, 6, 9, 12, 5}
+        n = 5dp10
+        n = {3, 4, 7, 10, 3}
 
 
-Roll Operators
+Pool Operators
 ==============
-The roll operators for YADN are defined as follows:
+Note::
 
-DE rc y (die cap):
-    Cap the maximum values of the dice generated by dice expression
-    DE at y. Values greater than y become y. For example::
+    The initial design of YADN used "roll operators" rather than
+    "pool operators" that would act on any dice expression as a
+    pool, even those resulting in integers. Implementation of
+    this required dice expressions to have a memory of the
+    pool that was generated before it was collapsed into a number,
+    which proved complex. Pool operators seemed easier to
+    implement and understand, if occasionally more verbose.
+
+The operators that act on dice pools and return a dice pool are as
+follows:
+
+P pc y (pool cap):
+    For a given pool P, limit the maximum value of each member in P
+    to y. Values greater than y become y. For example::
     
-        n = 5d10 rc 7
-        n = {3, 1, 9, 7, 10} rc 7
-        n = {30: 3, 1, 9, 7, 10} rc 7
-        n = {25: 3, 1, 7, 7, 7}
-        n = 25
+        n = 5dp10 pc 7
+        n = {3, 1, 9, 7, 10} pc 7
+        n = {3, 1, 7, 7, 7}
 
-DE rc y (die floor):
-    Limit the minimum values of the dice generated by dice expression
-    DE at y. Values greater than y become y. For example::
+P pc y (pool floor):
+    For a given pool P, limit the minimum value of each member in P
+    to y. Values greater than y become y. For example::
     
-        n = 5d10 rf 7
-        n = {3, 1, 9, 7, 10} rc 7
-        n = {30: 3, 1, 9, 7, 10} rc 7
-        n = {40: 7, 7, 9, 7, 10}
-        n = 40
+        n = 5dp10 pf 7
+        n = {3, 1, 9, 7, 10} pf 7
+        n = {7, 7, 9, 7, 10}
 
 
-DE rh y (keep high dice):
-    Keep the highest y dice. For example::
+P ph y (pool keep high):
+    For a given pool P, select the top y members with the highest
+    values. Return those members as a pool.
     
-        n = 5dp10 rh 3
-        n = {3, 1, 9, 7, 10} rh 3
+        n = 5dp10 ph 3
+        n = {3, 1, 9, 7, 10} ph 3
         n = {9, 7, 10}
 
 
-DE rl y (keep low dice):
-    Keep the lowest y dice. For example::
+P pl y (pool keep low):
+    For a given pool P, select the top y members with the lowest
+    values. Return those members as a pool.
     
-        n = 5dp10 rl 3
-        n = {3, 1, 9, 7, 10} rl 3
+        n = 5dp10 pl 3
+        n = {3, 1, 9, 7, 10} pl 3
         n = {3, 1, 7}
 
 
-DE rs y (count successes):
-    Count the number of integers above the success number y. For
-    example::
+Pool Degeneration Operators
+===========================
+The operators that collapse pools into numbers are defined as follows:
+
+P ps y (count successes):
+    For a given pool P, count the number of members with a value greater
+    than or equal to y. Return that count. For example::
     
-        n = 5dp10 rs 7
-        n = {3, 1, 9, 7, 10} rs 7
+        n = 5dp10 ps 7
+        n = {3, 1, 9, 7, 10} ps 7
         n = 3
+
+P pb y (count successes and botches):
+    For a given pool P, let a be the number of members with a value
+    greater than or equal to y. Let b be the number of members with
+    a value of one. Return the difference between a and b. For example::
+    
+        n = 5dp10 pb 7
+        n = {3, 1, 9, 7, 10} pb 7
+        n = 2
+
+S P | ∑ P (pool sum):
+    For a given pool P, add together the values of all members. Return
+    that sum. For example::
+    
+        n = S 5dp10
+        n = S {3, 1, 9, 7, 10}
+        n = 30

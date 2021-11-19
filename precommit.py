@@ -283,7 +283,6 @@ def main():
         check_doctests(doctest_modules)
         check_style(python_files, ignore)
         check_rst(rst_files, ignore)
-        # Waiting for mypy to support match.
         check_type_hints(get_module_dir())
 
     else:

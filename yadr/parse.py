@@ -4,8 +4,9 @@ parse
 
 Parse dice notation.
 """
+from functools import wraps
 import operator
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
 from yadr.model import Token, TokenInfo
@@ -28,89 +29,7 @@ OPERATORS = {
 }
 
 
-# Classes.
-class Parser:
-    """Parser for dice notation."""
-    def parse(self, tokens: Sequence[TokenInfo]) -> int | None:
-        """Parse dice notation tokens."""
-        trees = [Tree(*token) for token in tokens]
-        trees = trees[::-1]
-        parsed = self._rule_1(trees)
-        if parsed:
-            return parsed.compute()
-        return None
-
-    # Grammar rules.
-    def _rule_1(self, trees: list['Tree']) -> 'Tree':
-        left = self._rule_2(trees)
-
-        while (trees
-               and trees[-1].kind == Token.OPERATOR
-               and trees[-1].value in '+-'):            # type: ignore
-            tree = trees.pop()
-            tree.left = left
-            tree.right = self._rule_2(trees)
-            left = tree
-
-        return left
-
-    def _rule_2(self, trees: list['Tree']) -> 'Tree':
-        """Rule for multiplication and division."""
-        left = self._rule_3(trees)
-
-        while (trees
-               and trees[-1].kind == Token.OPERATOR
-               and trees[-1].value in '*/'):            # type: ignore
-            tree = trees.pop()
-            tree.left = left
-            tree.right = self._rule_3(trees)
-            left = tree
-
-        return left
-
-    def _rule_3(self, trees: list['Tree']) -> 'Tree':
-        """Rule for exponentiation."""
-        left = self._rule_4(trees)
-
-        while (trees
-               and trees[-1].kind == Token.OPERATOR
-               and trees[-1].value in '^'):             # type: ignore
-            tree = trees.pop()
-            tree.left = left
-            tree.right = self._rule_4(trees)
-            left = tree
-
-        return left
-
-    def _rule_4(self, trees: list['Tree']) -> 'Tree':
-        """Rule for dice operators."""
-        left = self._rule_5(trees)
-
-        while (trees and trees[-1].kind == Token.DICE_OPERATOR):
-            tree = trees.pop()
-            tree.left = left
-            tree.right = self._rule_5(trees)
-            left = tree
-
-        return left
-
-    def _rule_5(self, trees: list['Tree']) -> 'Tree':
-        """Rule for numbers and groups."""
-
-        if trees[-1].kind == Token.NUMBER:
-            return trees.pop()
-
-        if trees[-1].kind == Token.OPEN_GROUP:
-            _ = trees.pop()
-
-        expression = self._rule_1(trees)
-
-        if trees[-1].kind == Token.CLOSE_GROUP:
-            _ = trees.pop()
-
-        return expression
-
-
+# Utility classes and functions.
 class Tree:
     """A binary tree."""
     def __init__(self,
@@ -133,3 +52,96 @@ class Tree:
         elif self.kind == Token.DICE_OPERATOR:
             op = DICE_OPERATORS[self.value]
         return op(left, right)
+
+
+def parsing_rule(next_rule: Callable) -> Callable:
+    """A decorator for simplifying parsing rules."""
+    def outer_wrapper(fn: Callable) -> Callable:
+        @wraps(fn)
+        def inner_wrapper(*args, **kwargs) -> Callable:
+            left = next_rule(*args, **kwargs)
+            return fn(next_rule, left, *args, **kwargs)
+        return inner_wrapper
+    return outer_wrapper
+
+
+# Parsing initiation.
+def parse(tokens: Sequence[TokenInfo]) -> int | None:
+    """Parse dice notation tokens."""
+    trees = [Tree(*token) for token in tokens]
+    trees = trees[::-1]
+    parsed = add_sub(trees)
+    if parsed:
+        return parsed.compute()
+    return None
+
+
+# Parsing rules.
+def groups_and_numbers(trees: list[Tree]) -> Tree:
+    """Final rule, covering numbers and groups."""
+    if trees[-1].kind == Token.NUMBER:
+        return trees.pop()
+    if trees[-1].kind == Token.OPEN_GROUP:
+        _ = trees.pop()
+    expression = add_sub(trees)
+    if trees[-1].kind == Token.CLOSE_GROUP:
+        _ = trees.pop()
+    return expression
+
+
+@parsing_rule(groups_and_numbers)
+def dice_operators(next_rule: Callable,
+                   left: Tree,
+                   trees: list[Tree]):
+    """Parse dice operations."""
+    while (trees and trees[-1].kind == Token.DICE_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@parsing_rule(dice_operators)
+def exponents(next_rule: Callable,
+              left: Tree,
+              trees: list[Tree]):
+    """Parse exponents."""
+    while (trees
+           and trees[-1].kind == Token.OPERATOR
+           and trees[-1].value in '^'):             # type: ignore
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@parsing_rule(exponents)
+def mul_div(next_rule: Callable,
+            left: Tree,
+            trees: list[Tree]):
+    """Parse multiplication and division."""
+    while (trees
+           and trees[-1].kind == Token.OPERATOR
+           and trees[-1].value in '*/'):            # type: ignore
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@parsing_rule(mul_div)
+def add_sub(next_rule: Callable,
+            left: Tree,
+            trees: list[Tree]):
+    """Parse addition and subtraction."""
+    while (trees
+           and trees[-1].kind == Token.OPERATOR
+           and trees[-1].value in '+-'):            # type: ignore
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left

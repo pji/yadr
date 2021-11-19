@@ -27,6 +27,7 @@ class Lexer:
             Token.OPEN_GROUP: self._open_group,
             Token.CLOSE_GROUP: self._close_group,
             Token.DICE_OPERATOR: self._dice_operator,
+            Token.POOL: self._pool,
             Token.END: self._start
         }
         self.process = self._start
@@ -50,9 +51,15 @@ class Lexer:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
         if store:
-            value: str | int = self.buffer
-            if self.state == Token.NUMBER:
+            value: str | int | tuple[int, ...] = self.buffer
+            if self.state == Token.NUMBER and isinstance(value, str):
                 value = int(value)
+            elif self.state == Token.POOL and isinstance(value, str):
+                plexer = PoolLexer()
+                value = plexer.lex(value)
+            elif self.state in [Token.POOL, Token.NUMBER]:
+                msg = f'value must be str, was {type(value)}'
+                raise TypeError(msg)
             token_info = (self.state, value)
             self.tokens.append(token_info)
 
@@ -141,6 +148,16 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
+    def _pool(self, char:str) -> None:
+        """Processing a pool open."""
+        new_state = None
+        if (char.isdigit() or char in '-,}'):
+            self.buffer += char
+        else:
+            msg = f'{char} cannot be in a pool.'
+        if new_state:
+            self._change_state(new_state, char)
+
     def _start(self, char: str) -> None:
         """The starting state."""
         if self.tokens:
@@ -152,6 +169,8 @@ class Lexer:
             new_state = Token.NUMBER
         elif char == '(':
             new_state = Token.OPEN_GROUP
+        elif char == '{':
+            new_state = Token.POOL
         else:
             msg = f'Cannot start with {char}.'
             raise ValueError(msg)
@@ -191,3 +210,88 @@ class Lexer:
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char, store=False)
+
+
+class PoolLexer:
+    def __init__(self) -> None:
+        self.buffer = ''
+        self.pool: list[int] = []
+        self.state = Token.START
+        self.state_map = {
+            Token.MEMBER: self._member,
+            Token.MEMBER_DELIMITER: self._member_delimiter,
+            Token.POOL_CLOSE: self._pool_close,
+            Token.POOL_OPEN: self._pool_open,
+            Token.START: self._start,
+        }
+        self.process = self._start
+
+    # Public methods.
+    def lex(self, text: str) -> tuple[int, ...]:
+        """Lex a pool string from dice notation."""
+        for char in text:
+            self.process(char)
+        return tuple(self.pool)
+
+    # Private operation methods.
+    def _change_state(self, new_state: Token,
+                      char: str,
+                      store: bool = True) -> None:
+        """Terminate the previous token and start a new one."""
+        # Terminate and store the old token.
+        if store:
+            value = int(self.buffer)
+            self.pool.append(value)
+
+        # Set new state.
+        self.buffer = char
+        self.state = new_state
+        self.process = self.state_map[new_state]
+
+    # Lexing rules.
+    def _member(self, char:str) -> None:
+        """Lex a member."""
+        new_state = None
+        if char == ',':
+            new_state = Token.MEMBER_DELIMITER
+        elif char == '}':
+            new_state = Token.POOL_CLOSE
+        elif char.isdigit():
+            self.buffer += char
+        else:
+            msg = f'{char} cannot follow a member'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char)
+
+    def _member_delimiter(self, char: str) -> None:
+        """Lex a member delimiter."""
+        if char.isdigit() or char == '-':
+            new_state = Token.MEMBER
+        else:
+            msg = f'{char} cannot follow a ,'
+            raise ValueError(msg)
+        self._change_state(new_state, char, False)
+
+    def _pool_close(self, char: str) -> None:
+        """Lex a pool close."""
+        msg = '{} cannot follow a \x007d'.format(char)
+        raise ValueError(msg)
+
+    def _pool_open(self, char: str) -> None:
+        """Lex a pool open."""
+        if char.isdigit() or char == '-':
+            new_state = Token.MEMBER
+        else:
+            msg = '{} cannot follow a \x007b'.format(char)
+            raise ValueError(msg)
+        self._change_state(new_state, char, False)
+
+    def _start(self, char: str) -> None:
+        """Start lexing the string."""
+        if char == '{':
+            new_state = Token.POOL_OPEN
+        else:
+            msg = f'{char} cannot start a pool.'
+            raise ValueError(msg)
+        self._change_state(new_state, char, False)

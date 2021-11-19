@@ -5,7 +5,7 @@ model
 Common data elements for the yadr package.
 """
 from enum import Enum
-from typing import Generic, NamedTuple, TypeVar
+from typing import Generic, NamedTuple, Tuple, TypeVar
 
 # Common data.
 OPERATORS = '+ - * / ^'.split()
@@ -14,15 +14,21 @@ DICE_OPERATORS = 'd d! dh dl dp'.split()
 
 class Token(Enum):
     START = 0
-    NUMBER = 1
-    OPERATOR = 2
-    WHITESPACE = 3
+    WHITESPACE = 1
+    NUMBER = 2
+    OPERATOR = 3
     OPEN_GROUP = 4
     CLOSE_GROUP = 5
-    DICE_OPERATOR = 6
-    END = 7
+    MEMBER_DELIMITER = 6
+    MEMBER = 7
+    POOL_OPEN = 8
+    POOL_CLOSE = 9
+    POOL = 10
+    DICE_OPERATOR = 11
+    POOL_GEN_OPERATOR = 12
+    END = 13
 
 
 # Types.
-T = TypeVar('T', str, int)
+T = TypeVar('T', str, int, Tuple[int])
 TokenInfo = tuple[Token, T]

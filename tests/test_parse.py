@@ -16,8 +16,7 @@ from yadr import operator as yo
 class ParserTestCase(ut.TestCase):
     def parser_test(self, exp, tokens):
         """The standard Parse test case."""
-        parser = p.Parser()
-        act = parser.parse(tokens)
+        act = p.parse(tokens)
         self.assertEqual(exp, act)
 
     # Test basic operations.

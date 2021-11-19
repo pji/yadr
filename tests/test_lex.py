@@ -17,6 +17,17 @@ class LexTestCase(ut.TestCase):
         act = lexer.lex(data)
         self.assertTupleEqual(exp, act)
 
+    # Identity.
+    def test_pool(self):
+        """A pool of dice."""
+        exp = ((
+            lex.Token.POOL,
+            (5, 1, 9),
+        ),)
+        data = '{5,1,9}'
+        self.lex_test(exp, data)
+
+    # Operators.
     def test_basic_addition(self):
         """Given a basic addition equation, return the tokens that
         represent the equation.
@@ -39,66 +50,6 @@ class LexTestCase(ut.TestCase):
             (lex.Token.NUMBER, 3),
         )
         data = ' 15 + 3 '
-        self.lex_test(exp, data)
-
-    def test_basic_die(self):
-        """Given a basic die equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'd'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '20d10'
-        self.lex_test(exp, data)
-
-    def test_basic_dice_pool(self):
-        """Given a basic die equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'dp'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '20dp10'
-        self.lex_test(exp, data)
-
-    def test_basic_exploding_die(self):
-        """Given a basic exploding die equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'd!'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '20d!10'
-        self.lex_test(exp, data)
-
-    def test_basic_keep_high_die(self):
-        """Given a basic die equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'dh'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '20dh10'
-        self.lex_test(exp, data)
-
-    def test_basic_keep_low_die(self):
-        """Given a basic die equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'dl'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '20dl10'
         self.lex_test(exp, data)
 
     def test_basic_division(self):
@@ -149,6 +100,81 @@ class LexTestCase(ut.TestCase):
         data = '200-10'
         self.lex_test(exp, data)
 
+    # Dice operators.
+    def test_basic_die(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20d10'
+        self.lex_test(exp, data)
+
+    def test_basic_exploding_die(self):
+        """Given a basic exploding die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'd!'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20d!10'
+        self.lex_test(exp, data)
+
+    def test_basic_keep_high_die(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dh'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dh10'
+        self.lex_test(exp, data)
+
+    def test_basic_keep_low_die(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dl'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dl10'
+        self.lex_test(exp, data)
+
+    # Pool generation operator.
+    def test_basic_dice_pool(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dp'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dp10'
+        self.lex_test(exp, data)
+
+    # Pool operators.
+    @ut.skip
+    def test_basic_pool_cap(self):
+        """Cap the maximum value in a pool."""
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dl'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dl10'
+        self.lex_test(exp, data)
+
+    # Grouping.
     def test_parentheses(self):
         """Given a statement containing parenthesis, return the
         tokenized equation.
@@ -165,6 +191,7 @@ class LexTestCase(ut.TestCase):
         data = '(32-5)*21'
         self.lex_test(exp, data)
 
+    # Order of operations.
     def test_parentheses_with_whitespace(self):
         """Given a statement containing parenthesis and whitespace,
         return the tokenized equation.
