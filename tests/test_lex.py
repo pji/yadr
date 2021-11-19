@@ -110,6 +110,18 @@ class LexTestCase(ut.TestCase):
         self.lex_test(exp, data)
 
     # Dice operators.
+    def test_basic_concat(self):
+        """Given a basic concat equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dc'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dc10'
+        self.lex_test(exp, data)
+
     def test_basic_die(self):
         """Given a basic die equation, return the tokens that
         represent the equation.
@@ -172,6 +184,30 @@ class LexTestCase(ut.TestCase):
         self.lex_test(exp, data)
 
     # Pool operators.
+    def test_basic_pool_keep_above(self):
+        """Given a basic pool keep above statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pa'),
+            (lex.Token.NUMBER, 2),
+        )
+        data = '{5,1,9}pa2'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_keep_below(self):
+        """Given a basic pool keep below statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pb'),
+            (lex.Token.NUMBER, 2),
+        )
+        data = '{5,1,9}pb2'
+        self.lex_test(exp, data)
+
     def test_basic_pool_cap(self):
         """Cap the maximum value in a pool."""
         exp = (
@@ -180,6 +216,16 @@ class LexTestCase(ut.TestCase):
             (lex.Token.NUMBER, 7),
         )
         data = '{5,1,9}pc7'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_floor(self):
+        """Floor the minimum value in a pool."""
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pf'),
+            (lex.Token.NUMBER, 2),
+        )
+        data = '{5,1,9}pf2'
         self.lex_test(exp, data)
 
     def test_basic_pool_keep_high(self):
@@ -192,15 +238,125 @@ class LexTestCase(ut.TestCase):
         data = '{5,1,9}ph2'
         self.lex_test(exp, data)
 
-    def test_basic_pool_floor(self):
-        """Floor the minimum value in a pool."""
+    def test_basic_pool_keep_low(self):
+        """Cap the maximum value in a pool."""
         exp = (
             (lex.Token.POOL, (5, 1, 9)),
-            (lex.Token.POOL_OPERATOR, 'pf'),
+            (lex.Token.POOL_OPERATOR, 'pl'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}pf2'
+        data = '{5,1,9}pl2'
         self.lex_test(exp, data)
+
+    def test_basic_pool_remove(self):
+        """Given a basic pool remove statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'pr'),
+            (lex.Token.NUMBER, 5),
+        )
+        data = '{5,1,9}pr5'
+        self.lex_test(exp, data)
+
+    # Unary pool degeneration operator.
+    def test_basic_pool_count(self):
+        """Given a basic pool count statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
+            (lex.Token.POOL, (3, 1, 7))
+        )
+        data = 'N{3,1,7}'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_count_with_space(self):
+        """Given a basic pool count statement with white space, return
+        the tokens in the statement.
+        """
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
+            (lex.Token.POOL, (3, 1, 7))
+        )
+        data = 'N {3,1,7}'
+        self.lex_test(exp, data)
+
+    def test_basic_pool_sum(self):
+        """Given a basic pool count statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (3, 1, 7))
+        )
+        data = 'S{3,1,7}'
+        self.lex_test(exp, data)
+
+    # Binary pool degeneration operator.
+    def test_basic_count_successes(self):
+        """Given a basic count successes statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (lex.Token.NUMBER, 5),
+        )
+        data = '{5,1,9}ns5'
+        self.lex_test(exp, data)
+
+    def test_basic_count_successes_with_botch(self):
+        """Given a basic count successes with botches statement, return
+        the tokens in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'nb'),
+            (lex.Token.NUMBER, 5),
+        )
+        data = '{5,1,9}nb5'
+        self.lex_test(exp, data)
+
+    def test_count_successes_before_group(self):
+        """Groups can follow pool degeneration operators."""
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 3),
+            (lex.Token.OPERATOR, '+'),
+            (lex.Token.NUMBER, 2),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '{5,1,9}ns(3+2)'
+        self.lex_test(exp, data)
+
+    def test_count_successes_before_unary_pool_degen(self):
+        """Unary pool degens can follow pool degeneration operators."""
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
+            (lex.Token.POOL, (5, 1, 9)),
+        )
+        data = '{5,1,9}nsN{5,1,9}'
+        self.lex_test(exp, data)
+
+    def test_count_successes_before_operator(self):
+        """Operators cannot occur after pool degen operators."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow pool degeneration operator.'
+
+        # Test data and state.
+        data = '{5,1,9}ns+'
+        lexer = lex.Lexer()
+
+        # Run test and determine results.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
 
     # Grouping.
     def test_parentheses(self):

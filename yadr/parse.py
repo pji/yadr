@@ -15,10 +15,11 @@ from yadr.model import Token, TokenInfo
 # Data.
 DICE_OPERATORS = {
     'd': yo.die,
-    'dp': yo.dice_pool,
     'd!': yo.exploding_die,
+    'dc': yo.concat,
     'dh': yo.keep_high_die,
     'dl': yo.keep_low_die,
+    'dp': yo.dice_pool,
 }
 OPERATORS = {
     '^': operator.pow,
@@ -28,9 +29,21 @@ OPERATORS = {
     '-': operator.sub,
 }
 POOL_OPERATORS = {
+    'pa': yo.pool_keep_above,
+    'pb': yo.pool_keep_below,
     'pc': yo.pool_cap,
     'pf': yo.pool_floor,
     'ph': yo.pool_keep_high,
+    'pl': yo.pool_keep_low,
+    'pr': yo.pool_remove,
+}
+U_POOL_DEGEN_OPERATORS = {
+    'N': yo.pool_count,
+    'S': yo.pool_sum,
+}
+POOL_DEGEN_OPERATORS = {
+    'nb': yo.count_successes_with_botch,
+    'ns': yo.count_successes,
 }
 
 
@@ -58,7 +71,34 @@ class Tree:
             op = DICE_OPERATORS[self.value]
         elif self.kind == Token.POOL_OPERATOR:
             op = POOL_OPERATORS[self.value]
+        elif self.kind == Token.POOL_DEGEN_OPERATOR:
+            op = POOL_DEGEN_OPERATORS[self.value]
         return op(left, right)
+
+
+class Unary(Tree):
+    """A unary tree."""
+    def __init__(self,
+                 kind: Token,
+                 value: int | str,
+                 child: Optional['Tree'] = None) -> None:
+        self.kind = kind
+        self.value = value
+        self.child = child
+
+    def compute(self):
+        if self.kind in [Token.NUMBER, Token.POOL]:
+            return self.value
+        child = self.child.compute()
+        if self.kind == Token.U_POOL_DEGEN_OPERATOR:
+            op = U_POOL_DEGEN_OPERATORS[self.value]
+        elif self.kind == Token.OPERATOR:
+            op = OPERATORS[self.value]
+        elif self.kind == Token.DICE_OPERATOR:
+            op = DICE_OPERATORS[self.value]
+        elif self.kind == Token.POOL_OPERATOR:
+            op = POOL_OPERATORS[self.value]
+        return op(child)
 
 
 def next_rule(next_rule: Callable) -> Callable:
@@ -68,6 +108,16 @@ def next_rule(next_rule: Callable) -> Callable:
         def inner_wrapper(*args, **kwargs) -> Callable:
             left = next_rule(*args, **kwargs)
             return fn(next_rule, left, *args, **kwargs)
+        return inner_wrapper
+    return outer_wrapper
+
+
+def u_next_rule(next_rule: Callable) -> Callable:
+    """A decorator for simplifying parsing rules."""
+    def outer_wrapper(fn: Callable) -> Callable:
+        @wraps(fn)
+        def inner_wrapper(*args, **kwargs) -> Callable:
+            return fn(next_rule, *args, **kwargs)
         return inner_wrapper
     return outer_wrapper
 
@@ -85,9 +135,14 @@ def parse(tokens: Sequence[TokenInfo]) -> int | None:
 
 # Parsing rules.
 def groups_and_numbers(trees: list[Tree]) -> Tree:
-    """Final rule, covering numbers and groups."""
+    """Final rule, covering numbers, groups, and unaries."""
     if trees[-1].kind in [Token.NUMBER, Token.POOL]:
         return trees.pop()
+    if trees[-1].kind == Token.U_POOL_DEGEN_OPERATOR:
+        tree = trees.pop()
+        tree = Unary(tree.kind, tree.value)
+        tree.child = add_sub(trees)
+        return tree
     if trees[-1].kind == Token.OPEN_GROUP:
         _ = trees.pop()
     expression = add_sub(trees)
@@ -110,6 +165,19 @@ def pool_operators(next_rule: Callable,
 
 
 @next_rule(pool_operators)
+def pool_degen_operators(next_rule: Callable,
+                         left: Tree,
+                         trees: list[Tree]):
+    """Parse dice operations."""
+    while (trees and trees[-1].kind == Token.POOL_DEGEN_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@next_rule(pool_degen_operators)
 def dice_operators(next_rule: Callable,
                    left: Tree,
                    trees: list[Tree]):

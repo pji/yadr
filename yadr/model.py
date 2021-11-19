@@ -9,8 +9,10 @@ from typing import Generic, NamedTuple, Tuple, TypeVar
 
 # Common data.
 OPERATORS = '+ - * / ^'.split()
-DICE_OPERATORS = 'd d! dh dl dp'.split()
-POOL_OPERATORS = 'p pc pf ph'.split()
+DICE_OPERATORS = 'd d! dc dh dl dp'.split()
+POOL_OPERATORS = 'p pa pb pc pf ph pl pr'.split()
+U_POOL_DEGEN_OPERATORS = 'N S'.split()
+POOL_DEGEN_OPERATORS = 'nb ns'.split()
 
 
 class Token(Enum):
@@ -28,7 +30,9 @@ class Token(Enum):
     DICE_OPERATOR = 11
     POOL_GEN_OPERATOR = 12
     POOL_OPERATOR = 13
-    END = 14
+    U_POOL_DEGEN_OPERATOR = 14
+    POOL_DEGEN_OPERATOR = 15
+    END = 16
 
 
 # Types.

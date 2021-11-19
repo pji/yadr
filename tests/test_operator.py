@@ -31,6 +31,25 @@ class DicePoolTestCase(ut.TestCase):
 
 
 # Dice operation test cases.
+class ConcatTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_concat(self, mock_randint):
+        """Concatenate the least significant digit of the dice."""
+        # Expected value.
+        exp = 304
+
+        # Test data and state.
+        mock_randint.side_effect = (3, 10, 4)
+        num = 3
+        size = 10
+
+        # Run test.
+        act = op.concat(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
 class DieTestCase(ut.TestCase):
     def die_test(self, exp, args=None, kwargs=None, seed='spam'):
         """Common test for the die function."""
@@ -110,6 +129,42 @@ class KeepLowDie(ut.TestCase):
 
 
 # Pool operation test cases.
+class PoolKeepAbove(ut.TestCase):
+    def test_pool_keep_above(self):
+        """Keep dice equal to or below above the given value from the
+        pool.
+        """
+        # Expected value.
+        exp = (5, 6, 4, 5, 6, 6)
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        keep = 4
+
+        # Run test.
+        act = op.pool_keep_above(pool, keep)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
+class PoolKeepBelow(ut.TestCase):
+    def test_pool_keep_below(self):
+        """Keep dice equal to or below the given value from the pool."""
+        # Expected value.
+        exp = (1, 2, 4, 1, 3)
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        ceiling = 4
+
+        # Run test.
+        act = op.pool_keep_below(pool, ceiling)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
 class PoolCapTestCase(ut.TestCase):
     def test_pool_cap(self):
         """Dice in the pool are capped at the given value."""
@@ -148,15 +203,15 @@ class PoolKeepHigh(ut.TestCase):
     def test_pool_keep_high(self):
         """Keep the given number of highest dice from the pool."""
         # Expected value.
-        exp = (6, 6, 6, 5, 5)
-        
+        exp = (5, 6, 5, 6, 6)
+
         # Test data and state.
         pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
         keep = 5
-        
+
         # Run test.
         act = op.pool_keep_high(pool, keep)
-        
+
         # Determine test result.
         self.assertTupleEqual(exp, act)
 
@@ -165,14 +220,86 @@ class PoolKeepLow(ut.TestCase):
     def test_pool_keep_low(self):
         """Keep the given number of highest dice from the pool."""
         # Expected value.
-        exp = (1, 1, 2)
-        
+        exp = (1, 2, 1)
+
         # Test data and state.
         pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
         keep = 3
-        
+
         # Run test.
-        act = op.pool_keep_high(pool, keep)
-        
+        act = op.pool_keep_low(pool, keep)
+
         # Determine test result.
         self.assertTupleEqual(exp, act)
+
+
+class PoolRemove(ut.TestCase):
+    def test_pool_keep_below(self):
+        """Keep dice equal to or below the given value from the pool."""
+        # Expected value.
+        exp = (1, 2, 6, 4, 1, 6, 3, 6)
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        cut = 5
+
+        # Run test.
+        act = op.pool_remove(pool, cut)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
+# Pool degeneration test cases.
+class PoolCountTestCase(ut.TestCase):
+    def test_pool_count(self):
+        """Count the members in the pool."""
+        exp = 3
+        pool = (3, 1, 4)
+        act = op.pool_count(pool)
+        self.assertEqual(exp, act)
+
+
+class PoolSumTestCase(ut.TestCase):
+    def test_pool_count(self):
+        """Sum the members in the pool."""
+        exp = 8
+        pool = (3, 1, 4)
+        act = op.pool_sum(pool)
+        self.assertEqual(exp, act)
+
+
+class CountSuccessesTestCase(ut.TestCase):
+    def test_count_successes(self):
+        """Count the number of values above or equal to a target."""
+        # Expected value.
+        exp = 5
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        target = 5
+
+        # Run test.
+        act = op.count_successes(pool, target)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
+class CountSuccessesWithBotchesTestCase(ut.TestCase):
+    def test_count_successes_with_botch(self):
+        """Count the number of values above or equal to a target and
+        remove botches.
+        """
+        # Expected value.
+        exp = 3
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        target = 5
+
+        # Run test.
+        act = op.count_successes_with_botch(pool, target)
+
+        # Determine test result.
+        self.assertEqual(exp, act)

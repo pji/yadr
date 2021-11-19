@@ -15,6 +15,15 @@ def dice_pool(num: int, size: int) -> tuple[int, ...]:
 
 
 # Dice operators.
+def concat(num: int, size: int) -> int:
+    """Concatenate the least significant digits."""
+    base = 10
+    pool: Sequence[int] = dice_pool(num, size)
+    pool = [n % base for n in pool]
+    pool = [n * base ** i for i, n in enumerate(pool[::-1])]
+    return sum(pool)
+
+
 def die(num: int, size: int) -> int:
     """Roll a number of same-sized dice and return the result."""
     pool = dice_pool(num, size)
@@ -67,17 +76,69 @@ def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
     return tuple(result)
 
 
+def pool_keep_above(pool: Sequence[int], floor: int) -> tuple[int, ...]:
+    return tuple(n for n in pool if n >= floor)
+
+
+def pool_keep_below(pool: Sequence[int], ceiling: int) -> tuple[int, ...]:
+    return tuple(n for n in pool if n <= ceiling)
+
+
 def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     """Keep a number of the highest dice."""
-    sorted_pool = sorted(n for n in pool)
-    sorted_pool = sorted_pool[::-1]
-    return tuple(sorted_pool)[:keep]
+    pool = list(pool)
+    remove = len(pool) - keep
+    for _ in range(remove):
+        low_value = max(pool)
+        low_index = 0
+        for i, n in enumerate(pool):
+            if n < low_value:
+                low_value = n
+                low_index = i
+        pool.pop(low_index)
+    return tuple(pool)
 
 
 def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     """Keep a number of the lowest dice."""
-    sorted_pool = sorted(n for n in pool)
-    return tuple(sorted_pool)[:keep]
+    pool = list(pool)
+    remove = len(pool) - keep
+    for _ in range(remove):
+        high_value = min(pool)
+        high_index = 0
+        for i, n in enumerate(pool):
+            if n > high_value:
+                high_value = n
+                high_index = i
+        pool.pop(high_index)
+    return tuple(pool)
+
+
+def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
+    return tuple(n for n in pool if n != cut)
+
+
+# Pool degeneration operators.
+def pool_count(pool: Sequence[int]) -> int:
+    """Count the dice in the pool."""
+    return len(pool)
+
+
+def pool_sum(pool: Sequence[int]) -> int:
+    """Sum the dice in the pool."""
+    return sum(pool)
+
+
+def count_successes(pool: Sequence[int], target: int) -> int:
+    """Count the number of successes in the pool."""
+    pool = pool_keep_above(pool, target)
+    return len(pool)
+
+
+def count_successes_with_botch(pool: Sequence[int], target: int) -> int:
+    botches = len([n for n in pool if n == 1])
+    pool = pool_keep_above(pool, target)
+    return len(pool) - botches
 
 
 # Utility functions.

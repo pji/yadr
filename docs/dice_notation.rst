@@ -27,13 +27,13 @@ practices when building this document:
 *   Dicetray: Grammar_
 *   d20: d20_
 *   Python dice: Python_dice_
-*   KSU: Grammars_trees_interpreters_
+*   KSU: Grammars_
 *   gnebehay: parser_
 
 .. _Grammar: https://github.com/gtmanfred/dicetray
 .. _d20: https://d20.readthedocs.io/en/latest/start.html
 .. _Python_dice: https://github.com/markbrockettrobson/python_dice
-.. _Grammars_trees_interpreters: https://people.cs.ksu.edu/~schmidt/505f10/bnfS.html
+.. _Grammars: https://people.cs.ksu.edu/~schmidt/505f10/bnfS.html
 .. _parser: https://github.com/gnebehay/parser
 
 
@@ -80,7 +80,7 @@ BNF)::
     GROUP_OPEN ::= (
     GROUP_CLOSE ::= )
     OPERATOR ::= ^ | * | / | + | -
-    DICE_OPERATOR ::= d | d! | dh | dl
+    DICE_OPERATOR ::= d | d! | dc | dh | dl
     GROUP ::= GROUP_OPEN EXPRESSION GROUP_CLOSE
     DICE_EXPRESSION ::= EXPRESSION DICE_OPERATOR EXPRESSION
     EXPRESSION ::= NUMBER | GROUP | DICE_EXPRESSION | POOL_DEGEN_EXPRESSION
@@ -95,12 +95,12 @@ BNF)::
     POOL_GEN_OPERATOR ::= dp
     POOL_GEN_EXPRESSION ::= EXPRESSION POOL_GEN_OPERATOR EXPRESSION
     
-    POOL_OPERATOR ::= pc | pf | ph | pl
+    POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr
     POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION |
                         POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION
 
-    U_POOL_DEGEN_OPERATOR ::= S | ∑
-    POOL_DEGEN_OPERATOR ::= ps | pb
+    U_POOL_DEGEN_OPERATOR ::= N | S
+    POOL_DEGEN_OPERATOR ::= ns | nb
     POOL_DEGEN_EXPRESSION ::= U_POOL_DEGEN_OPERATOR POOL |
                               U_POOL_DEGEN_OPERATOR POOL_EXPRESSION |
                               POOL POOL_DEGEN_OPERATOR EXPRESSION |
@@ -142,6 +142,15 @@ x d y (dice sum):
         n = 1d20
         n = {11}
         n = 11
+
+x dc y (concat):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Concatenate
+    the least significant digit of each value into a single integer. For
+    example::
+    
+        n = 2dc10
+        n = {3, 10}
+        n = 30
 
 x d! y (exploding dice):
     Like `dice sum` but if any n = y, it explodes (a new integer in the
@@ -200,6 +209,22 @@ Note::
 The operators that act on dice pools and return a dice pool are as
 follows:
 
+P pa y (pool keep above):
+    For a given pool P, remove all members with a value below y. For
+    example::
+    
+        n = 5dp10 pa 7
+        n = {3, 1, 9, 7, 10} pa 7
+        n = { 9, 7, 10}
+
+P pb y (pool keep below):
+    For a given pool P, remove all members with a value above y. For
+    example::
+    
+        n = 5dp10 pb 7
+        n = {3, 1, 9, 7, 10} pa 7
+        n = {3, 1}
+
 P pc y (pool cap):
     For a given pool P, limit the maximum value of each member in P
     to y. Values greater than y become y. For example::
@@ -216,7 +241,6 @@ P pc y (pool floor):
         n = {3, 1, 9, 7, 10} pf 7
         n = {7, 7, 9, 7, 10}
 
-
 P ph y (pool keep high):
     For a given pool P, select the top y members with the highest
     values. Return those members as a pool.
@@ -224,7 +248,6 @@ P ph y (pool keep high):
         n = 5dp10 ph 3
         n = {3, 1, 9, 7, 10} ph 3
         n = {9, 7, 10}
-
 
 P pl y (pool keep low):
     For a given pool P, select the top y members with the lowest
@@ -234,12 +257,19 @@ P pl y (pool keep low):
         n = {3, 1, 9, 7, 10} pl 3
         n = {3, 1, 7}
 
+P pr y (pool remove):
+    For a given pool P, remove all members with value y.
+    
+        n = 5dp10 pr 7
+        n = {3, 1, 9, 7, 10} pr 7
+        n = {3, 1, 9, 10}
+
 
 Pool Degeneration Operators
 ===========================
 The operators that collapse pools into numbers are defined as follows:
 
-P ps y (count successes):
+P ns y (count successes):
     For a given pool P, count the number of members with a value greater
     than or equal to y. Return that count. For example::
     
@@ -247,7 +277,7 @@ P ps y (count successes):
         n = {3, 1, 9, 7, 10} ps 7
         n = 3
 
-P pb y (count successes and botches):
+P nb y (count successes and botches):
     For a given pool P, let a be the number of members with a value
     greater than or equal to y. Let b be the number of members with
     a value of one. Return the difference between a and b. For example::
@@ -256,7 +286,14 @@ P pb y (count successes and botches):
         n = {3, 1, 9, 7, 10} pb 7
         n = 2
 
-S P | ∑ P (pool sum):
+N P (pool count):
+    For a given pool P, return the number of members in P. For example::
+    
+        n = N 5dp10
+        n = N {3, 1, 9, 7, 10}
+        n = 5
+
+S P (pool sum):
     For a given pool P, add together the values of all members. Return
     that sum. For example::
     

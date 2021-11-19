@@ -81,6 +81,18 @@ class ParseTestCase(ut.TestCase):
         self.parser_test(exp, tokens)
 
     # Test dice operators.
+    @patch('random.randint')
+    def test_concat(self, mock_randint):
+        """Concatenate dice rolls."""
+        mock_randint.side_effect = [1, 11, 3]
+        exp = 113
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.DICE_OPERATOR, 'dc'),
+            (Token.NUMBER, 12),
+        )
+        self.parser_test(exp, tokens)
+
     def test_die(self):
         """Roll a die."""
         yo._seed('spam')
@@ -139,8 +151,72 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 6),
         )
         self.parser_test(exp, tokens)
-    
-    #Test pool operators.
+
+    # Test unary pool degeneration operators.
+    @patch('random.randint')
+    def test_pool_count(self, mock_randint):
+        """Count the dice in a pool."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = 3
+        tokens = (
+            (Token.U_POOL_DEGEN_OPERATOR, 'N'),
+            (Token.NUMBER, (1, 5, 3)),
+        )
+        self.parser_test(exp, tokens)
+
+    @patch('random.randint')
+    def test_pool_count(self, mock_randint):
+        """Count the dice in a pool."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = 9
+        tokens = (
+            (Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (Token.NUMBER, (1, 5, 3)),
+        )
+        self.parser_test(exp, tokens)
+
+    # Test pool degeneration operators.
+    def test_count_successes(self):
+        """Keep a values that aren't a given number in the pool."""
+        exp = 2
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (Token.NUMBER, 8),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_count_successes_with_botch(self):
+        """Keep a values that aren't a given number in the pool."""
+        exp = 1
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_DEGEN_OPERATOR, 'nb'),
+            (Token.NUMBER, 8),
+        )
+        self.parser_test(exp, tokens)
+
+    # Test pool operators.
+    def test_pool_keep_above(self):
+        """Keep a values above a given number in the pool."""
+        exp = (8, 9)
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_OPERATOR, 'pa'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_pool_keep_below(self):
+        """Keep a values below a given number in the pool."""
+        exp = (5, 1)
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_OPERATOR, 'pb'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
     def test_pool_cap(self):
         """Cap the values in a pool at a given value."""
         exp = (5, 7, 1, 7)
@@ -150,7 +226,7 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 7),
         )
         self.parser_test(exp, tokens)
-    
+
     def test_pool_floor(self):
         """Floor the values in a pool at a given value."""
         exp = (8, 8, 8, 9)
@@ -160,17 +236,37 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 8),
         )
         self.parser_test(exp, tokens)
-    
+
     def test_pool_keep_high(self):
         """Keep a number of highest values from the pool."""
-        exp = (9, 8)
+        exp = (8, 9)
         tokens = (
             (Token.POOL, (5, 8, 1, 9)),
             (Token.POOL_OPERATOR, 'ph'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
-    
+
+    def test_pool_keep_low(self):
+        """Keep a number of highest values from the pool."""
+        exp = (5, 1)
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_OPERATOR, 'pl'),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_pool_remove(self):
+        """Keep a values that aren't a given number in the pool."""
+        exp = (5, 1, 9)
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_OPERATOR, 'pr'),
+            (Token.NUMBER, 8),
+        )
+        self.parser_test(exp, tokens)
+
     # Test order of precedence.
     def test_can_perform_multiple_operations(self):
         """The parser can parse statements with multiple operators."""
