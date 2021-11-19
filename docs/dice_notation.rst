@@ -250,14 +250,16 @@ P ph y (pool keep high):
 
 P pl y (pool keep low):
     For a given pool P, select the top y members with the lowest
-    values. Return those members as a pool. For example::
+    values. Return those members as a pool.
+    For example::
     
         n = 5dp10 pl 3
         n = {3, 1, 9, 7, 10} pl 3
         n = {3, 1, 7}
 
 P pr y (pool remove):
-    For a given pool P, remove all members with value y. For example::
+    For a given pool P, remove all members with value y.
+    For example::
     
         n = 5dp10 pr 7
         n = {3, 1, 9, 7, 10} pr 7
