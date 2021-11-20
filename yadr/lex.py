@@ -18,16 +18,6 @@ from yadr.model import (
 )
 
 
-# Utility.
-def ignore_whitespace(fn: Callable) -> Callable:
-    @wraps(fn)
-    def wrapper(self, char: str) -> None:
-        if char.isspace():
-            return None
-        fn(self, char)
-    return wrapper
-
-
 # Classes.
 class Lexer:
     """A state-machine to lex dice notation."""
@@ -63,16 +53,12 @@ class Lexer:
         for char in text:
             self.process(char)
         else:
-            args = [Token.END, '']
-            if self.state == Token.WHITESPACE:
-                args.append(False)
-            self._change_state(*args)               # type: ignore
+            self._change_state(Token.END, '')
         return tuple(self.tokens)
 
     # Private operation methods.
     def _change_state(self, new_state: Token,
-                      char: str,
-                      store: bool = True) -> None:
+                      char: str) -> None:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
         if self.state not in [Token.WHITESPACE, Token.START, Token.POOL_END]:
@@ -274,7 +260,7 @@ class Lexer:
         else:
             msg = f'Cannot start with {char}.'
             raise ValueError(msg)
-        self._change_state(new_state, char, store=False)
+        self._change_state(new_state, char)
 
     def _whitespace(self, char: str) -> None:
         if char.isspace():
