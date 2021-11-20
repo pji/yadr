@@ -109,7 +109,7 @@ class LexTestCase(ut.TestCase):
         data = '200-10'
         self.lex_test(exp, data)
 
-    def test_subtraction_followed_by_unary_pool_degen(self):
+    def test_operator_can_be_followed_by_unary_pool_degen(self):
         """Subtraction can be followed by a unary pool degeneration
         operator.
         """
@@ -121,6 +121,20 @@ class LexTestCase(ut.TestCase):
         )
         data = '200-S{2,3,4}'
         self.lex_test(exp, data)
+
+    def test_operator_cannot_be_followed_by_an_operator(self):
+        """And operator cannot be followed by and operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow operator.'
+        
+        # Test data and state.
+        data = '3-+2'
+        lexer = lex.Lexer()
+        
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
 
     # Dice operators.
     def test_basic_concat(self):
