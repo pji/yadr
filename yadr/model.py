@@ -9,7 +9,8 @@ from typing import Generic, NamedTuple, Tuple, TypeVar
 
 # Common data.
 OPERATORS = '+ - * / ^'.split()
-DICE_OPERATORS = 'd d! dc dh dl dp'.split()
+DICE_OPERATORS = 'd d! dc dh dl dw'.split()
+POOL_GEN_OPERATORS = 'g g!'.split()
 POOL_OPERATORS = 'p pa pb pc pf ph pl pr'.split()
 U_POOL_DEGEN_OPERATORS = 'N S'.split()
 POOL_DEGEN_OPERATORS = 'nb ns'.split()

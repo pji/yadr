@@ -11,6 +11,7 @@ from yadr.model import (
     DICE_OPERATORS,
     OPERATORS,
     POOL_OPERATORS,
+    POOL_GEN_OPERATORS,
     Token,
     TokenInfo,
     U_POOL_DEGEN_OPERATORS,
@@ -41,6 +42,7 @@ class Lexer:
             Token.POOL_END: self._pool_end,
             Token.POOL_OPERATOR: self._pool_operator,
             Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
+            Token.POOL_GEN_OPERATOR: self._pool_gen_operator,
             Token.POOL_DEGEN_OPERATOR: self._pool_degen_operator,
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start
@@ -123,6 +125,8 @@ class Lexer:
             new_state = Token.OPERATOR
         elif char == 'd':
             new_state = Token.DICE_OPERATOR
+        elif char == 'g':
+            new_state = Token.POOL_GEN_OPERATOR
         elif char == ')':
             new_state = Token.CLOSE_GROUP
         elif char.isspace():
@@ -193,6 +197,24 @@ class Lexer:
             msg = f'{char} cannot follow a pool.'
             raise ValueError(msg)
         self._change_state(new_state, char)
+
+    def _pool_gen_operator(self, char: str) -> None:
+        """Processing an operator."""
+        valid_char = [s[1] for s in POOL_GEN_OPERATORS[1:]]
+        new_state: Token | None = None
+        if char in valid_char:
+            self.buffer += char
+        elif char.isdigit() or char == '-':
+            new_state = Token.NUMBER
+        elif char == '(':
+            new_state = Token.OPEN_GROUP
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow pool gen operator.'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char)
 
     def _u_pool_degen_operator(self, char: str) -> None:
         """Processing a unary pool degeneration operator."""

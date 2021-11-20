@@ -19,7 +19,7 @@ DICE_OPERATORS = {
     'dc': yo.concat,
     'dh': yo.keep_high_die,
     'dl': yo.keep_low_die,
-    'dp': yo.dice_pool,
+    'dw': yo.wild_die,
 }
 OPERATORS = {
     '^': operator.pow,
@@ -27,6 +27,10 @@ OPERATORS = {
     '/': operator.floordiv,
     '+': operator.add,
     '-': operator.sub,
+}
+POOL_GEN_OPERATORS = {
+    'g': yo.dice_pool,
+    'g!': yo.exploding_pool,
 }
 POOL_OPERATORS = {
     'pa': yo.pool_keep_above,
@@ -73,6 +77,11 @@ class Tree:
             op = POOL_OPERATORS[self.value]
         elif self.kind == Token.POOL_DEGEN_OPERATOR:
             op = POOL_DEGEN_OPERATORS[self.value]
+        elif self.kind == Token.POOL_GEN_OPERATOR:
+            op = POOL_GEN_OPERATORS[self.value]
+        else:
+            msg = f'Unknown token {self.kind}'
+            raise TypeError(msg)
         return op(left, right)
 
 
@@ -152,6 +161,19 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
 
 
 @next_rule(groups_and_numbers)
+def pool_gen_operators(next_rule: Callable,
+                       left: Tree,
+                       trees: list[Tree]):
+    """Parse dice operations."""
+    while (trees and trees[-1].kind == Token.POOL_GEN_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@next_rule(pool_gen_operators)
 def pool_operators(next_rule: Callable,
                    left: Tree,
                    trees: list[Tree]):

@@ -80,7 +80,7 @@ BNF)::
     GROUP_OPEN ::= (
     GROUP_CLOSE ::= )
     OPERATOR ::= ^ | * | / | + | -
-    DICE_OPERATOR ::= d | d! | dc | dh | dl
+    DICE_OPERATOR ::= d | d! | dc | dh | dl | dw
     GROUP ::= GROUP_OPEN EXPRESSION GROUP_CLOSE
     DICE_EXPRESSION ::= EXPRESSION DICE_OPERATOR EXPRESSION
     EXPRESSION ::= NUMBER | GROUP | DICE_EXPRESSION | POOL_DEGEN_EXPRESSION
@@ -92,7 +92,7 @@ BNF)::
     POOL_CLOSE ::= }
     POOL ::= POOL_OPEN MEMBER POOL_CLOSE
     
-    POOL_GEN_OPERATOR ::= dp
+    POOL_GEN_OPERATOR ::= dp | g!
     POOL_GEN_EXPRESSION ::= EXPRESSION POOL_GEN_OPERATOR EXPRESSION
     
     POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr
@@ -181,6 +181,35 @@ x dl y (keep low die):
         n = {1, 17}
         n = 1
 
+x dw y (wild die):
+    Generate two pools of random integers within the range 1 ≤ n ≤ y.
+    The first pool, called the "wild" pool, has only one member. The
+    standard pool has x minus one (x - 1) members. If the value of
+    the wild die is neither y nor 1, return the sum of the sums of
+    the two pools. For example::
+    
+        n = 4dw6
+        n = S{3} + S{5, 1, 6}
+        n = 3 + 12
+        n = 15
+    
+    The member in the wild pool (the "wild die") explodes (see "exploding
+    dice" above).::
+    
+        n = 4dw6
+        n = S{6} + S{5, 1, 6}
+        n = S{6+3} + S{5, 1, 6}
+        n = 9 + 12
+        n = 21
+    
+    If the value of the wild die is one, return zero (technically, this
+    should be "the roll fails", but that requires more complex roll
+    results than YADN can currently handle).::
+    
+        n = 4dw6
+        n = S{1} + S{5, 1, 6}
+        n = 0
+
 
 Pool Generation Operator
 ========================
@@ -188,10 +217,23 @@ The operator that generates dice pools is defined as:
 
 x dp y (dice pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    all integers as individual values. For example::
+    all integers as the member of a pool. For example::
     
         n = 5dp10
         n = {3, 4, 7, 10, 3}
+
+
+x g! y (exploding pool):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Return
+    all integers as the member of a pool. Each pool member can explode
+    (see "exploding dice" above). For example.::
+    
+        n = 6g!6
+        n = {2, 6, 1, 1, 6, 3}
+        n = {2, 6+3, 1, 1, 6+6, 3}
+        n = {2, 6+3, 1, 1, 6+6+1, 3}
+        n = {2, 9, 1, 1, 13, 3}
+        n = 29
 
 
 Pool Operators
@@ -301,3 +343,39 @@ S P (pool sum):
         n = S 5dp10
         n = S {3, 1, 9, 7, 10}
         n = 30
+
+
+Example Usage
+=============
+The following examples illustrate how YADN can be used to describe
+dice rolls in various game systems.
+
+*Dungeons and Dragons:* An attack roll with a plus three modifier::
+
+    n = 1d20+3
+    n = S{4}+3
+    n = 4+3
+    n = 7
+
+*Dungeons and Dragons:* A roll to generate an ability score, using four
+dice and dropping the lowest::
+
+    n = 4dl6
+    n = S{5, 1, 6, 6}
+    n = S{5, 6, 6}
+    n = 17
+
+*Dungeons and Dragons:* A damage roll with a long sword, an extra
+six-sided die of damage, and a plus five modifier::
+
+    n = 1d8 + 1d6 + 5
+    n = S{3} + S{1} + 5
+    n = 3 + 1 + 5
+    n = 9
+
+*West End's Star Wars: the Roleplaying Game, Second Edition:* An attack
+roll with a *Blaster* skill of "5D+2"::
+
+    n = 5dw6 + 2
+    n = S{1} + S{2, 5, 1, 6} + 2
+    n = 0

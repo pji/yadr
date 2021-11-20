@@ -30,6 +30,25 @@ class DicePoolTestCase(ut.TestCase):
         self.assertTupleEqual(exp, act)
 
 
+class ExplodingPoolTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_exploding_pool(self, mock_randint):
+        """Generate a dice pool."""
+        # Expected value.
+        exp = (2, 9, 1, 1, 13, 3)
+
+        # Test data and state.
+        mock_randint.side_effect = (2, 6, 1, 1, 6, 3, 3, 6, 1)
+        num = 6
+        size = 6
+
+        # Run test.
+        act = op.exploding_pool(num, size)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
 # Dice operation test cases.
 class ConcatTestCase(ut.TestCase):
     @patch('random.randint')
@@ -123,6 +142,56 @@ class KeepLowDie(ut.TestCase):
 
         # Run test.
         act = op.keep_low_die(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
+class WildDie(ut.TestCase):
+    @patch('random.randint')
+    def test_wild_die(self, mock_randint):
+        # Expected value.
+        exp = 17
+
+        # Test data and state.
+        mock_randint.side_effect = [3, 4, 1, 5, 4]
+        num = 5
+        size = 6
+
+        # Run test.
+        act = op.wild_die(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    @patch('random.randint')
+    def test_wild_die_explodes(self, mock_randint):
+        # Expected value.
+        exp = 22
+
+        # Test data and state.
+        mock_randint.side_effect = [6, 2, 4, 1, 5, 4]
+        num = 5
+        size = 6
+
+        # Run test.
+        act = op.wild_die(num, size)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    @patch('random.randint')
+    def test_wild_die_is_one(self, mock_randint):
+        # Expected value.
+        exp = 0
+
+        # Test data and state.
+        mock_randint.side_effect = [1, 4, 1, 5, 4]
+        num = 5
+        size = 6
+
+        # Run test.
+        act = op.wild_die(num, size)
 
         # Determine test result.
         self.assertEqual(exp, act)

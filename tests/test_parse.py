@@ -139,6 +139,18 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    @patch('random.randint')
+    def test_wild_die(self, mock_randint):
+        """Roll dice and keep the lowest."""
+        mock_randint.side_effect = [4, 2, 1, 6]
+        exp = 13
+        tokens = (
+            (Token.NUMBER, 4),
+            (Token.DICE_OPERATOR, 'dw'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
     # Test pool generation operators.
     @patch('random.randint')
     def test_dice_pool(self, mock_randint):
@@ -147,7 +159,19 @@ class ParseTestCase(ut.TestCase):
         exp = (1, 5, 3)
         tokens = (
             (Token.NUMBER, 3),
-            (Token.DICE_OPERATOR, 'dp'),
+            (Token.POOL_GEN_OPERATOR, 'g'),
+            (Token.NUMBER, 6),
+        )
+        self.parser_test(exp, tokens)
+
+    @patch('random.randint')
+    def test_exploding_pool(self, mock_randint):
+        """Roll an exploding dice pool."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = (1, 5, 3)
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.POOL_GEN_OPERATOR, 'g!'),
             (Token.NUMBER, 6),
         )
         self.parser_test(exp, tokens)

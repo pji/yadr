@@ -14,6 +14,13 @@ def dice_pool(num: int, size: int) -> tuple[int, ...]:
     return tuple(random.randint(1, size) for _ in range(num))
 
 
+def exploding_pool(num: int, size: int) -> tuple[int, ...]:
+    """Roll a die pool."""
+    pool: Sequence[int] = dice_pool(num, size)
+    pool = [_explode(n, size) for n in pool]
+    return tuple(pool)
+
+
 # Dice operators.
 def concat(num: int, size: int) -> int:
     """Concatenate the least significant digits."""
@@ -32,15 +39,7 @@ def die(num: int, size: int) -> int:
 
 def exploding_die(num: int, size: int) -> int:
     """Roll a number of exploding same-sized dice."""
-    def explode(value: int) -> int:
-        if value == size:
-            explode_value = random.randint(1, size)
-            value += explode(explode_value)
-        return value
-
-    pool: Sequence[int] = dice_pool(num, size)
-    pool = [explode(n) for n in pool]
-    return sum(pool)
+    return sum(exploding_pool(num, size))
 
 
 def keep_high_die(num: int, size: int) -> int:
@@ -53,6 +52,15 @@ def keep_low_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the lowest."""
     pool = dice_pool(num, size)
     return min(pool)
+
+
+def wild_die(num: int, size: int) -> int:
+    """Roll a number of same-sized dice and return the result."""
+    wild = exploding_pool(1, size)
+    regular = dice_pool(num - 1, size)
+    if wild[0] == 1:
+        return 0
+    return sum((sum(wild), sum(regular)))
 
 
 # Pool operators.
@@ -149,3 +157,10 @@ def _seed(seed: int | str | bytes) -> None:
     if isinstance(seed, bytes):
         seed = int.from_bytes(seed, 'little')
     random.seed(seed)
+
+
+def _explode(value: int, size: int) -> int:
+    if value == size:
+        explode_value = random.randint(1, size)
+        value += _explode(explode_value, size)
+    return value

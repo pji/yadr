@@ -170,6 +170,18 @@ class LexTestCase(ut.TestCase):
         data = '20dl10'
         self.lex_test(exp, data)
 
+    def test_basic_wild_die(self):
+        """Given a basic die equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.DICE_OPERATOR, 'dw'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20dw10'
+        self.lex_test(exp, data)
+
     # Pool generation operator.
     def test_basic_dice_pool(self):
         """Given a basic die equation, return the tokens that
@@ -177,10 +189,22 @@ class LexTestCase(ut.TestCase):
         """
         exp = (
             (lex.Token.NUMBER, 20),
-            (lex.Token.DICE_OPERATOR, 'dp'),
+            (lex.Token.POOL_GEN_OPERATOR, 'g'),
             (lex.Token.NUMBER, 10),
         )
-        data = '20dp10'
+        data = '20g10'
+        self.lex_test(exp, data)
+
+    def test_basic_expolding_pool(self):
+        """Given a basic pool generation, return the tokens that
+        represent the generation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.POOL_GEN_OPERATOR, 'g!'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20g!10'
         self.lex_test(exp, data)
 
     # Pool operators.
