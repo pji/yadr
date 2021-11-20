@@ -127,11 +127,11 @@ class LexTestCase(ut.TestCase):
         # Expected values.
         exp_ex = ValueError
         exp_msg = '\\+ cannot follow operator.'
-        
+
         # Test data and state.
         data = '3-+2'
         lexer = lex.Lexer()
-        
+
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = lexer.lex(data)
