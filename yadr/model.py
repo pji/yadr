@@ -32,7 +32,8 @@ class Token(Enum):
     POOL_OPERATOR = 13
     U_POOL_DEGEN_OPERATOR = 14
     POOL_DEGEN_OPERATOR = 15
-    END = 16
+    POOL_END = 16
+    END = 17
 
 
 # Types.

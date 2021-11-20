@@ -109,33 +109,6 @@ class LexTestCase(ut.TestCase):
         data = '200-10'
         self.lex_test(exp, data)
 
-    def test_operator_can_be_followed_by_unary_pool_degen(self):
-        """Subtraction can be followed by a unary pool degeneration
-        operator.
-        """
-        exp = (
-            (lex.Token.NUMBER, 200),
-            (lex.Token.OPERATOR, '-'),
-            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
-            (lex.Token.POOL, (2, 3, 4)),
-        )
-        data = '200-S{2,3,4}'
-        self.lex_test(exp, data)
-
-    def test_operator_cannot_be_followed_by_an_operator(self):
-        """And operator cannot be followed by and operator."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '\\+ cannot follow operator.'
-
-        # Test data and state.
-        data = '3-+2'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
     # Dice operators.
     def test_basic_concat(self):
         """Given a basic concat equation, return the tokens that
@@ -375,7 +348,7 @@ class LexTestCase(ut.TestCase):
         """Operators cannot occur after pool degen operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow pool degeneration operator.'
+        exp_msg = '\\+ cannot follow a pool degeneration operator.'
 
         # Test data and state.
         data = '{5,1,9}ns+'
@@ -402,7 +375,6 @@ class LexTestCase(ut.TestCase):
         data = '(32-5)*21'
         self.lex_test(exp, data)
 
-    # Order of operations.
     def test_parentheses_with_whitespace(self):
         """Given a statement containing parenthesis and whitespace,
         return the tokenized equation.
@@ -419,6 +391,7 @@ class LexTestCase(ut.TestCase):
         data = '( 32 - 5 ) * 21'
         self.lex_test(exp, data)
 
+    # Order of operations.
     def test_negative_number(self):
         """Tokenize a number that starts with a negative sign."""
         exp = ((lex.Token.NUMBER, -24),)
@@ -443,4 +416,454 @@ class LexTestCase(ut.TestCase):
             (lex.Token.NUMBER, -24),
         )
         data = '3 + -24'
+        self.lex_test(exp, data)
+
+    # Expressions.
+    def test_dice_operator_can_follow_group(self):
+        """Dice operators can follow groups."""
+        exp = (
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '(10*10)d10'
+        self.lex_test(exp, data)
+
+    def test_dice_operator_can_follow_group_whitespace(self):
+        """Dice operators can follow groups."""
+        exp = (
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '(10*10) d10'
+        self.lex_test(exp, data)
+
+    def test_dice_operator_cannot_follow_unary_pool_degen(self):
+        """And operator cannot be followed by a unary pool degen."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = 'd cannot follow an unary pool degeneration operator.'
+
+        # Test data and state.
+        data = 'Sd20'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_dice_operator_cannot_follow_unary_pool_degen_whitespace(self):
+        """And operator cannot be followed by a unary pool degen."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = 'd cannot follow an unary pool degeneration operator.'
+
+        # Test data and state.
+        data = 'S d20'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_group_can_follow_dice_operator(self):
+        """Numbers can follow dice operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '10d(10*10)'
+        self.lex_test(exp, data)
+
+    def test_group_can_follow_dice_operator_whitespace(self):
+        """Numbers can follow dice operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '10d (10*10)'
+        self.lex_test(exp, data)
+
+    def test_group_can_follow_operator(self):
+        """Numbers can follow operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '+'),
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '10+(10*10)'
+        self.lex_test(exp, data)
+
+    def test_group_can_follow_operator_whitespace(self):
+        """Numbers can follow operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '+'),
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '10+ (10*10)'
+        self.lex_test(exp, data)
+
+    def test_group_cannot_follow_number(self):
+        """Groups cannot follow numbers."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\( cannot follow a number.'
+
+        # Test data and state.
+        data = '3(3+2)'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_group_cannot_follow_number_after_whitespace(self):
+        """Groups cannot follow numbers."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\( cannot follow a number.'
+
+        # Test data and state.
+        data = '3 (3+2)'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def Test_number_can_follow_unary_pool_degen(self):
+        """A number can follow an unary pool degen."""
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.NUMBER, 3),
+            (lex.Token.POOL_GEN_OPERATOR, 'dp'),
+            (lex.Token.NUMBER, 3),
+        )
+        data = 'S3dp3'
+        self.lex_test(exp, data)
+
+    def Test_number_can_follow_unary_pool_degen_whitespace(self):
+        """A number can follow an unary pool degen."""
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.NUMBER, 3),
+            (lex.Token.POOL_GEN_OPERATOR, 'dp'),
+            (lex.Token.NUMBER, 3),
+        )
+        data = 'S 3dp3'
+        self.lex_test(exp, data)
+
+    def test_number_cannot_follow_group(self):
+        """Numbers cannot follow groups."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '4 cannot follow a group.'
+
+        # Test data and state.
+        data = '(3+2) 4'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_number_cannot_follow_number(self):
+        """Numbers cannot follow numbers."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '4 cannot follow a number.'
+
+        # Test data and state.
+        data = '3 4'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_number_cannot_follow_pool(self):
+        """Numbers cannot follow numbers."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '4 cannot follow a pool.'
+
+        # Test data and state.
+        data = '{1,2,3}4'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_number_cannot_follow_pool_whitespace(self):
+        """Numbers cannot follow numbers."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '4 cannot follow a pool.'
+
+        # Test data and state.
+        data = '{1,2,3} 4'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_group_open(self):
+        """An operator cannot follow a group open."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow \\(.'
+
+        # Test data and state.
+        data = '(+2)'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_group_open_whitespace(self):
+        """An operator cannot follow a group open."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow \\(.'
+
+        # Test data and state.
+        data = '( +2)'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_operator(self):
+        """And operator cannot be followed by an operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an operator.'
+
+        # Test data and state.
+        data = '3-+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_operator_whitespace(self):
+        """And operator cannot be followed by an operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an operator.'
+
+        # Test data and state.
+        data = '3- +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_pool_degen_operator(self):
+        """And operator follow by a pool degen operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow a pool degeneration operator.'
+
+        # Test data and state.
+        data = '{1,2,3}ns+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_pool_degen_operator_whitespace(self):
+        """And operator follow by a pool degen operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow a pool degeneration operator.'
+
+        # Test data and state.
+        data = '{1,2,3}ns +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_pool_operator(self):
+        """And operator follow by a pool operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow a pool operator.'
+
+        # Test data and state.
+        data = '{1,2,3}ph+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_pool_operator_whitespace(self):
+        """And operator follow by a pool operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow a pool operator.'
+
+        # Test data and state.
+        data = '{1,2,3}ph +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_unary_pool_degen(self):
+        """And operator cannot be followed by a unary pool degen."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an unary pool degeneration operator.'
+
+        # Test data and state.
+        data = 'S+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_unary_pool_degen_whitespace(self):
+        """And operator cannot be followed by a unary pool degen."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an unary pool degeneration operator.'
+
+        # Test data and state.
+        data = 'S +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_start_expression(self):
+        """An operator cannot start an expression."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = 'Cannot start with \\+.'
+
+        # Test data and state.
+        data = '+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_start_expression_whitespace(self):
+        """An operator cannot start an expression."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = 'Cannot start with \\+.'
+
+        # Test data and state.
+        data = ' +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_pool_cannot_follow_operator(self):
+        """A pool cannot follow a operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\{ cannot follow an operator.'
+
+        # Test data and state.
+        data = '3+{2,3}'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_pool_cannot_follow_operator_whitespace(self):
+        """A pool cannot follow a operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\{ cannot follow an operator.'
+
+        # Test data and state.
+        data = '3+ {2,3}'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_unary_pool_degen_can_follow_group_open(self):
+        """Unary pool degeneration operators can follow group open."""
+        exp = (
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (1, 2, 3)),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '(S{1,2,3})'
+        self.lex_test(exp, data)
+
+    def test_unary_pool_degen_can_follow_group_open_whitespace(self):
+        """Unary pool degeneration operators can follow group open."""
+        exp = (
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (1, 2, 3)),
+            (lex.Token.CLOSE_GROUP, ')'),
+        )
+        data = '( S{1,2,3})'
+        self.lex_test(exp, data)
+
+    def test_unary_pool_degen_can_follow_operator(self):
+        """Subtraction can be followed by a unary pool degeneration
+        operator.
+        """
+        exp = (
+            (lex.Token.NUMBER, 200),
+            (lex.Token.OPERATOR, '-'),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (2, 3, 4)),
+        )
+        data = '200-S{2,3,4}'
         self.lex_test(exp, data)
