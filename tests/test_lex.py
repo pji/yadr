@@ -109,6 +109,19 @@ class LexTestCase(ut.TestCase):
         data = '200-10'
         self.lex_test(exp, data)
 
+    def test_subtraction_followed_by_unary_pool_degen(self):
+        """Subtraction can be followed by a unary pool degeneration
+        operator.
+        """
+        exp = (
+            (lex.Token.NUMBER, 200),
+            (lex.Token.OPERATOR, '-'),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (2, 3, 4)),
+        )
+        data = '200-S{2,3,4}'
+        self.lex_test(exp, data)
+
     # Dice operators.
     def test_basic_concat(self):
         """Given a basic concat equation, return the tokens that

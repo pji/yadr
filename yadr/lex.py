@@ -156,6 +156,8 @@ class Lexer:
         """Processing an operator."""
         if char.isdigit() or char == '-':
             new_state = Token.NUMBER
+        elif char in U_POOL_DEGEN_OPERATORS:
+            new_state = Token.U_POOL_DEGEN_OPERATOR
         else:
             msg = f'{char} cannot follow operator.'
             raise ValueError(msg)
