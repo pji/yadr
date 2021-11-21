@@ -438,6 +438,69 @@ class LexTestCase(ut.TestCase):
         data = '( 32 - 5 ) * 21'
         self.lex_test(exp, data)
 
+    # Rolls and results.
+    def test_roll_delimiter(self):
+        """Given a statement containing parenthesis, return the
+        tokenized equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 2),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.ROLL_DELIMITER, ';'),
+            (lex.Token.NUMBER, 5),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '2d10;5d10'
+        self.lex_test(exp, data)
+
+    def test_roll_delimiter_whitespace(self):
+        """Given a statement containing parenthesis, return the
+        tokenized equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 2),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.ROLL_DELIMITER, ';'),
+            (lex.Token.NUMBER, 5),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '2d10 ; 5d10'
+        self.lex_test(exp, data)
+
+    def test_roll_delimiter_can_follow_group(self):
+        """A roll delimiter can follow a close group delimiter."""
+        exp = (
+            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.NUMBER, 2),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.OPERATOR, '+'),
+            (lex.Token.NUMBER, 1),
+            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.ROLL_DELIMITER, ';'),
+            (lex.Token.NUMBER, 5),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '(2d10+1);5d10'
+        self.lex_test(exp, data)
+
+    def test_roll_delimiter_can_follow_pool(self):
+        """A roll delimiter can follow a close group delimiter."""
+        exp = (
+            (lex.Token.POOL, (1, 2, 3)),
+            (lex.Token.ROLL_DELIMITER, ';'),
+            (lex.Token.NUMBER, 5),
+            (lex.Token.DICE_OPERATOR, 'd'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '{1, 2, 3};5d10'
+        self.lex_test(exp, data)
+
     # Order of operations.
     def test_negative_number(self):
         """Tokenize a number that starts with a negative sign."""

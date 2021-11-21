@@ -12,6 +12,7 @@ from yadr.model import (
     OPERATORS,
     POOL_OPERATORS,
     POOL_GEN_OPERATORS,
+    ROLL_DELIMITER,
     Token,
     TokenInfo,
     U_POOL_DEGEN_OPERATORS,
@@ -44,6 +45,7 @@ class Lexer:
             Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
             Token.POOL_GEN_OPERATOR: self._pool_gen_operator,
             Token.POOL_DEGEN_OPERATOR: self._pool_degen_operator,
+            Token.ROLL_DELIMITER: self._roll_delimiter,
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start
         }
@@ -90,6 +92,8 @@ class Lexer:
             new_state = Token.DICE_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
+        elif char == ';':
+            new_state = Token.ROLL_DELIMITER
         else:
             msg = f'{char} cannot follow a group.'
             raise ValueError(msg)
@@ -129,6 +133,8 @@ class Lexer:
             new_state = Token.POOL_GEN_OPERATOR
         elif char == ')':
             new_state = Token.CLOSE_GROUP
+        elif char == ';':
+            new_state = Token.ROLL_DELIMITER
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -191,6 +197,8 @@ class Lexer:
             new_state = Token.POOL_DEGEN_OPERATOR
         elif char == ')':
             new_state = Token.CLOSE_GROUP
+        elif char == ';':
+            new_state = Token.ROLL_DELIMITER
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -265,10 +273,8 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _start(self, char: str) -> None:
-        """The starting state."""
-        if self.tokens:
-            self.tokens = []
+    def _roll_delimiter(self, char:str) -> None:
+        """Lex roll delimiters."""
         if char.isdigit() or char == '-':
             new_state = Token.NUMBER
         elif char == '(':
@@ -283,6 +289,12 @@ class Lexer:
             msg = f'Cannot start with {char}.'
             raise ValueError(msg)
         self._change_state(new_state, char)
+
+    def _start(self, char: str) -> None:
+        """The starting state."""
+        if self.tokens:
+            self.tokens = []
+        self._roll_delimiter(char)
 
     def _whitespace(self, char: str) -> None:
         if char.isspace():

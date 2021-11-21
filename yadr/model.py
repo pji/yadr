@@ -14,6 +14,7 @@ POOL_GEN_OPERATORS = 'g g!'.split()
 POOL_OPERATORS = 'p pa pb pc pf ph pl pr p%'.split()
 U_POOL_DEGEN_OPERATORS = 'C N S'.split()
 POOL_DEGEN_OPERATORS = 'nb ns'.split()
+ROLL_DELIMITER = ';'
 
 
 class Token(Enum):
@@ -34,9 +35,11 @@ class Token(Enum):
     U_POOL_DEGEN_OPERATOR = 14
     POOL_DEGEN_OPERATOR = 15
     POOL_END = 16
-    END = 17
+    ROLL_DELIMITER = 17
+    END = 18
 
 
 # Types.
+Result = TypeVar('Result', int, Tuple[int], None)
 T = TypeVar('T', str, int, Tuple[int])
 TokenInfo = tuple[Token, T]

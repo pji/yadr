@@ -312,6 +312,25 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    @patch('random.randint')
+    # Test rolls and results.
+    def test_roll_delimiter(self, mock_randint):
+        """Return the result of two rolls."""
+        mock_randint.side_effect = (1, 1, 3, 8)
+        exp = ((1, 1, 3), 10)
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.POOL_GEN_OPERATOR, 'g'),
+            (Token.NUMBER, 8),
+            (Token.ROLL_DELIMITER, ';'),
+            (Token.NUMBER, 1),
+            (Token.DICE_OPERATOR, 'd'),
+            (Token.NUMBER, 10),
+            (Token.OPERATOR, '+'),
+            (Token.NUMBER, 2)
+        )
+        self.parser_test(exp, tokens)
+
     # Test order of precedence.
     def test_can_perform_multiple_operations(self):
         """The parser can parse statements with multiple operators."""

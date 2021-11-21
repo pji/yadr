@@ -6,10 +6,10 @@ Parse dice notation.
 """
 from functools import wraps
 import operator
-from typing import Callable, Optional, Sequence, TypeVar
+from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
-from yadr.model import Token, TokenInfo
+from yadr.model import Result, Token, TokenInfo
 
 
 # Data.
@@ -140,8 +140,25 @@ def u_next_rule(next_rule: Callable) -> Callable:
 
 
 # Parsing initiation.
-def parse(tokens: Sequence[TokenInfo]) -> int | None:
+def parse(tokens: Sequence[TokenInfo]) -> Result | tuple[Result, ...]:
     """Parse dice notation tokens."""
+    if (Token.ROLL_DELIMITER, ';') not in tokens:
+        return _parse_roll(tokens)              # type: ignore
+
+    rolls = []
+    while (Token.ROLL_DELIMITER, ';') in tokens:
+        index = tokens.index((Token.ROLL_DELIMITER, ';'))
+        rolls.append(tokens[0:index])
+        tokens = tokens[index + 1:]
+    else:
+        rolls.append(tokens)
+    results: Sequence[Result] = []
+    for roll in rolls:
+        results.append(parse(roll))             # type: ignore
+    return tuple(results)
+
+
+def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
     trees = [Tree(*token) for token in tokens]
     trees = trees[::-1]
     parsed = add_sub(trees)

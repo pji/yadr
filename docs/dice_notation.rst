@@ -418,7 +418,7 @@ roll with a *Blaster* skill of "5D+2"::
     n = S{1} + S{2, 5, 1, 6} + 2
     n = 0
 
-*Mage: the Awakening:* A five dot roll with a success value of six::
+*Mage: the Ascension:* A five dot roll with a success value of six::
 
     n = 5g10 nb 6
     n = {10, 2, 6, 1, 8} nb 6
