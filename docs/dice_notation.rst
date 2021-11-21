@@ -96,8 +96,10 @@ BNF)::
     POOL_GEN_EXPRESSION ::= EXPRESSION POOL_GEN_OPERATOR EXPRESSION
     
     POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr | p%
+    POOL_GROUP ::= OPEN_GROUP POOL_EXPRESSION CLOSE_GROUP
     POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION |
-                        POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION
+                        POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION |
+                        POOL_GROUP POOL_OPERATOR EXPRESSION
 
     U_POOL_DEGEN_OPERATOR ::= C | N | S
     POOL_DEGEN_OPERATOR ::= ns | nb
@@ -105,6 +107,10 @@ BNF)::
                               U_POOL_DEGEN_OPERATOR POOL_EXPRESSION |
                               POOL POOL_DEGEN_OPERATOR EXPRESSION |
                               POOL_EXPRESSION POOL_DEGEN_OPERATOR EXPRESSION
+
+    ROLL_DELIMITER ::= ;
+    ROLL ::= EXPRESSION | POOL_EXPRESSION | ROLL ROLL_DELIMITER ROLL
+    RESULT ::= NUMBER | POOL | RESULT ROLL_DELIMITER RESULT
 
 
 Order of Operations
@@ -254,6 +260,9 @@ P nb y (count successes and botches):
     
         n = 5dp10 pb 7
         n = {3, 1, 9, 7, 10} pb 7
+        n = N {3, 1, 9, 7, 10} pa 7 - N {3, 1, 9, 7, 10} pb 1
+        n = N {9, 7, 10} - N {1}
+        n = 3 - 1
         n = 2
 
 C P (pool concatenate):
@@ -408,3 +417,26 @@ roll with a *Blaster* skill of "5D+2"::
     n = 5dw6 + 2
     n = S{1} + S{2, 5, 1, 6} + 2
     n = 0
+
+*Mage: the Awakening:* A five dot roll with a success value of six::
+
+    n = 5g10 nb 6
+    n = {10, 2, 6, 1, 8} nb 6
+    n = N {10, 1, 1, 1, 8} pa 6 - N {10, 1, 1, 1, 8} pb 1
+    n = N {10, 8} - N {1, 1, 1}
+    n = 2 - 3
+    n = -1
+
+*Vampire: the Masquerade, Fifth Edition:* A seven dot roll with two
+hunger dice::
+
+    n = 2g10; 5g10
+    n = {6, 10}; {3, 10, 1, 7, 7}
+
+.. note:
+    YADN cannot handle counting values across multiple pools or returning
+    anything other than a number, pool, or a combination of those. This
+    means it can't currently handle V:tM5's critical systems. Until it
+    is able to handle more complex results, it will have to fall back to
+    generating the pools and letting the humans figure things out from
+    there.

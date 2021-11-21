@@ -7,7 +7,7 @@ Unit tests for the yadr.parse module.
 import unittest as ut
 from unittest.mock import patch
 
-from yadr import parse as p
+from yadr import parser as p
 from yadr.model import Token
 from yadr import operator as yo
 
