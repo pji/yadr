@@ -127,6 +127,12 @@ def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
 
 
 # Pool degeneration operators.
+def pool_concatenate(pool: Sequence[int]) -> int:
+    """Count the dice in the pool."""
+    str_value = ''.join((str(m) for m in pool))
+    return int(str_value)
+
+
 def pool_count(pool: Sequence[int]) -> int:
     """Count the dice in the pool."""
     return len(pool)

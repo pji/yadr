@@ -285,6 +285,17 @@ class LexTestCase(ut.TestCase):
         self.lex_test(exp, data)
 
     # Unary pool degeneration operator.
+    def test_basic_pool_concatente(self):
+        """Given a basic pool concatenate statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'C'),
+            (lex.Token.POOL, (3, 1, 7))
+        )
+        data = 'C{3,1,7}'
+        self.lex_test(exp, data)
+
     def test_basic_pool_count(self):
         """Given a basic pool count statement, return the tokens
         in the statement.

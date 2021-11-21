@@ -178,6 +178,17 @@ class ParseTestCase(ut.TestCase):
 
     # Test unary pool degeneration operators.
     @patch('random.randint')
+    def test_pool_concatenate(self, mock_randint):
+        """Concatenate the dice in a pool."""
+        mock_randint.side_effect = [1, 5, 3]
+        exp = 153
+        tokens = (
+            (Token.U_POOL_DEGEN_OPERATOR, 'C'),
+            (Token.NUMBER, (1, 5, 3)),
+        )
+        self.parser_test(exp, tokens)
+
+    @patch('random.randint')
     def test_pool_count(self, mock_randint):
         """Count the dice in a pool."""
         mock_randint.side_effect = [1, 5, 3]
@@ -189,7 +200,7 @@ class ParseTestCase(ut.TestCase):
         self.parser_test(exp, tokens)
 
     @patch('random.randint')
-    def test_pool_count(self, mock_randint):
+    def test_pool_sum(self, mock_randint):
         """Count the dice in a pool."""
         mock_randint.side_effect = [1, 5, 3]
         exp = 9

@@ -320,6 +320,15 @@ class PoolRemove(ut.TestCase):
 
 
 # Pool degeneration test cases.
+class PoolConcatenateTestCase(ut.TestCase):
+    def test_pool_concatenate(self):
+        """Concatenate the members in the pool."""
+        exp = 314
+        pool = (3, 1, 4)
+        act = op.pool_concatenate(pool)
+        self.assertEqual(exp, act)
+
+
 class PoolCountTestCase(ut.TestCase):
     def test_pool_count(self):
         """Count the members in the pool."""

@@ -42,6 +42,7 @@ POOL_OPERATORS = {
     'pr': yo.pool_remove,
 }
 U_POOL_DEGEN_OPERATORS = {
+    'C': yo.pool_concatenate,
     'N': yo.pool_count,
     'S': yo.pool_sum,
 }
