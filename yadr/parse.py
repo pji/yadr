@@ -64,6 +64,10 @@ class Tree:
         self.left = left
         self.right = right
 
+    def __repr__(self):
+        name = self.__class__.__name__
+        return f'{name}(kind={self.kind}, value={self.value})'
+
     def compute(self):
         if self.kind in [Token.NUMBER, Token.POOL]:
             return self.value
@@ -107,6 +111,8 @@ class Unary(Tree):
             op = DICE_OPERATORS[self.value]
         elif self.kind == Token.POOL_OPERATOR:
             op = POOL_OPERATORS[self.value]
+        elif self.kind == Token.POOL_GEN_OPERATOR:
+            op = POOL_GEN_OPERATORS[self.value]
         return op(child)
 
 
@@ -147,11 +153,6 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
     if trees[-1].kind in [Token.NUMBER, Token.POOL]:
         return trees.pop()
-    if trees[-1].kind == Token.U_POOL_DEGEN_OPERATOR:
-        tree = trees.pop()
-        tree = Unary(tree.kind, tree.value)
-        tree.child = add_sub(trees)
-        return tree
     if trees[-1].kind == Token.OPEN_GROUP:
         _ = trees.pop()
     expression = add_sub(trees)
@@ -186,7 +187,18 @@ def pool_operators(next_rule: Callable,
     return left
 
 
-@next_rule(pool_operators)
+@u_next_rule(pool_operators)
+def u_pool_degen_operators(next_rule: Callable, trees: list[Tree]):
+    """Parse dice operations."""
+    if trees[-1].kind == Token.U_POOL_DEGEN_OPERATOR:
+        tree = trees.pop()
+        unary = Unary(tree.kind, tree.value)
+        unary.child = next_rule(trees)
+        return unary
+    return next_rule(trees)
+
+
+@next_rule(u_pool_degen_operators)
 def pool_degen_operators(next_rule: Callable,
                          left: Tree,
                          trees: list[Tree]):

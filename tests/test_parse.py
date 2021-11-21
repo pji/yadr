@@ -341,3 +341,75 @@ class ParseTestCase(ut.TestCase):
             (Token.CLOSE_GROUP, ')'),
         )
         self.parser_test(exp, tokens)
+
+    @patch('random.randint')
+    def test_pool_generation_happens_before_pool_degeneration(self, mock_ri):
+        """Pool generation should happen before pool degeneration
+        in order of operations.
+        """
+        # Expected value.
+        exp = 20
+
+        # Test data and state.
+        rand_results = [5, 4, 6, 2, 3]
+        mock_ri.side_effect = rand_results
+        tokens = (
+            (Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (Token.NUMBER, 5),
+            (Token.POOL_GEN_OPERATOR, 'g'),
+            (Token.NUMBER, 6),
+        )
+
+        # Run test.
+        act = p.parse(tokens)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    @patch('random.randint')
+    def test_unary_pool_degeneration_happens_before_operators(self, mock_ri):
+        """Unary pool degeneration should happen before operators
+        in order of operations.
+        """
+        # Expected value.
+        exp = 25
+
+        # Test data and state.
+        rand_results = [5, 4, 6, 2, 3]
+        mock_ri.side_effect = rand_results
+        tokens = (
+            (Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (Token.NUMBER, 5),
+            (Token.POOL_GEN_OPERATOR, 'g'),
+            (Token.NUMBER, 6),
+            (Token.OPERATOR, '+'),
+            (Token.NUMBER, 5),
+        )
+
+        # Run test.
+        act = p.parse(tokens)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    def test_pool_operation_happens_before_pool_degeneration(self):
+        """Pool operations should happen before pool degeneration
+        in order of operations.
+        """
+        # Expected value.
+        exp = 1
+
+        # Test data and state.
+        tokens = (
+            (Token.POOL, (5, 4, 6, 2, 3)),
+            (Token.POOL_OPERATOR, 'pb'),
+            (Token.NUMBER, 5),
+            (Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (Token.NUMBER, 5),
+        )
+
+        # Run test.
+        act = p.parse(tokens)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
