@@ -302,6 +302,23 @@ class PoolKeepLow(ut.TestCase):
         self.assertTupleEqual(exp, act)
 
 
+class PoolModulo(ut.TestCase):
+    def test_pool_keep_below(self):
+        """Perform a modulo on all members."""
+        # Expected value.
+        exp = (1, 2, 2, 0, 1, 2, 1, 0, 0, 0)
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        divisor = 3
+
+        # Run test.
+        act = op.pool_modulo(pool, divisor)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
 class PoolRemove(ut.TestCase):
     def test_pool_keep_below(self):
         """Keep dice equal to or below the given value from the pool."""

@@ -225,8 +225,8 @@ P pr y (pool remove):
         n = {3, 1, 9, 7, 10} pr 7
         n = {3, 1, 9, 10}
 
-P p% y (pool modulus):
-    For a given pool P, perform a modulus y operation on each member
+P p% y (pool modulo):
+    For a given pool P, perform a modulo y operation on each member
     (M % y). For example::
     
         n = 5dp10 pr 7

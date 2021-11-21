@@ -272,6 +272,18 @@ class LexTestCase(ut.TestCase):
         data = '{5,1,9}pl2'
         self.lex_test(exp, data)
 
+    def test_basic_pool_modulo(self):
+        """Given a basic pool modulo statement, return the tokens
+        in the statement.
+        """
+        exp = (
+            (lex.Token.POOL, (5, 1, 9)),
+            (lex.Token.POOL_OPERATOR, 'p%'),
+            (lex.Token.NUMBER, 5),
+        )
+        data = '{5,1,9}p%5'
+        self.lex_test(exp, data)
+
     def test_basic_pool_remove(self):
         """Given a basic pool remove statement, return the tokens
         in the statement.

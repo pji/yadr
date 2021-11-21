@@ -40,6 +40,7 @@ POOL_OPERATORS = {
     'ph': yo.pool_keep_high,
     'pl': yo.pool_keep_low,
     'pr': yo.pool_remove,
+    'p%': yo.pool_modulo,
 }
 U_POOL_DEGEN_OPERATORS = {
     'C': yo.pool_concatenate,

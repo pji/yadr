@@ -122,7 +122,13 @@ def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     return tuple(pool)
 
 
+def pool_modulo(pool: Sequence[int], divisor: int) -> tuple[int, ...]:
+    """Perform a modulo operation of each member."""
+    return tuple(n % divisor for n in pool)
+
+
 def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
+    """Remove members of a pool of the given value."""
     return tuple(n for n in pool if n != cut)
 
 

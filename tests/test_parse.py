@@ -292,6 +292,16 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    def test_pool_modulo(self):
+        """Perform a modulo on each member."""
+        exp = (0, 3, 1, 4)
+        tokens = (
+            (Token.POOL, (5, 8, 1, 9)),
+            (Token.POOL_OPERATOR, 'p%'),
+            (Token.NUMBER, 5),
+        )
+        self.parser_test(exp, tokens)
+
     def test_pool_remove(self):
         """Keep a values that aren't a given number in the pool."""
         exp = (5, 1, 9)
