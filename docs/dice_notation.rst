@@ -95,11 +95,11 @@ BNF)::
     POOL_GEN_OPERATOR ::= dp | g!
     POOL_GEN_EXPRESSION ::= EXPRESSION POOL_GEN_OPERATOR EXPRESSION
     
-    POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr
+    POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr | p%
     POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION |
                         POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION
 
-    U_POOL_DEGEN_OPERATOR ::= N | S
+    U_POOL_DEGEN_OPERATOR ::= C | N | S
     POOL_DEGEN_OPERATOR ::= ns | nb
     POOL_DEGEN_EXPRESSION ::= U_POOL_DEGEN_OPERATOR POOL |
                               U_POOL_DEGEN_OPERATOR POOL_EXPRESSION |
@@ -128,92 +128,11 @@ collapsed before it is passed to an operator. The trade-off seems
 worthwhile here, but this may be reviewed in the future.
 
 
-Dice Operators
-==============
-The dice operators are defined in YADN as follows:
-
-x d y (dice sum):
-    Generate x random integers n within the range 1 ≤ n ≤ y. Unless
-    modified by a roll operator, the result is treated as the sum
-    of the integers. Roll operators are allowed to interact with the
-    individual integers. This represents the case of rolling a number
-    of the same dice. For example::
-    
-        n = 1d20
-        n = {11}
-        n = 11
-
-x dc y (concat):
-    Generate x random integers n within the range 1 ≤ n ≤ y. Concatenate
-    the least significant digit of each value into a single integer. For
-    example::
-    
-        n = 2dc10
-        n = {3, 10}
-        n = 30
-
-x d! y (exploding dice):
-    Like `dice sum` but if any n = y, it explodes (a new integer in the
-    same range is generated and added to n). New integers generated
-    from explosions also explode if they equal y. For example::
-    
-        n = 6d!4
-        n = {1, 4, 3, 4, 4, 1}
-        n = {1, 4+1, 3, 4+4, 4+2, 1}
-        n = {1, 4+1, 3, 4+4+4, 4+2, 1}
-        n = {1, 4+1, 3, 4+4+4+1, 4+2, 1}
-        n = {1, 5, 3, 13, 6, 1}
-        n = 29
-
-x dh y (keep high die):
-    Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    the integer with the highest value. For example::
-    
-        n = 2dh20
-        n = {1, 17}
-        n = 17
-
-x dl y (keep low die):
-    Generate x random integers n within the range 1 ≤ n ≤ y. Return
-    the integer with the lowest value. For example::
-    
-        n = 2dl20
-        n = {1, 17}
-        n = 1
-
-x dw y (wild die):
-    Generate two pools of random integers within the range 1 ≤ n ≤ y.
-    The first pool, called the "wild" pool, has only one member. The
-    standard pool has x minus one (x - 1) members. If the value of
-    the wild die is neither y nor 1, return the sum of the sums of
-    the two pools. For example::
-    
-        n = 4dw6
-        n = S{3} + S{5, 1, 6}
-        n = 3 + 12
-        n = 15
-    
-    The member in the wild pool (the "wild die") explodes (see "exploding
-    dice" above).::
-    
-        n = 4dw6
-        n = S{6} + S{5, 1, 6}
-        n = S{6+3} + S{5, 1, 6}
-        n = 9 + 12
-        n = 21
-    
-    If the value of the wild die is one, return zero (technically, this
-    should be "the roll fails", but that requires more complex roll
-    results than YADN can currently handle).::
-    
-        n = 4dw6
-        n = S{1} + S{5, 1, 6}
-        n = 0
-
-
-Pool Generation Operator
-========================
-The operator that generates dice pools is defined as:
+Pool Generation Operators
+=========================
+Pool generation operators generate a pool. These serve as the foundation
+for most dice interactions described by YADN. The pool generation
+operators are defined as follows:
 
 x dp y (dice pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
@@ -233,7 +152,6 @@ x g! y (exploding pool):
         n = {2, 6+3, 1, 1, 6+6, 3}
         n = {2, 6+3, 1, 1, 6+6+1, 3}
         n = {2, 9, 1, 1, 13, 3}
-        n = 29
 
 
 Pool Operators
@@ -247,8 +165,8 @@ Pool Operators
     which proved complex. Pool operators seemed easier to
     implement and understand, if occasionally more verbose.
 
-The operators that act on dice pools and return a dice pool are as
-follows:
+Pool operators interact with or change a pool or its members. They
+are defined as follows:
 
 P pa y (pool keep above):
     For a given pool P, remove all members with a value below y. For
@@ -307,10 +225,19 @@ P pr y (pool remove):
         n = {3, 1, 9, 7, 10} pr 7
         n = {3, 1, 9, 10}
 
+P p% y (pool modulus):
+    For a given pool P, perform a modulus y operation on each member
+    (M % y). For example::
+    
+        n = 5dp10 pr 7
+        n = {3, 1, 9, 7, 10} pz 10
+        n = {3, 1, 9, 0}
+
 
 Pool Degeneration Operators
 ===========================
-The operators that collapse pools into numbers are defined as follows:
+Pool degeneration operators act on the members of a pool, collapsing it
+into a number. They are defined as follows:
 
 P ns y (count successes):
     For a given pool P, count the number of members with a value greater
@@ -329,6 +256,13 @@ P nb y (count successes and botches):
         n = {3, 1, 9, 7, 10} pb 7
         n = 2
 
+C P (pool concatenate):
+    For a given pool P, concatenate the digits of each member. For example::
+    
+        n = C 5dp10
+        n = C {3, 1, 9, 7, 10}
+        n = 319710
+
 N P (pool count):
     For a given pool P, return the number of members in P. For example::
     
@@ -343,6 +277,93 @@ S P (pool sum):
         n = S 5dp10
         n = S {3, 1, 9, 7, 10}
         n = 30
+
+
+Dice Operators
+==============
+Dice operators generate a pool, act on the members, and then collapse
+that pool into a number. They are defined as follows:
+
+x d y (dice sum):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Unless
+    modified by a roll operator, the result is treated as the sum
+    of the integers. Roll operators are allowed to interact with the
+    individual integers. This represents the case of rolling a number
+    of the same dice. For example::
+    
+        n = 1d20
+        n = S{11}
+        n = 11
+
+x dc y (concat):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Concatenate
+    the least significant digit of each value into a single integer. For
+    example::
+    
+        n = 2dc20
+        n = C {3, 17} p% 10
+        n = C {3, 7}
+        n = 37
+
+x d! y (exploding dice):
+    Like `dice sum` but if any n = y, it explodes (a new integer in the
+    same range is generated and added to n). New integers generated
+    from explosions also explode if they equal y. For example::
+    
+        n = 6d!4
+        n = S{1, 4, 3, 4, 4, 1}
+        n = S{1, 4+1, 3, 4+4, 4+2, 1}
+        n = S{1, 4+1, 3, 4+4+4, 4+2, 1}
+        n = S{1, 4+1, 3, 4+4+4+1, 4+2, 1}
+        n = S{1, 5, 3, 13, 6, 1}
+        n = 29
+
+x dh y (keep high die):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Return
+    the integer with the highest value. For example::
+    
+        n = 2dh20
+        n = S({1, 17} ph 1)
+        n = S{17}
+        n = 17
+
+x dl y (keep low die):
+    Generate x random integers n within the range 1 ≤ n ≤ y. Return
+    the integer with the lowest value. For example::
+    
+        n = 2dl20
+        n = S({1, 17} pl 1)
+        n = S{1}
+        n = 1
+
+x dw y (wild die):
+    Generate two pools of random integers within the range 1 ≤ n ≤ y.
+    The first pool, called the "wild" pool, has only one member. The
+    standard pool has x minus one (x - 1) members. If the value of
+    the wild die is neither y nor 1, return the sum of the sums of
+    the two pools. For example::
+    
+        n = 4dw6
+        n = S{3} + S{5, 1, 6}
+        n = 3 + 12
+        n = 15
+    
+    The member in the wild pool (the "wild die") explodes (see "exploding
+    dice" above).::
+    
+        n = 4dw6
+        n = S{6} + S{5, 1, 6}
+        n = S{6+3} + S{5, 1, 6}
+        n = 9 + 12
+        n = 21
+    
+    If the value of the wild die is one, return zero (technically, this
+    should be "the roll fails", but that requires more complex roll
+    results than YADN can currently handle).::
+    
+        n = 4dw6
+        n = S{1} + S{5, 1, 6}
+        n = 0
 
 
 Example Usage
@@ -372,6 +393,14 @@ six-sided die of damage, and a plus five modifier::
     n = S{3} + S{1} + 5
     n = 3 + 1 + 5
     n = 9
+
+*Dungeons and Dragons:* A 1-100 "percentile" roll before the availability
+of ten-sided dice::
+
+    n = 2dc20
+    n = C {13, 9} p% 10
+    n = C {3, 9}
+    n = 39
 
 *West End's Star Wars: the Roleplaying Game, Second Edition:* An attack
 roll with a *Blaster* skill of "5D+2"::
