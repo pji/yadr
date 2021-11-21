@@ -25,10 +25,9 @@ def exploding_pool(num: int, size: int) -> tuple[int, ...]:
 def concat(num: int, size: int) -> int:
     """Concatenate the least significant digits."""
     base = 10
-    pool: Sequence[int] = dice_pool(num, size)
-    pool = [n % base for n in pool]
-    pool = [n * base ** i for i, n in enumerate(pool[::-1])]
-    return sum(pool)
+    pool = dice_pool(num, size)
+    pool = pool_modulo(pool, base)
+    return pool_concatenate(pool)
 
 
 def die(num: int, size: int) -> int:
