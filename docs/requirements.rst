@@ -45,24 +45,30 @@ The following are the functional requirements for `yadr`:
 13. `yadr` can determine whether a roll was a success.
 14. `yadr` can count the number of successes over multiple dice (see
     systems like White Wolf's Vampire: the Masquerade).
-15. `yadr` can map die faces to symbols (see Games Workshop's 
-    Hero Quest).
-16. `yadr` can roll a number of dice and only use a given number of the
+15. `yadr` can roll a number of dice and only use a given number of the
     highest rolls (see advantage in Wizard of the Coast's Dungeons &
     Dragons 5th Edition).
-17. `yadr` can roll a number of dice and only use a given number of the
+16. `yadr` can roll a number of dice and only use a given number of the
     lowest rolls (see advantage in Wizard of the Coast's Dungeons &
     Dragons 5th Edition).
-18. `yadr` rolls can deflate (a roll below a certain number removes
+17. `yadr` rolls can deflate (a roll below a certain number removes
     itself and other dice from the total).
-19. `yadr` can remap the value of the faces of a die.
-20. `yadr` can cap the value of a die.
+18. `yadr` can cap the value of a die.
+
+The following are stretch requirements that would be nice to have:
+
+#.  `yadr` can map die faces to symbols (see Games Workshop's 
+    Hero Quest).
+#.  `yadr` can remap the value of the faces of a die.
 
 
 Technical Requirements
 ----------------------
 The following are the technical requirements for `yadr`:
 
-1.  `yadr` can be seeded to allow predictable result for testing.
-2.  `yadr` can use the `secrets` standard Python library for better
+#.  `yadr` can be seeded to allow predictable result for testing.
+
+The following are stretch requirements that would be nice to have:
+
+#.  `yadr` can use the `secrets` standard Python library for better
     random number generation.

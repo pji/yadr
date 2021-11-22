@@ -440,3 +440,33 @@ hunger dice::
     is able to handle more complex results, it will have to fall back to
     generating the pools and letting the humans figure things out from
     there.
+
+*Fate:* A roll with a skill rated as "Good."::
+
+    n = (2d3 - 4) + 3
+    n = (S{1, 3} - 4) + 3
+    n = (4 - 4) + 3
+    n = 0 + 3
+    n = 3
+
+.. note:
+    YADN cannot currently handle mapping results to words. In the Fate
+    system, the 3 here would mean "good," but doing that translation is
+    up to the humans to figure out for now. But, result mapping may be
+    added as a feature in the future.
+
+*Star Wars: Edge of the Empire:* Slicing with a Computers of three and
+Intellect of two while under heavy fire and having a broken wrist but
+having a fragment of the terminal's passcode algorithms::
+
+    n = 1p8; 2g12; 2g6; 1g6
+    n = {4}; {3, 9}; {6, 6}; {2}
+
+.. note:
+    The Star Wars: Edge of the Empire system requires mapping the
+    values of pool members onto a table of symbols with specific
+    meanings. There are multiple types of symbols on each dies,
+    so it's not a straight forward success check. The best YADN can
+    do at the moment is return the pool results and let the humans
+    cross-reference against the table on page 12 in the Core
+    Rulebook.
