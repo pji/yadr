@@ -5,26 +5,22 @@ lex
 A lexer for `yadr` dice notation.
 """
 from functools import wraps
-from typing import Callable
+from typing import Callable, Optional
 
 from yadr.model import (
-    DICE_OPERATORS,
-    OPERATORS,
-    POOL_OPERATORS,
-    POOL_GEN_OPERATORS,
-    ROLL_DELIMITER,
+    Char,
+    CompoundResult,
+    Result,
     Token,
     TokenInfo,
-    U_POOL_DEGEN_OPERATORS,
-    POOL_DEGEN_OPERATORS
 )
 
 
-# Classes.
+# Lexers.
 class Lexer:
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
-        self.buffer = ''
+        self.buffer = Char('')
         self.tokens: list[TokenInfo] = []
 
         # Lexer is a state machine, so its behavior changes based on its
@@ -36,8 +32,8 @@ class Lexer:
             Token.START: self._start,
             Token.NUMBER: self._number,
             Token.OPERATOR: self._operator,
-            Token.OPEN_GROUP: self._open_group,
-            Token.CLOSE_GROUP: self._close_group,
+            Token.GROUP_OPEN: self._open_group,
+            Token.GROUP_CLOSE: self._close_group,
             Token.DICE_OPERATOR: self._dice_operator,
             Token.POOL: self._pool,
             Token.POOL_END: self._pool_end,
@@ -54,22 +50,23 @@ class Lexer:
     # Public methods.
     def lex(self, text: str) -> tuple[TokenInfo, ...]:
         """Lex a dice notation string."""
-        for char in text:
+        chars = [Char(c) for c in text]
+        for char in chars:
             self.process(char)
         else:
-            self._change_state(Token.END, '')
+            self._change_state(Token.END, Char(''))
         return tuple(self.tokens)
 
     # Private operation methods.
     def _change_state(self, new_state: Token,
-                      char: str) -> None:
+                      char: Char) -> None:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
         if self.state not in [Token.WHITESPACE, Token.START, Token.POOL_END]:
-            value: str | int | tuple[int, ...] = self.buffer
-            if self.state == Token.NUMBER and isinstance(value, str):
+            value: Char | int | tuple[int, ...] = self.buffer
+            if self.state == Token.NUMBER and isinstance(value, Char):
                 value = int(value)
-            elif self.state == Token.POOL and isinstance(value, str):
+            elif self.state == Token.POOL and isinstance(value, Char):
                 plexer = PoolLexer()
                 value = plexer.lex(value)
             elif self.state in [Token.POOL, Token.NUMBER]:
@@ -84,31 +81,30 @@ class Lexer:
         self.process = self.state_map[new_state]
 
     # Lexing rules.
-    def _close_group(self, char: str) -> None:
+    def _close_group(self, char: Char) -> None:
         """Processing a close group token."""
-        if char in OPERATORS:
+        if char.is_operator():
             new_state = Token.OPERATOR
-        elif char == 'd':
+        elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
-        elif char == ';':
+        elif char.is_roll_delim():
             new_state = Token.ROLL_DELIMITER
         else:
             msg = f'{char} cannot follow a group.'
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _dice_operator(self, char: str) -> None:
+    def _dice_operator(self, char: Char) -> None:
         """Processing an operator."""
-        valid_char = [s[1] for s in DICE_OPERATORS[1:]]
         new_state: Token | None = None
-        if char in valid_char:
+        if char.still_dice_op():
             self.buffer += char
         elif char.isdigit() or char == '-':
             new_state = Token.NUMBER
         elif char == '(':
-            new_state = Token.OPEN_GROUP
+            new_state = Token.GROUP_OPEN
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -117,7 +113,20 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _number(self, char: str) -> None:
+    def _open_group(self, char: Char) -> None:
+        """Processing an open group token."""
+        if char.isdigit():
+            new_state = Token.NUMBER
+        elif char.is_u_pool_degen_op():
+            new_state = Token.U_POOL_DEGEN_OPERATOR
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow (.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
+
+    def _number(self, char: Char) -> None:
         """Processing a number."""
         new_state: Token | None = None
 
@@ -125,15 +134,15 @@ class Lexer:
         # number.
         if char.isdigit() and self.state == Token.NUMBER:
             self.buffer += char
-        elif char in OPERATORS:
+        elif char.is_operator():
             new_state = Token.OPERATOR
-        elif char == 'd':
+        elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
-        elif char == 'g':
+        elif char.is_pool_gen_op():
             new_state = Token.POOL_GEN_OPERATOR
-        elif char == ')':
-            new_state = Token.CLOSE_GROUP
-        elif char == ';':
+        elif char.is_group_close():
+            new_state = Token.GROUP_CLOSE
+        elif char.is_roll_delim():
             new_state = Token.ROLL_DELIMITER
         elif char.isspace():
             new_state = Token.WHITESPACE
@@ -143,26 +152,13 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _open_group(self, char: str) -> None:
-        """Processing an open group token."""
-        if char.isdigit():
-            new_state = Token.NUMBER
-        elif char in U_POOL_DEGEN_OPERATORS:
-            new_state = Token.U_POOL_DEGEN_OPERATOR
-        elif char.isspace():
-            new_state = Token.WHITESPACE
-        else:
-            msg = f'{char} cannot follow (.'
-            raise ValueError(msg)
-        self._change_state(new_state, char)
-
-    def _operator(self, char: str) -> None:
+    def _operator(self, char: Char) -> None:
         """Processing an operator."""
-        if char.isdigit() or char == '-':
+        if char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
-        elif char == '(':
-            new_state = Token.OPEN_GROUP
-        elif char in U_POOL_DEGEN_OPERATORS:
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
+        elif char.is_u_pool_degen_op():
             new_state = Token.U_POOL_DEGEN_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
@@ -171,16 +167,18 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _pool(self, char: str) -> None:
+    def _pool(self, char: Char) -> None:
         """Processing a pool open."""
         new_state = None
         if char.isdigit():
             self.buffer += char
-        elif char in '-,':
+        elif char.is_negative_sign():
+            self.buffer += char
+        elif char.is_member_delim():
             self.buffer += char
         elif char.isspace():
             self.buffer += char
-        elif char == '}':
+        elif char.is_pool_close():
             self.buffer += char
             new_state = Token.POOL_END
         else:
@@ -189,14 +187,14 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _pool_end(self, char: str) -> None:
+    def _pool_end(self, char: Char) -> None:
         """Processing after a pool."""
         if char == 'p':
             new_state = Token.POOL_OPERATOR
         elif char == 'n':
             new_state = Token.POOL_DEGEN_OPERATOR
         elif char == ')':
-            new_state = Token.CLOSE_GROUP
+            new_state = Token.GROUP_CLOSE
         elif char == ';':
             new_state = Token.ROLL_DELIMITER
         elif char.isspace():
@@ -206,16 +204,15 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _pool_gen_operator(self, char: str) -> None:
+    def _pool_gen_operator(self, char: Char) -> None:
         """Processing an operator."""
-        valid_char = [s[1] for s in POOL_GEN_OPERATORS[1:]]
         new_state: Token | None = None
-        if char in valid_char:
+        if char.still_pool_gen_op():
             self.buffer += char
-        elif char.isdigit() or char == '-':
+        elif char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
-        elif char == '(':
-            new_state = Token.OPEN_GROUP
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -224,11 +221,11 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _u_pool_degen_operator(self, char: str) -> None:
+    def _u_pool_degen_operator(self, char: Char) -> None:
         """Processing a unary pool degeneration operator."""
-        if char.isdigit() or char == '-':
+        if char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
-        elif char == '{':
+        elif char.is_pool_open():
             new_state = Token.POOL
         elif char.isspace():
             new_state = Token.WHITESPACE
@@ -237,18 +234,17 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _pool_degen_operator(self, char: str) -> None:
+    def _pool_degen_operator(self, char: Char) -> None:
         """Processing a pool degeneration operator."""
-        valid_char = [s[1] for s in POOL_DEGEN_OPERATORS]
         new_state: Token | None = None
-        if char in valid_char:
+        if char.still_pool_degen_op():
             self.buffer += char
-        elif char.isdigit() or char == '-':
+        elif char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
-        elif char in U_POOL_DEGEN_OPERATORS:
+        elif char.is_u_pool_degen_op():
             new_state = Token.U_POOL_DEGEN_OPERATOR
-        elif char == '(':
-            new_state = Token.OPEN_GROUP
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -257,13 +253,12 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _pool_operator(self, char: str) -> None:
+    def _pool_operator(self, char: Char) -> None:
         """Lex pool operators."""
         new_state = None
-        valid_char = [s[1] for s in POOL_OPERATORS[1:]]
-        if char in valid_char:
+        if char.still_pool_op():
             self.buffer += char
-        elif char.isdigit() or char == '-':
+        elif char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
         elif char.isspace():
             new_state = Token.WHITESPACE
@@ -273,15 +268,15 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _roll_delimiter(self, char:str) -> None:
+    def _roll_delimiter(self, char: Char) -> None:
         """Lex roll delimiters."""
-        if char.isdigit() or char == '-':
+        if char.isdigit() or char.is_negative_sign():
             new_state = Token.NUMBER
-        elif char == '(':
-            new_state = Token.OPEN_GROUP
-        elif char == '{':
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
+        elif char.is_pool_open():
             new_state = Token.POOL
-        elif char in U_POOL_DEGEN_OPERATORS:
+        elif char.is_u_pool_degen_op():
             new_state = Token.U_POOL_DEGEN_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
@@ -290,13 +285,13 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _start(self, char: str) -> None:
+    def _start(self, char: Char) -> None:
         """The starting state."""
         if self.tokens:
             self.tokens = []
         self._roll_delimiter(char)
 
-    def _whitespace(self, char: str) -> None:
+    def _whitespace(self, char: Char) -> None:
         if char.isspace():
             return None
         prev_state = Token.START
@@ -310,7 +305,7 @@ class Lexer:
 
 class PoolLexer:
     def __init__(self) -> None:
-        self.buffer = ''
+        self.buffer = Char('')
         self.pool: list[int] = []
         self.state = Token.START
         self.state_map = {
@@ -324,15 +319,15 @@ class PoolLexer:
         self.process = self._start
 
     # Public methods.
-    def lex(self, text: str) -> tuple[int, ...]:
+    def lex(self, text: Char) -> tuple[int, ...]:
         """Lex a pool string from dice notation."""
         for char in text:
-            self.process(char)
+            self.process(Char(char))
         return tuple(self.pool)
 
     # Private operation methods.
     def _change_state(self, new_state: Token,
-                      char: str,
+                      char: Char,
                       store: bool = True) -> None:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
@@ -346,7 +341,7 @@ class PoolLexer:
         self.process = self.state_map[new_state]
 
     # Lexing rules.
-    def _member(self, char:str) -> None:
+    def _member(self, char: Char) -> None:
         """Lex a member."""
         new_state = None
         if char == ',':
@@ -363,7 +358,7 @@ class PoolLexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _member_delimiter(self, char: str) -> None:
+    def _member_delimiter(self, char: Char) -> None:
         """Lex a member delimiter."""
         if char.isdigit() or char == '-':
             new_state = Token.MEMBER
@@ -374,12 +369,12 @@ class PoolLexer:
             raise ValueError(msg)
         self._change_state(new_state, char, False)
 
-    def _pool_close(self, char: str) -> None:
+    def _pool_close(self, char: Char) -> None:
         """Lex a pool close."""
-        msg = '{} cannot follow a \x007d'.format(char)
+        msg = '[ cannot follow a ]'
         raise ValueError(msg)
 
-    def _pool_open(self, char: str) -> None:
+    def _pool_open(self, char: Char) -> None:
         """Lex a pool open."""
         if char.isdigit() or char == '-':
             new_state = Token.MEMBER
@@ -390,7 +385,7 @@ class PoolLexer:
             raise ValueError(msg)
         self._change_state(new_state, char, False)
 
-    def _start(self, char: str) -> None:
+    def _start(self, char: Char) -> None:
         """Start lexing the string."""
         if char == '{':
             new_state = Token.POOL_OPEN
@@ -399,7 +394,7 @@ class PoolLexer:
             raise ValueError(msg)
         self._change_state(new_state, char, False)
 
-    def _whitespace(self, char: str) -> None:
+    def _whitespace(self, char: Char) -> None:
         """Processing whitespace."""
         new_state = None
         if char.isdigit() or char == '-':
@@ -413,3 +408,35 @@ class PoolLexer:
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char, False)
+
+
+# Delexer.
+class Encoder:
+    def __init__(self, yadn: str = '') -> None:
+        self.yadn = yadn
+
+    # Public methods.
+    def encode(self, data: Result) -> str:
+        """Turn computed Python object results into a YADN string."""
+        if isinstance(data, int):
+            self._encode_int(data)
+        elif isinstance(data, CompoundResult):
+            self._encode_compound_result(data)
+        elif isinstance(data, tuple):
+            self._encode_tuple(data)
+        return self.yadn
+
+    # Private methods.
+    def _encode_compound_result(self, data: CompoundResult) -> None:
+        for result in data[:-1]:
+            self.encode(result)
+            self.yadn += '; '
+        else:
+            self.encode(data[-1])
+
+    def _encode_int(self, data: int) -> None:
+        self.yadn = f'{self.yadn}{data}'
+
+    def _encode_tuple(self, data: tuple) -> None:
+        members = ', '.join(str(m) for m in data)
+        self.yadn = f'{self.yadn}[{members}]'

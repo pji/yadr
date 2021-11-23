@@ -7,6 +7,7 @@ Unit tests for the dice notation lexer.
 import unittest as ut
 
 from yadr import lex
+from yadr import model as m
 
 
 # Test cases.
@@ -371,11 +372,11 @@ class LexTestCase(ut.TestCase):
         exp = (
             (lex.Token.POOL, (5, 1, 9)),
             (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 3),
             (lex.Token.OPERATOR, '+'),
             (lex.Token.NUMBER, 2),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '{5,1,9}ns(3+2)'
         self.lex_test(exp, data)
@@ -411,11 +412,11 @@ class LexTestCase(ut.TestCase):
         tokenized equation.
         """
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 32),
             (lex.Token.OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 21),
         )
@@ -427,11 +428,11 @@ class LexTestCase(ut.TestCase):
         return the tokenized equation.
         """
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 32),
             (lex.Token.OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 21),
         )
@@ -474,13 +475,13 @@ class LexTestCase(ut.TestCase):
     def test_roll_delimiter_can_follow_group(self):
         """A roll delimiter can follow a close group delimiter."""
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 2),
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '+'),
             (lex.Token.NUMBER, 1),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.ROLL_DELIMITER, ';'),
             (lex.Token.NUMBER, 5),
             (lex.Token.DICE_OPERATOR, 'd'),
@@ -532,11 +533,11 @@ class LexTestCase(ut.TestCase):
     def test_dice_operator_can_follow_group(self):
         """Dice operators can follow groups."""
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
         )
@@ -546,11 +547,11 @@ class LexTestCase(ut.TestCase):
     def test_dice_operator_can_follow_group_whitespace(self):
         """Dice operators can follow groups."""
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
         )
@@ -590,11 +591,11 @@ class LexTestCase(ut.TestCase):
         exp = (
             (lex.Token.NUMBER, 10),
             (lex.Token.DICE_OPERATOR, 'd'),
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '10d(10*10)'
         self.lex_test(exp, data)
@@ -604,11 +605,11 @@ class LexTestCase(ut.TestCase):
         exp = (
             (lex.Token.NUMBER, 10),
             (lex.Token.DICE_OPERATOR, 'd'),
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '10d (10*10)'
         self.lex_test(exp, data)
@@ -618,11 +619,11 @@ class LexTestCase(ut.TestCase):
         exp = (
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '+'),
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '10+(10*10)'
         self.lex_test(exp, data)
@@ -632,11 +633,11 @@ class LexTestCase(ut.TestCase):
         exp = (
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '+'),
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '10+ (10*10)'
         self.lex_test(exp, data)
@@ -946,10 +947,10 @@ class LexTestCase(ut.TestCase):
     def test_unary_pool_degen_can_follow_group_open(self):
         """Unary pool degeneration operators can follow group open."""
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (lex.Token.POOL, (1, 2, 3)),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '(S{1,2,3})'
         self.lex_test(exp, data)
@@ -957,10 +958,10 @@ class LexTestCase(ut.TestCase):
     def test_unary_pool_degen_can_follow_group_open_whitespace(self):
         """Unary pool degeneration operators can follow group open."""
         exp = (
-            (lex.Token.OPEN_GROUP, '('),
+            (lex.Token.GROUP_OPEN, '('),
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (lex.Token.POOL, (1, 2, 3)),
-            (lex.Token.CLOSE_GROUP, ')'),
+            (lex.Token.GROUP_CLOSE, ')'),
         )
         data = '( S{1,2,3})'
         self.lex_test(exp, data)
@@ -977,3 +978,39 @@ class LexTestCase(ut.TestCase):
         )
         data = '200-S{2,3,4}'
         self.lex_test(exp, data)
+
+
+class EncoderTestCase(ut.TestCase):
+    def setUp(self):
+        self.encoder = lex.Encoder()
+
+    def tearDown(self):
+        self.encoder = None
+
+    def test_number(self):
+        """An int becomes a string containing the YADN number."""
+        exp = '3'
+        data = 3
+        act = self.encoder.encode(data)
+        self.assertEqual(exp, act)
+
+    def test_pool(self):
+        """A tuple of integers becomes a string containing the
+        YADN pool.
+        """
+        exp = '[1, 1, 3, 8]'
+        data = (1, 1, 3, 8)
+        act = self.encoder.encode(data)
+        self.assertEqual(exp, act)
+
+    def test_compound_result(self):
+        """A CompoundResult becomes a string of roll delimited
+        values.
+        """
+        exp = '[1, 1, 3, 8]; 3'
+        data = m.CompoundResult((
+            (1, 1, 3, 8),
+            3
+        ))
+        act = self.encoder.encode(data)
+        self.assertEqual(exp, act)

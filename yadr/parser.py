@@ -9,7 +9,7 @@ import operator
 from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
-from yadr.model import Result, Token, TokenInfo
+from yadr.model import CompoundResult, Result, Token, TokenInfo
 
 
 # Data.
@@ -140,7 +140,7 @@ def u_next_rule(next_rule: Callable) -> Callable:
 
 
 # Parsing initiation.
-def parse(tokens: Sequence[TokenInfo]) -> Result | tuple[Result, ...]:
+def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
     """Parse dice notation tokens."""
     if (Token.ROLL_DELIMITER, ';') not in tokens:
         return _parse_roll(tokens)              # type: ignore
@@ -155,7 +155,7 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | tuple[Result, ...]:
     results: Sequence[Result] = []
     for roll in rolls:
         results.append(parse(roll))             # type: ignore
-    return tuple(results)
+    return CompoundResult(results)
 
 
 def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
@@ -172,10 +172,10 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
     if trees[-1].kind in [Token.NUMBER, Token.POOL]:
         return trees.pop()
-    if trees[-1].kind == Token.OPEN_GROUP:
+    if trees[-1].kind == Token.GROUP_OPEN:
         _ = trees.pop()
     expression = add_sub(trees)
-    if trees[-1].kind == Token.CLOSE_GROUP:
+    if trees[-1].kind == Token.GROUP_CLOSE:
         _ = trees.pop()
     return expression
 

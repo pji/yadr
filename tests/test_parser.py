@@ -374,11 +374,11 @@ class ParseTestCase(ut.TestCase):
         tokens = (
             (Token.NUMBER, 3),
             (Token.OPERATOR, '*'),
-            (Token.OPEN_GROUP, '('),
+            (Token.GROUP_OPEN, '('),
             (Token.NUMBER, 2),
             (Token.OPERATOR, '+'),
             (Token.NUMBER, 4),
-            (Token.CLOSE_GROUP, ')'),
+            (Token.GROUP_CLOSE, ')'),
         )
         self.parser_test(exp, tokens)
 

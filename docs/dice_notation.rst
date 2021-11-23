@@ -83,13 +83,16 @@ BNF)::
     DICE_OPERATOR ::= d | d! | dc | dh | dl | dw
     GROUP ::= GROUP_OPEN EXPRESSION GROUP_CLOSE
     DICE_EXPRESSION ::= EXPRESSION DICE_OPERATOR EXPRESSION
-    EXPRESSION ::= NUMBER | GROUP | DICE_EXPRESSION | POOL_DEGEN_EXPRESSION
-                   EXPRESSION OPERATOR EXPRESSION
+    EXPRESSION ::= NUMBER 
+                | GROUP
+                | DICE_EXPRESSION
+                | POOL_DEGEN_EXPRESSION
+                | EXPRESSION OPERATOR EXPRESSION
 
     MEMBER_DELIMITER ::= ,
     MEMBER ::= NUMBER | NUMBER MEMBER_DELIMITER MEMBER
-    POOL_OPEN ::= {
-    POOL_CLOSE ::= }
+    POOL_OPEN ::= [
+    POOL_CLOSE ::= ]
     POOL ::= POOL_OPEN MEMBER POOL_CLOSE
     
     POOL_GEN_OPERATOR ::= dp | g!
@@ -97,19 +100,55 @@ BNF)::
     
     POOL_OPERATOR ::= pa | pb | pc | pf | ph | pl | pr | p%
     POOL_GROUP ::= OPEN_GROUP POOL_EXPRESSION CLOSE_GROUP
-    POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION |
-                        POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION |
-                        POOL_GROUP POOL_OPERATOR EXPRESSION
+    POOL_EXPRESSION ::= POOL POOL_OPERATOR EXPRESSION
+                     | POOL_GEN_EXPRESSION POOL_OPERATOR EXPRESSION
+                     | POOL_GROUP POOL_OPERATOR EXPRESSION
 
     U_POOL_DEGEN_OPERATOR ::= C | N | S
     POOL_DEGEN_OPERATOR ::= ns | nb
-    POOL_DEGEN_EXPRESSION ::= U_POOL_DEGEN_OPERATOR POOL |
-                              U_POOL_DEGEN_OPERATOR POOL_EXPRESSION |
-                              POOL POOL_DEGEN_OPERATOR EXPRESSION |
-                              POOL_EXPRESSION POOL_DEGEN_OPERATOR EXPRESSION
+    POOL_DEGEN_EXPRESSION ::= U_POOL_DEGEN_OPERATOR POOL
+                           | U_POOL_DEGEN_OPERATOR POOL_EXPRESSION
+                           | POOL POOL_DEGEN_OPERATOR EXPRESSION
+                           | POOL_EXPRESSION POOL_DEGEN_OPERATOR EXPRESSION
+
+    QUALIFIER_DELIMITER ::= "
+    LETTER ::= [A-Za-z]
+    SPACE = " "
+    WORD ::= LETTER
+          | NUMBER
+          | WORD LETTER
+          | WORD NUMBER
+          | WORD SPACE
+          | WORD WORD
+    QUALIFIER ::= QUALIFIER_DELIMITER WORD QUALIFIER_DELIMITER
+
+    CH_OP :: = ?
+    CH_DELIM ::= :
+    CHOICE_EXPRESSION ::= EXPRESSION CH_OP QUALIFIER CH_DELIM QUALIFIER
+                       | POOL_EXPRESSION CH_OP QUALIFIER CH_DELIM QUALIFIER
+
+    MAP_OPEN ::= {
+    CLOSE_MAP ::= }
+    KEY ::= NUMBER | POOL | QUALIFIER
+    VALUE ::= NUMBER | POOL | QUALIFIER
+    KV_DELIMITER ::= :
+    KV_PAIR ::= KEY KV_DELIMITER VALUE
+    PAIR_DELIMETER ::= ,
+    MAP_NAME ::= QUALIFIER
+    NAME_DELIMITER ::= =
+    MAP_CONTENT :: = KV_PAIR | KV_PAIR PAIR_DELIMITER KV_PAIR
+    MAP ::= MAP_OPEN MAP_NAME NAME_DELIMITER MAP_CONTENT MAP_CLOSE
+    MAPPING_OPERATOR ::= m=
+    MAPPING_EXPRESSION ::= EXPRESSION MAPPING_OPERATOR MAP_NAME
+                        | POOL_EXPRESSION MAPPING_OPERATOR MAP_NAME
+                        | MAPPING_EXPRESSION MAPPING_OPERATOR MAP_NAME
 
     ROLL_DELIMITER ::= ;
-    ROLL ::= EXPRESSION | POOL_EXPRESSION | ROLL ROLL_DELIMITER ROLL
+    ROLL ::= EXPRESSION
+          | POOL_EXPRESSION
+          | CHOICE_EXPRESSION
+          | MAP
+          | ROLL ROLL_DELIMITER ROLL
     RESULT ::= NUMBER | POOL | RESULT ROLL_DELIMITER RESULT
 
 
@@ -145,8 +184,7 @@ x dp y (dice pool):
     all integers as the member of a pool. For example::
     
         n = 5dp10
-        n = {3, 4, 7, 10, 3}
-
+        n = [3, 4, 7, 10, 3]
 
 x g! y (exploding pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
@@ -154,14 +192,15 @@ x g! y (exploding pool):
     (see "exploding dice" above). For example.::
     
         n = 6g!6
-        n = {2, 6, 1, 1, 6, 3}
-        n = {2, 6+3, 1, 1, 6+6, 3}
-        n = {2, 6+3, 1, 1, 6+6+1, 3}
-        n = {2, 9, 1, 1, 13, 3}
+        n = [2, 6, 1, 1, 6, 3]
+        n = [2, 6+3, 1, 1, 6+6, 3]
+        n = [2, 6+3, 1, 1, 6+6+1, 3]
+        n = [2, 9, 1, 1, 13, 3]
 
 
 Pool Operators
 ==============
+
 .. note::
     The initial design of YADN used "roll operators" rather than
     "pool operators" that would act on any dice expression as a
@@ -179,40 +218,40 @@ P pa y (pool keep above):
     example::
     
         n = 5dp10 pa 7
-        n = {3, 1, 9, 7, 10} pa 7
-        n = { 9, 7, 10}
+        n = [3, 1, 9, 7, 10] pa 7
+        n = [ 9, 7, 10]
 
 P pb y (pool keep below):
     For a given pool P, remove all members with a value above y. For
     example::
     
         n = 5dp10 pb 7
-        n = {3, 1, 9, 7, 10} pa 7
-        n = {3, 1}
+        n = [3, 1, 9, 7, 10] pa 7
+        n = [3, 1]
 
 P pc y (pool cap):
     For a given pool P, limit the maximum value of each member in P
     to y. Values greater than y become y. For example::
     
         n = 5dp10 pc 7
-        n = {3, 1, 9, 7, 10} pc 7
-        n = {3, 1, 7, 7, 7}
+        n = [3, 1, 9, 7, 10] pc 7
+        n = [3, 1, 7, 7, 7]
 
 P pc y (pool floor):
     For a given pool P, limit the minimum value of each member in P
     to y. Values greater than y become y. For example::
     
         n = 5dp10 pf 7
-        n = {3, 1, 9, 7, 10} pf 7
-        n = {7, 7, 9, 7, 10}
+        n = [3, 1, 9, 7, 10] pf 7
+        n = [7, 7, 9, 7, 10]
 
 P ph y (pool keep high):
     For a given pool P, select the top y members with the highest
     values. Return those members as a pool. For example::
     
         n = 5dp10 ph 3
-        n = {3, 1, 9, 7, 10} ph 3
-        n = {9, 7, 10}
+        n = [3, 1, 9, 7, 10] ph 3
+        n = [9, 7, 10]
 
 P pl y (pool keep low):
     For a given pool P, select the top y members with the lowest
@@ -220,24 +259,24 @@ P pl y (pool keep low):
     For example::
     
         n = 5dp10 pl 3
-        n = {3, 1, 9, 7, 10} pl 3
-        n = {3, 1, 7}
+        n = [3, 1, 9, 7, 10] pl 3
+        n = [3, 1, 7]
 
 P pr y (pool remove):
     For a given pool P, remove all members with value y.
     For example::
     
         n = 5dp10 pr 7
-        n = {3, 1, 9, 7, 10} pr 7
-        n = {3, 1, 9, 10}
+        n = [3, 1, 9, 7, 10] pr 7
+        n = [3, 1, 9, 10]
 
 P p% y (pool modulo):
     For a given pool P, perform a modulo y operation on each member
     (M % y). For example::
     
         n = 5dp10 pr 7
-        n = {3, 1, 9, 7, 10} pz 10
-        n = {3, 1, 9, 0}
+        n = [3, 1, 9, 7, 10] pz 10
+        n = [3, 1, 9, 0]
 
 
 Pool Degeneration Operators
@@ -250,7 +289,7 @@ P ns y (count successes):
     than or equal to y. Return that count. For example::
     
         n = 5dp10 ps 7
-        n = {3, 1, 9, 7, 10} ps 7
+        n = [3, 1, 9, 7, 10] ps 7
         n = 3
 
 P nb y (count successes and botches):
@@ -259,9 +298,9 @@ P nb y (count successes and botches):
     a value of one. Return the difference between a and b. For example::
     
         n = 5dp10 pb 7
-        n = {3, 1, 9, 7, 10} pb 7
-        n = N {3, 1, 9, 7, 10} pa 7 - N {3, 1, 9, 7, 10} pb 1
-        n = N {9, 7, 10} - N {1}
+        n = [3, 1, 9, 7, 10] pb 7
+        n = N [3, 1, 9, 7, 10] pa 7 - N [3, 1, 9, 7, 10] pb 1
+        n = N [9, 7, 10] - N [1]
         n = 3 - 1
         n = 2
 
@@ -269,14 +308,14 @@ C P (pool concatenate):
     For a given pool P, concatenate the digits of each member. For example::
     
         n = C 5dp10
-        n = C {3, 1, 9, 7, 10}
+        n = C [3, 1, 9, 7, 10]
         n = 319710
 
 N P (pool count):
     For a given pool P, return the number of members in P. For example::
     
         n = N 5dp10
-        n = N {3, 1, 9, 7, 10}
+        n = N [3, 1, 9, 7, 10]
         n = 5
 
 S P (pool sum):
@@ -284,7 +323,7 @@ S P (pool sum):
     that sum. For example::
     
         n = S 5dp10
-        n = S {3, 1, 9, 7, 10}
+        n = S [3, 1, 9, 7, 10]
         n = 30
 
 
@@ -301,7 +340,7 @@ x d y (dice sum):
     of the same dice. For example::
     
         n = 1d20
-        n = S{11}
+        n = S[11]
         n = 11
 
 x dc y (concat):
@@ -310,8 +349,8 @@ x dc y (concat):
     example::
     
         n = 2dc20
-        n = C {3, 17} p% 10
-        n = C {3, 7}
+        n = C [3, 17] p% 10
+        n = C [3, 7]
         n = 37
 
 x d! y (exploding dice):
@@ -320,11 +359,11 @@ x d! y (exploding dice):
     from explosions also explode if they equal y. For example::
     
         n = 6d!4
-        n = S{1, 4, 3, 4, 4, 1}
-        n = S{1, 4+1, 3, 4+4, 4+2, 1}
-        n = S{1, 4+1, 3, 4+4+4, 4+2, 1}
-        n = S{1, 4+1, 3, 4+4+4+1, 4+2, 1}
-        n = S{1, 5, 3, 13, 6, 1}
+        n = S[1, 4, 3, 4, 4, 1]
+        n = S[1, 4+1, 3, 4+4, 4+2, 1]
+        n = S[1, 4+1, 3, 4+4+4, 4+2, 1]
+        n = S[1, 4+1, 3, 4+4+4+1, 4+2, 1]
+        n = S[1, 5, 3, 13, 6, 1]
         n = 29
 
 x dh y (keep high die):
@@ -332,8 +371,8 @@ x dh y (keep high die):
     the integer with the highest value. For example::
     
         n = 2dh20
-        n = S({1, 17} ph 1)
-        n = S{17}
+        n = S([1, 17] ph 1)
+        n = S[17]
         n = 17
 
 x dl y (keep low die):
@@ -341,8 +380,8 @@ x dl y (keep low die):
     the integer with the lowest value. For example::
     
         n = 2dl20
-        n = S({1, 17} pl 1)
-        n = S{1}
+        n = S([1, 17] pl 1)
+        n = S[1]
         n = 1
 
 x dw y (wild die):
@@ -353,7 +392,7 @@ x dw y (wild die):
     the two pools. For example::
     
         n = 4dw6
-        n = S{3} + S{5, 1, 6}
+        n = S[3] + S[5, 1, 6]
         n = 3 + 12
         n = 15
     
@@ -361,8 +400,8 @@ x dw y (wild die):
     dice" above).::
     
         n = 4dw6
-        n = S{6} + S{5, 1, 6}
-        n = S{6+3} + S{5, 1, 6}
+        n = S[6] + S[5, 1, 6]
+        n = S[6+3] + S[5, 1, 6]
         n = 9 + 12
         n = 21
     
@@ -371,8 +410,79 @@ x dw y (wild die):
     results than YADN can currently handle).::
     
         n = 4dw6
-        n = S{1} + S{5, 1, 6}
+        n = S[1] + S[5, 1, 6]
         n = 0
+
+
+Qualifiers
+==========
+It is common for dice systems to turn a quantitative result generated
+by the dice into a qualitative result. A common example of this is the
+"critical hit" system in later editions of *Dungeons and Dragons:* in
+most cases the `1d20` roll used for an attack just returns the rolled
+number, but if the roll is a twenty it's a "critical hit," which
+has additional effects beyond the twenty.
+
+In YADN,  this addition information is returned as "qualifiers." A
+simple example of this can be seen with the "sum success" pool
+degeneration operator::
+
+    n = 6g6 ss 20
+    n = S 6g6 >= 20 ? "success" : "failure"
+    n = S [3, 2, 6, 6, 1, 3] >= 20 ? "success" : "failure"
+    n = 21 >= 20 ? "success" : "failure"
+    n = "success"
+
+.. note:
+    Qualifiers are currently limited to the alphabetical characters
+    permitted in 7-bit ASCII and digits. There is no reason this has
+    to be the case. Other than the quotation mark character, the full
+    unicode range should work, though it may make sense to limit it
+    to printable characters to avoid surprises. The limitation is
+    just because I'm not sure how to represent that many characters
+    in the notation while excluding one.
+
+
+Result Maps
+===========
+Maps are key-value pairs that can be used to substitute a mapped
+value onto a roll result. For example, a mapping of the "ability die"
+from *Star Wars: Edge of the Empire* would look like::
+
+    {"ability" = 1: "blank"",
+                 2: "success",
+                 3: "success",
+                 4: "success success",
+                 5: "advantage",
+                 6: "advantage",
+                 7: "success advantage",
+                 8: "advantage advantage"}
+
+A result map cannot be part of an expression. Instead it is passed in a
+separate roll before the role where it will be used. The map is then
+stored in memory by its name, so that it can be referenced in a later
+roll through a "mapping operator".
+
+.. note:
+    Manually entering a result map for every roll expression is
+    a tedious way to role dice. Interpretors implementing YADN
+    may include pre-built maps for common dice systems for users
+    to reference.
+
+
+Mapping Operators
+=================
+Mapping operators map roll results onto result maps. They are defined
+as:
+
+R m= M:
+    For a given result R, return the value for key R from result
+    map M. For example::
+    
+        n = {"fudge" = 1:-1,2:0,3:1}; S(2g3 m= "fudge")
+        n = {"fudge" = 1:-1,2:0,3:1}; S([2, 1] m= "fudge")
+        n = S[0, -1]
+        n = -1
 
 
 Example Usage
@@ -383,7 +493,7 @@ dice rolls in various game systems.
 *Dungeons and Dragons:* An attack roll with a plus three modifier::
 
     n = 1d20+3
-    n = S{4}+3
+    n = S[4]+3
     n = 4+3
     n = 7
 
@@ -391,15 +501,15 @@ dice rolls in various game systems.
 dice and dropping the lowest::
 
     n = 4dl6
-    n = S{5, 1, 6, 6}
-    n = S{5, 6, 6}
+    n = S[5, 1, 6, 6]
+    n = S[5, 6, 6]
     n = 17
 
 *Dungeons and Dragons:* A damage roll with a long sword, an extra
 six-sided die of damage, and a plus five modifier::
 
     n = 1d8 + 1d6 + 5
-    n = S{3} + S{1} + 5
+    n = S[3] + S[1] + 5
     n = 3 + 1 + 5
     n = 9
 
@@ -407,23 +517,23 @@ six-sided die of damage, and a plus five modifier::
 of ten-sided dice::
 
     n = 2dc20
-    n = C {13, 9} p% 10
-    n = C {3, 9}
+    n = C [13, 9] p% 10
+    n = C [3, 9]
     n = 39
 
 *West End's Star Wars: the Roleplaying Game, Second Edition:* An attack
 roll with a *Blaster* skill of "5D+2"::
 
     n = 5dw6 + 2
-    n = S{1} + S{2, 5, 1, 6} + 2
+    n = S[1] + S[2, 5, 1, 6] + 2
     n = 0
 
 *Mage: the Ascension:* A five dot roll with a success value of six::
 
     n = 5g10 nb 6
-    n = {10, 2, 6, 1, 8} nb 6
-    n = N {10, 1, 1, 1, 8} pa 6 - N {10, 1, 1, 1, 8} pb 1
-    n = N {10, 8} - N {1, 1, 1}
+    n = [10, 2, 6, 1, 8] nb 6
+    n = N [10, 1, 1, 1, 8] pa 6 - N [10, 1, 1, 1, 8] pb 1
+    n = N [10, 8] - N [1, 1, 1]
     n = 2 - 3
     n = -1
 
@@ -431,7 +541,7 @@ roll with a *Blaster* skill of "5D+2"::
 hunger dice::
 
     n = 2g10; 5g10
-    n = {6, 10}; {3, 10, 1, 7, 7}
+    n = [6, 10]; [3, 10, 1, 7, 7]
 
 .. note:
     YADN cannot handle counting values across multiple pools or returning
@@ -444,29 +554,22 @@ hunger dice::
 *Fate:* A roll with a skill rated as "Good."::
 
     n = (2d3 - 4) + 3
-    n = (S{1, 3} - 4) + 3
+    n = (S[1, 3] - 4) + 3
     n = (4 - 4) + 3
     n = 0 + 3
     n = 3
 
 .. note:
-    YADN cannot currently handle mapping results to words. In the Fate
-    system, the 3 here would mean "good," but doing that translation is
-    up to the humans to figure out for now. But, result mapping may be
-    added as a feature in the future.
+    Result mapping now exists in YADN. This example needs to be
+    expanded to include it.
 
 *Star Wars: Edge of the Empire:* Slicing with a Computers of three and
 Intellect of two while under heavy fire and having a broken wrist but
 having a fragment of the terminal's passcode algorithms::
 
     n = 1p8; 2g12; 2g6; 1g6
-    n = {4}; {3, 9}; {6, 6}; {2}
+    n = [4]; [3, 9]; [6, 6]; [2]
 
 .. note:
-    The Star Wars: Edge of the Empire system requires mapping the
-    values of pool members onto a table of symbols with specific
-    meanings. There are multiple types of symbols on each dies,
-    so it's not a straight forward success check. The best YADN can
-    do at the moment is return the pool results and let the humans
-    cross-reference against the table on page 12 in the Core
-    Rulebook.
+    Result mapping now exists in YADN. This example needs to be
+    expanded to include it.
