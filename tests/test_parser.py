@@ -312,6 +312,15 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test qualifiers.
+    def test_qualifier(self):
+        """Return a qualifier."""
+        exp = 'spam'
+        tokens = (
+            (Token.QUALIFIER, 'spam'),
+        )
+        self.parser_test(exp, tokens)
+
     @patch('random.randint')
     # Test rolls and results.
     def test_roll_delimiter(self, mock_randint):

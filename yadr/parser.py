@@ -71,7 +71,7 @@ class Tree:
         return f'{name}(kind={self.kind}, value={self.value})'
 
     def compute(self):
-        if self.kind in [Token.NUMBER, Token.POOL]:
+        if self.kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
             return self.value
         left = self.left.compute()
         right = self.right.compute()
@@ -170,7 +170,7 @@ def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
 # Parsing rules.
 def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
-    if trees[-1].kind in [Token.NUMBER, Token.POOL]:
+    if trees[-1].kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
         return trees.pop()
     if trees[-1].kind == Token.GROUP_OPEN:
         _ = trees.pop()
