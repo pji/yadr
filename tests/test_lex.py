@@ -25,7 +25,7 @@ class LexTestCase(ut.TestCase):
             lex.Token.POOL,
             (5, 1, 9),
         ),)
-        data = '{5,1,9}'
+        data = '[5,1,9]'
         self.lex_test(exp, data)
 
     def test_pool_with_whitespace(self):
@@ -34,7 +34,7 @@ class LexTestCase(ut.TestCase):
             lex.Token.POOL,
             (5, 1, 9),
         ),)
-        data = '{ 5 , 1 , 9 }'
+        data = '[ 5 , 1 , 9 ]'
         self.lex_test(exp, data)
 
     # Operators.
@@ -218,7 +218,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pa'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}pa2'
+        data = '[5,1,9]pa2'
         self.lex_test(exp, data)
 
     def test_basic_pool_keep_below(self):
@@ -230,7 +230,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pb'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}pb2'
+        data = '[5,1,9]pb2'
         self.lex_test(exp, data)
 
     def test_basic_pool_cap(self):
@@ -240,7 +240,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pc'),
             (lex.Token.NUMBER, 7),
         )
-        data = '{5,1,9}pc7'
+        data = '[5,1,9]pc7'
         self.lex_test(exp, data)
 
     def test_basic_pool_floor(self):
@@ -250,7 +250,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pf'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}pf2'
+        data = '[5,1,9]pf2'
         self.lex_test(exp, data)
 
     def test_basic_pool_keep_high(self):
@@ -260,7 +260,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'ph'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}ph2'
+        data = '[5,1,9]ph2'
         self.lex_test(exp, data)
 
     def test_basic_pool_keep_low(self):
@@ -270,7 +270,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pl'),
             (lex.Token.NUMBER, 2),
         )
-        data = '{5,1,9}pl2'
+        data = '[5,1,9]pl2'
         self.lex_test(exp, data)
 
     def test_basic_pool_modulo(self):
@@ -282,7 +282,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'p%'),
             (lex.Token.NUMBER, 5),
         )
-        data = '{5,1,9}p%5'
+        data = '[5,1,9]p%5'
         self.lex_test(exp, data)
 
     def test_basic_pool_remove(self):
@@ -294,7 +294,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_OPERATOR, 'pr'),
             (lex.Token.NUMBER, 5),
         )
-        data = '{5,1,9}pr5'
+        data = '[5,1,9]pr5'
         self.lex_test(exp, data)
 
     # Unary pool degeneration operator.
@@ -306,7 +306,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'C'),
             (lex.Token.POOL, (3, 1, 7))
         )
-        data = 'C{3,1,7}'
+        data = 'C[3,1,7]'
         self.lex_test(exp, data)
 
     def test_basic_pool_count(self):
@@ -317,7 +317,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
             (lex.Token.POOL, (3, 1, 7))
         )
-        data = 'N{3,1,7}'
+        data = 'N[3,1,7]'
         self.lex_test(exp, data)
 
     def test_basic_pool_count_with_space(self):
@@ -328,7 +328,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
             (lex.Token.POOL, (3, 1, 7))
         )
-        data = 'N {3,1,7}'
+        data = 'N [3,1,7]'
         self.lex_test(exp, data)
 
     def test_basic_pool_sum(self):
@@ -339,7 +339,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (lex.Token.POOL, (3, 1, 7))
         )
-        data = 'S{3,1,7}'
+        data = 'S[3,1,7]'
         self.lex_test(exp, data)
 
     # Binary pool degeneration operator.
@@ -352,7 +352,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
             (lex.Token.NUMBER, 5),
         )
-        data = '{5,1,9}ns5'
+        data = '[5,1,9]ns5'
         self.lex_test(exp, data)
 
     def test_basic_count_successes_with_botch(self):
@@ -364,7 +364,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL_DEGEN_OPERATOR, 'nb'),
             (lex.Token.NUMBER, 5),
         )
-        data = '{5,1,9}nb5'
+        data = '[5,1,9]nb5'
         self.lex_test(exp, data)
 
     def test_count_successes_before_group(self):
@@ -378,7 +378,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.NUMBER, 2),
             (lex.Token.GROUP_CLOSE, ')'),
         )
-        data = '{5,1,9}ns(3+2)'
+        data = '[5,1,9]ns(3+2)'
         self.lex_test(exp, data)
 
     def test_count_successes_before_unary_pool_degen(self):
@@ -389,7 +389,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'N'),
             (lex.Token.POOL, (5, 1, 9)),
         )
-        data = '{5,1,9}nsN{5,1,9}'
+        data = '[5,1,9]nsN[5,1,9]'
         self.lex_test(exp, data)
 
     def test_count_successes_before_operator(self):
@@ -399,7 +399,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '\\+ cannot follow a pool degeneration operator.'
 
         # Test data and state.
-        data = '{5,1,9}ns+'
+        data = '[5,1,9]ns+'
         lexer = lex.Lexer()
 
         # Run test and determine results.
@@ -499,7 +499,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
         )
-        data = '{1, 2, 3};5d10'
+        data = '[1, 2, 3];5d10'
         self.lex_test(exp, data)
 
     # Order of operations.
@@ -727,7 +727,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '4 cannot follow a pool.'
 
         # Test data and state.
-        data = '{1,2,3}4'
+        data = '[1,2,3]4'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -741,7 +741,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '4 cannot follow a pool.'
 
         # Test data and state.
-        data = '{1,2,3} 4'
+        data = '[1,2,3] 4'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -811,7 +811,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '\\+ cannot follow a pool degeneration operator.'
 
         # Test data and state.
-        data = '{1,2,3}ns+2'
+        data = '[1,2,3]ns+2'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -825,7 +825,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '\\+ cannot follow a pool degeneration operator.'
 
         # Test data and state.
-        data = '{1,2,3}ns +2'
+        data = '[1,2,3]ns +2'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -839,7 +839,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '\\+ cannot follow a pool operator.'
 
         # Test data and state.
-        data = '{1,2,3}ph+2'
+        data = '[1,2,3]ph+2'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -853,7 +853,7 @@ class LexTestCase(ut.TestCase):
         exp_msg = '\\+ cannot follow a pool operator.'
 
         # Test data and state.
-        data = '{1,2,3}ph +2'
+        data = '[1,2,3]ph +2'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -920,10 +920,10 @@ class LexTestCase(ut.TestCase):
         """A pool cannot follow a operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\{ cannot follow an operator.'
+        exp_msg = '\\[ cannot follow an operator.'
 
         # Test data and state.
-        data = '3+{2,3}'
+        data = '3+[2,3]'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -934,10 +934,10 @@ class LexTestCase(ut.TestCase):
         """A pool cannot follow a operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\{ cannot follow an operator.'
+        exp_msg = '\\[ cannot follow an operator.'
 
         # Test data and state.
-        data = '3+ {2,3}'
+        data = '3+ [2,3]'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
@@ -952,7 +952,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL, (1, 2, 3)),
             (lex.Token.GROUP_CLOSE, ')'),
         )
-        data = '(S{1,2,3})'
+        data = '(S[1,2,3])'
         self.lex_test(exp, data)
 
     def test_unary_pool_degen_can_follow_group_open_whitespace(self):
@@ -963,7 +963,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.POOL, (1, 2, 3)),
             (lex.Token.GROUP_CLOSE, ')'),
         )
-        data = '( S{1,2,3})'
+        data = '( S[1,2,3])'
         self.lex_test(exp, data)
 
     def test_unary_pool_degen_can_follow_operator(self):
@@ -976,7 +976,7 @@ class LexTestCase(ut.TestCase):
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (lex.Token.POOL, (2, 3, 4)),
         )
-        data = '200-S{2,3,4}'
+        data = '200-S[2,3,4]'
         self.lex_test(exp, data)
 
 

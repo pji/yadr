@@ -344,9 +344,9 @@ class PoolLexer:
     def _member(self, char: Char) -> None:
         """Lex a member."""
         new_state = None
-        if char == ',':
+        if char.is_member_delim():
             new_state = Token.MEMBER_DELIMITER
-        elif char == '}':
+        elif char.is_pool_close():
             new_state = Token.POOL_CLOSE
         elif char.isdigit():
             self.buffer += char
@@ -387,7 +387,7 @@ class PoolLexer:
 
     def _start(self, char: Char) -> None:
         """Start lexing the string."""
-        if char == '{':
+        if char.is_pool_open():
             new_state = Token.POOL_OPEN
         else:
             msg = f'{char} cannot start a pool.'
@@ -397,11 +397,11 @@ class PoolLexer:
     def _whitespace(self, char: Char) -> None:
         """Processing whitespace."""
         new_state = None
-        if char.isdigit() or char == '-':
+        if char.isdigit() or char.is_negative_sign():
             new_state = Token.MEMBER
-        elif char == ',':
+        elif char.is_member_delim():
             new_state = Token.MEMBER_DELIMITER
-        elif char == '}':
+        elif char.is_pool_close():
             new_state = Token.POOL_CLOSE
         else:
             msg = f'{char} cannot follow white space.'
