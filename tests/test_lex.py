@@ -279,25 +279,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
             _ = lexer.lex(data)
 
 
-class IdentityTestCase(BasicOperatorTestCase):
-    def test_pool(self):
-        """A pool of dice."""
-        exp = ((
-            lex.Token.POOL,
-            (5, 1, 9),
-        ),)
-        data = '[5,1,9]'
-        self.lex_test(exp, data)
-
-    def test_pool_with_whitespace(self):
-        """A pool of dice that has whitespace."""
-        exp = ((
-            lex.Token.POOL,
-            (5, 1, 9),
-        ),)
-        data = '[ 5 , 1 , 9 ]'
-        self.lex_test(exp, data)
-
+class NumberTestCase(BasicOperatorTestCase):
     # Allowed next symbol.
     def test_group_cannot_follow_number(self):
         """Groups cannot follow numbers."""
@@ -752,6 +734,24 @@ class PoolOperatorTestCase(BasicOperatorTestCase):
 
 
 class PoolTestCase(BasicOperatorTestCase):
+    def test_pool(self):
+        """A pool of dice."""
+        exp = ((
+            lex.Token.POOL,
+            (5, 1, 9),
+        ),)
+        data = '[5,1,9]'
+        self.lex_test(exp, data)
+
+    def test_pool_with_whitespace(self):
+        """A pool of dice that has whitespace."""
+        exp = ((
+            lex.Token.POOL,
+            (5, 1, 9),
+        ),)
+        data = '[ 5 , 1 , 9 ]'
+        self.lex_test(exp, data)
+
     # Allowed next symbol.
     def test_number_cannot_follow_pool(self):
         """Numbers cannot follow numbers."""
@@ -780,6 +780,18 @@ class PoolTestCase(BasicOperatorTestCase):
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = lexer.lex(data)
+
+
+class QualifierTestCase(BasicOperatorTestCase):
+    def test_quotation_marks(self):
+        """Given a statement containing quotation marks, return the
+        tokenized equation.
+        """
+        exp = (
+            (lex.Token.QUALIFIER, 'spam'),
+        )
+        data = '"spam"'
+        self.lex_test(exp, data)
 
 
 class ResultsRollTestCase(BasicOperatorTestCase):

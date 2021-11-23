@@ -43,7 +43,9 @@ class Lexer:
             Token.POOL_DEGEN_OPERATOR: self._pool_degen_operator,
             Token.ROLL_DELIMITER: self._roll_delimiter,
             Token.WHITESPACE: self._whitespace,
-            Token.END: self._start
+            Token.QUALIFIER: self._qualifier,
+            Token.QUALIFIER_CLOSE: self._qualifier_close,
+            Token.END: self._start,
         }
         self.process = self._start
 
@@ -62,7 +64,10 @@ class Lexer:
                       char: Char) -> None:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
-        if self.state not in [Token.WHITESPACE, Token.START, Token.POOL_END]:
+        if self.state not in [Token.WHITESPACE,
+                              Token.START,
+                              Token.POOL_END,
+                              Token.QUALIFIER_CLOSE]:
             value: Char | int | tuple[int, ...] = self.buffer
             if self.state == Token.NUMBER and isinstance(value, Char):
                 value = int(value)
@@ -221,6 +226,22 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
+    def _qualifier(self, char: Char) -> None:
+        """Processing a qualifier."""
+        if self.buffer[0].is_qualifier_delim():
+            self.buffer = self.buffer[1:]
+        new_state: Optional[Token] = None
+        if char.still_qualifier():
+            self.buffer += char
+        elif char.is_qualifier_delim():
+            new_state = Token.QUALIFIER_CLOSE
+        if new_state:
+            self._change_state(new_state, char)
+
+    def _qualifier_close(self, char: Char) -> None:
+        """Process after a qualifier."""
+        raise NotImplementedError
+
     def _u_pool_degen_operator(self, char: Char) -> None:
         """Processing a unary pool degeneration operator."""
         if char.isdigit() or char.is_negative_sign():
@@ -270,7 +291,9 @@ class Lexer:
 
     def _roll_delimiter(self, char: Char) -> None:
         """Lex roll delimiters."""
-        if char.isdigit() or char.is_negative_sign():
+        if char.isdigit():
+            new_state = Token.NUMBER
+        elif char.is_negative_sign():
             new_state = Token.NUMBER
         elif char.is_group_open():
             new_state = Token.GROUP_OPEN
@@ -278,6 +301,8 @@ class Lexer:
             new_state = Token.POOL
         elif char.is_u_pool_degen_op():
             new_state = Token.U_POOL_DEGEN_OPERATOR
+        elif char.is_qualifier_delim():
+            new_state = Token.QUALIFIER
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:

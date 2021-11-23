@@ -8,16 +8,8 @@ from collections import UserString
 from enum import Enum
 from typing import Generic, NamedTuple, Sequence, Tuple, TypeVar
 
+
 # Common data.
-OPERATORS = '+ - * / ^'.split()
-DICE_OPERATORS = 'd d! dc dh dl dw'.split()
-POOL_GEN_OPERATORS = 'g g!'.split()
-POOL_OPERATORS = 'p pa pb pc pf ph pl pr p%'.split()
-U_POOL_DEGEN_OPERATORS = 'C N S'.split()
-POOL_DEGEN_OPERATORS = 'nb ns'.split()
-ROLL_DELIMITER = ';'
-
-
 class Token(Enum):
     START = 0
     WHITESPACE = 1
@@ -38,7 +30,10 @@ class Token(Enum):
     POOL_END = 16
     ROLL_DELIMITER = 17
     NEGATIVE_SIGN = 18
-    END = 19
+    QUALIFIER_DELIMITER = 19
+    QUALIFIER = 20
+    QUALIFIER_CLOSE = 21
+    END = 22
 
 
 class Char(UserString):
@@ -57,8 +52,10 @@ class Char(UserString):
         Token.POOL_DEGEN_OPERATOR: 'nb ns'.split(),
         Token.ROLL_DELIMITER: ';',
         Token.NEGATIVE_SIGN: '-',
+        Token.QUALIFIER_DELIMITER: '"',
     }
 
+    # Change state tests.
     def is_dice_op(self) -> bool:
         return self.data in self.tokens[Token.DICE_OPERATOR]
 
@@ -71,14 +68,17 @@ class Char(UserString):
     def is_member_delim(self) -> bool:
         return self.data in self.tokens[Token.MEMBER_DELIMITER]
 
+    def is_negative_sign(self) -> bool:
+        return self.data in self.tokens[Token.NEGATIVE_SIGN]
+
     def is_operator(self) -> bool:
         return self.data in self.tokens[Token.OPERATOR]
 
-    def is_pool_open(self) -> bool:
-        return self.data in self.tokens[Token.POOL_OPEN]
-
     def is_pool_close(self) -> bool:
         return self.data in self.tokens[Token.POOL_CLOSE]
+
+    def is_pool_degen_op(self) -> bool:
+        return self.data in self.tokens[Token.POOL_DEGEN_OPERATOR]
 
     def is_pool_gen_op(self) -> bool:
         return self.data in self.tokens[Token.POOL_GEN_OPERATOR]
@@ -86,18 +86,19 @@ class Char(UserString):
     def is_pool_op(self) -> bool:
         return self.data in self.tokens[Token.POOL_OPERATOR]
 
-    def is_u_pool_degen_op(self) -> bool:
-        return self.data in self.tokens[Token.U_POOL_DEGEN_OPERATOR]
+    def is_pool_open(self) -> bool:
+        return self.data in self.tokens[Token.POOL_OPEN]
 
-    def is_pool_degen_op(self) -> bool:
-        return self.data in self.tokens[Token.POOL_DEGEN_OPERATOR]
+    def is_qualifier_delim(self) -> bool:
+        return self.data in self.tokens[Token.QUALIFIER_DELIMITER]
 
     def is_roll_delim(self) -> bool:
         return self.data in self.tokens[Token.ROLL_DELIMITER]
 
-    def is_negative_sign(self) -> bool:
-        return self.data in self.tokens[Token.NEGATIVE_SIGN]
+    def is_u_pool_degen_op(self) -> bool:
+        return self.data in self.tokens[Token.U_POOL_DEGEN_OPERATOR]
 
+    # Maintain state tests.
     def still_dice_op(self) -> bool:
         valid = [s[1] for s in self.tokens[Token.DICE_OPERATOR][1:]]
         return self.data in valid
@@ -113,6 +114,11 @@ class Char(UserString):
     def still_pool_gen_op(self) -> bool:
         valid = [s[1] for s in self.tokens[Token.POOL_GEN_OPERATOR][1:]]
         return self.data in valid
+
+    def still_qualifier(self) -> bool:
+        return (self.data.isalpha()
+                or self.data.isdigit()
+                or self.data.isspace())
 
 
 # Types.
