@@ -574,6 +574,18 @@ class OperatorTestCase(BasicOperatorTestCase):
         data = '20^10'
         self.lex_test(exp, data)
 
+    def test_basic_modulo(self):
+        """Given a basic modulo equation, return the tokens
+        that represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 2),
+            (lex.Token.MD_OPERATOR, '%'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '2%10'
+        self.lex_test(exp, data)
+
     def test_basic_multiplication(self):
         """Given a basic multiplication equation, return the tokens
         that represent the equation.

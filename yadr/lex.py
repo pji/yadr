@@ -136,7 +136,7 @@ class Lexer:
         if char.is_operator():
             new_state = Token.OPERATOR
         elif char.is_as_op():
-            new_state = Token.AD_OPERATOR
+            new_state = Token.AS_OPERATOR
         elif char.is_md_op():
             new_state = Token.MD_OPERATOR
         elif char.is_dice_op():

@@ -72,7 +72,7 @@ class Char(UserString):
         Token.GROUP_CLOSE: ')',
         Token.MEMBER_DELIMITER: ',',
         Token.AS_OPERATOR: '+-',
-        Token.MD_OPERATOR: '*/',
+        Token.MD_OPERATOR: '*/%',
         Token.OPERATOR: '^',
         Token.DICE_OPERATOR: 'd d! dc dh dl dw'.split(),
         Token.POOL_OPEN: '[',

@@ -60,6 +60,16 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    def test_modulo(self):
+        "Perform basic modulo."
+        exp = 1
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.MD_OPERATOR, '%'),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
     def test_multiplication(self):
         "Perform basic multiplication."
         exp = 6
