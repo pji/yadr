@@ -43,14 +43,15 @@ class BooleanTestCase(BasicOperatorTestCase):
         self.lex_test(exp, data)
 
 
-@ut.skip
 class ChoiceTestCase(BasicOperatorTestCase):
     def test_choice(self):
         """Lex a choice operator."""
         exp = (
             (lex.Token.BOOLEAN, True),
             (lex.Token.CHOICE_OPERATOR, '?'),
-            (lex.Token.CHOICE_OPTIONS, ('spam', 'eggs')),
+            (lex.Token.QUALIFIER, 'spam'),
+            (lex.Token.OPTIONS_OPERATOR, ':'),
+            (lex.Token.QUALIFIER, 'eggs'),
         )
         data = 'T?"spam":"eggs"'
         self.lex_test(exp, data)

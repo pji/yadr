@@ -80,6 +80,15 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test booleans.
+    def test_boolean(self):
+        """Parse a boolean."""
+        exp = True
+        tokens = (
+            (Token.BOOLEAN, True),
+        )
+        self.parser_test(exp, tokens)
+
     # Test comparison operators.
     def test_greater_than(self):
         """Perform greater than comparison."""

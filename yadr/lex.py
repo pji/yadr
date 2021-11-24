@@ -48,6 +48,7 @@ class Lexer:
             Token.OPTIONS_OPERATOR: self._options_operator,
             Token.COMPARISON_OPERATOR: self._comparison_operator,
             Token.BOOLEAN: self._boolean,
+            Token.CHOICE_OPERATOR: self._choice_operator,
             Token.END: self._start,
         }
         self.process = self._start
@@ -97,7 +98,21 @@ class Lexer:
     # Lexing rules.
     def _boolean(self, char: Char) -> None:
         """Processing a boolean."""
-        raise NotImplementedError
+        if char.is_choice_op():
+            new_state = Token.CHOICE_OPERATOR
+        else:
+            msg = f'{char} cannot follow a boolean.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
+
+    def _choice_operator(self, char: Char) -> None:
+        """Processing a choice operator."""
+        if char.is_qualifier_delim():
+            new_state = Token.QUALIFIER
+        else:
+            msg = '{char} cannot follow a choice operator.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
 
     def _close_group(self, char: Char) -> None:
         """Processing a close group token."""

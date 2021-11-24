@@ -36,7 +36,9 @@ class Token(Enum):
     OPTIONS_OPERATOR = 22
     COMPARISON_OPERATOR = 23
     BOOLEAN = 24
-    END = 25
+    CHOICE_OPERATOR = 25
+    CHOICE_OPTIONS = 26
+    END = 27
 
 
 op_tokens = (
@@ -48,6 +50,12 @@ op_tokens = (
     Token.U_POOL_DEGEN_OPERATOR,
     Token.OPTIONS_OPERATOR,
     Token.OPERATOR,
+)
+id_tokens = (
+    Token.BOOLEAN,
+    Token.NUMBER,
+    Token.POOL,
+    Token.QUALIFIER,
 )
 
 
@@ -72,12 +80,16 @@ class Char(UserString):
         Token.OPTIONS_OPERATOR: ':',
         Token.COMPARISON_OPERATOR: '< > >= <= != =='.split(),
         Token.BOOLEAN: 'T F'.split(),
+        Token.CHOICE_OPERATOR: '?',
     }
 
     # Change state tests.
     def is_boolean(self) -> bool:
         valid_char = {op[0] for op in self.tokens[Token.BOOLEAN]}
         return self.data in valid_char
+
+    def is_choice_op(self) -> bool:
+        return self.data == self.tokens[Token.CHOICE_OPERATOR]
 
     def is_comparison_op(self) -> bool:
         valid_char = {op[0] for op in self.tokens[Token.COMPARISON_OPERATOR]}
@@ -94,6 +106,9 @@ class Char(UserString):
 
     def is_member_delim(self) -> bool:
         return self.data in self.tokens[Token.MEMBER_DELIMITER]
+
+    def is_number(self) -> bool:
+        return self.data.isdigit() or self.is_negative_sign()
 
     def is_negative_sign(self) -> bool:
         return self.data in self.tokens[Token.NEGATIVE_SIGN]

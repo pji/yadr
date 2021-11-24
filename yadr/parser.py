@@ -9,7 +9,14 @@ import operator
 from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
-from yadr.model import CompoundResult, Result, Token, TokenInfo, op_tokens
+from yadr.model import (
+    CompoundResult,
+    Result,
+    Token,
+    TokenInfo,
+    op_tokens,
+    id_tokens
+)
 
 
 # Utility classes and functions.
@@ -30,7 +37,7 @@ class Tree:
         return f'{name}(kind={self.kind}, value={self.value})'
 
     def compute(self):
-        if self.kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
+        if self.kind in id_tokens:
             return self.value
         left = self.left.compute()
         right = self.right.compute()
@@ -53,7 +60,7 @@ class Unary(Tree):
         self.child = child
 
     def compute(self):
-        if self.kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
+        if self.kind in id_tokens:
             return self.value
         child = self.child.compute()
         if self.kind in op_tokens:
@@ -114,7 +121,7 @@ def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
 def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
     kind = trees[-1].kind
-    if kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
+    if kind in id_tokens:
         return trees.pop()
     elif kind == Token.GROUP_OPEN:
         _ = trees.pop()
