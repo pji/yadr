@@ -194,6 +194,9 @@ def _explode(value: int, size: int) -> int:
 
 # Registration.
 ops_by_symbol = {
+    # Choice operator.
+    '?': choice,
+
     # Comparison operators.
     '>': operator.gt,
     '<': operator.le,

@@ -270,6 +270,20 @@ def options_op(next_rule: Callable,
     return left
 
 
+@next_rule(options_op)
+def choice_op(next_rule: Callable,
+              left: Tree,
+              trees: list[Tree]):
+    """Parse options operator."""
+    while (trees
+           and trees[-1].kind == Token.CHOICE_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
 # Set the last rule in order of operations to make it a little easier
 # to update as new operations are added.
-last_rule = options_op
+last_rule = choice_op

@@ -42,6 +42,7 @@ class Token(Enum):
 
 
 op_tokens = (
+    Token.CHOICE_OPERATOR,
     Token.COMPARISON_OPERATOR,
     Token.DICE_OPERATOR,
     Token.POOL_GEN_OPERATOR,

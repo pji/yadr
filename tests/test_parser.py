@@ -89,6 +89,19 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test choice operator.
+    def test_choice(self):
+        """Perform choice operation."""
+        exp = 'eggs'
+        tokens = (
+            (Token.BOOLEAN, False),
+            (Token.CHOICE_OPERATOR, '?'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.OPTIONS_OPERATOR, ':'),
+            (Token.QUALIFIER, 'eggs'),
+        )
+        self.parser_test(exp, tokens)
+
     # Test comparison operators.
     def test_greater_than(self):
         """Perform greater than comparison."""
