@@ -90,7 +90,7 @@ class Char(UserString):
     # Change state tests.
     def is_as_op(self) -> bool:
         return self.data in self.tokens[Token.AS_OPERATOR]
-    
+
     def is_boolean(self) -> bool:
         valid_char = {op[0] for op in self.tokens[Token.BOOLEAN]}
         return self.data in valid_char
