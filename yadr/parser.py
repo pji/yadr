@@ -9,48 +9,7 @@ import operator
 from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
-from yadr.model import CompoundResult, Result, Token, TokenInfo
-
-
-# Data.
-DICE_OPERATORS = {
-    'd': yo.die,
-    'd!': yo.exploding_die,
-    'dc': yo.concat,
-    'dh': yo.keep_high_die,
-    'dl': yo.keep_low_die,
-    'dw': yo.wild_die,
-}
-OPERATORS = {
-    '^': operator.pow,
-    '*': operator.mul,
-    '/': operator.floordiv,
-    '+': operator.add,
-    '-': operator.sub,
-}
-POOL_GEN_OPERATORS = {
-    'g': yo.dice_pool,
-    'g!': yo.exploding_pool,
-}
-POOL_OPERATORS = {
-    'pa': yo.pool_keep_above,
-    'pb': yo.pool_keep_below,
-    'pc': yo.pool_cap,
-    'pf': yo.pool_floor,
-    'ph': yo.pool_keep_high,
-    'pl': yo.pool_keep_low,
-    'pr': yo.pool_remove,
-    'p%': yo.pool_modulo,
-}
-U_POOL_DEGEN_OPERATORS = {
-    'C': yo.pool_concatenate,
-    'N': yo.pool_count,
-    'S': yo.pool_sum,
-}
-POOL_DEGEN_OPERATORS = {
-    'nb': yo.count_successes_with_botch,
-    'ns': yo.count_successes,
-}
+from yadr.model import CompoundResult, Result, Token, TokenInfo, op_tokens
 
 
 # Utility classes and functions.
@@ -75,16 +34,8 @@ class Tree:
             return self.value
         left = self.left.compute()
         right = self.right.compute()
-        if self.kind == Token.OPERATOR:
-            op = OPERATORS[self.value]
-        elif self.kind == Token.DICE_OPERATOR:
-            op = DICE_OPERATORS[self.value]
-        elif self.kind == Token.POOL_OPERATOR:
-            op = POOL_OPERATORS[self.value]
-        elif self.kind == Token.POOL_DEGEN_OPERATOR:
-            op = POOL_DEGEN_OPERATORS[self.value]
-        elif self.kind == Token.POOL_GEN_OPERATOR:
-            op = POOL_GEN_OPERATORS[self.value]
+        if self.kind in op_tokens:
+            op = yo.ops_by_symbol[self.value]
         else:
             msg = f'Unknown token {self.kind}'
             raise TypeError(msg)
@@ -102,19 +53,11 @@ class Unary(Tree):
         self.child = child
 
     def compute(self):
-        if self.kind in [Token.NUMBER, Token.POOL]:
+        if self.kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
             return self.value
         child = self.child.compute()
-        if self.kind == Token.U_POOL_DEGEN_OPERATOR:
-            op = U_POOL_DEGEN_OPERATORS[self.value]
-        elif self.kind == Token.OPERATOR:
-            op = OPERATORS[self.value]
-        elif self.kind == Token.DICE_OPERATOR:
-            op = DICE_OPERATORS[self.value]
-        elif self.kind == Token.POOL_OPERATOR:
-            op = POOL_OPERATORS[self.value]
-        elif self.kind == Token.POOL_GEN_OPERATOR:
-            op = POOL_GEN_OPERATORS[self.value]
+        if self.kind in op_tokens:
+            op = yo.ops_by_symbol[self.value]
         return op(child)
 
 
@@ -161,7 +104,7 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
 def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
     trees = [Tree(*token) for token in tokens]
     trees = trees[::-1]
-    parsed = add_sub(trees)
+    parsed = last_rule(trees)
     if parsed:
         return parsed.compute()
     return None
@@ -170,11 +113,15 @@ def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
 # Parsing rules.
 def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
-    if trees[-1].kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
+    kind = trees[-1].kind
+    if kind in [Token.NUMBER, Token.POOL, Token.QUALIFIER]:
         return trees.pop()
-    if trees[-1].kind == Token.GROUP_OPEN:
+    elif kind == Token.GROUP_OPEN:
         _ = trees.pop()
-    expression = add_sub(trees)
+    else:
+        msg = f'Unrecognized token {kind}'
+        raise TypeError(msg)
+    expression = last_rule(trees)
     if trees[-1].kind == Token.GROUP_CLOSE:
         _ = trees.pop()
     return expression
@@ -286,3 +233,36 @@ def add_sub(next_rule: Callable,
         tree.right = next_rule(trees)
         left = tree
     return left
+
+
+@next_rule(add_sub)
+def comparison_op(next_rule: Callable,
+                  left: Tree,
+                  trees: list[Tree]):
+    """Parse comparison operator."""
+    while (trees
+           and trees[-1].kind == Token.COMPARISON_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+@next_rule(comparison_op)
+def options_op(next_rule: Callable,
+               left: Tree,
+               trees: list[Tree]):
+    """Parse options operator."""
+    while (trees
+           and trees[-1].kind == Token.OPTIONS_OPERATOR):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
+# Set the last rule in order of operations to make it a little easier
+# to update as new operations are added.
+last_rule = options_op

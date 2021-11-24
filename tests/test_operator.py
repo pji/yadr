@@ -10,43 +10,37 @@ from unittest.mock import patch
 from yadr import operator as op
 
 
-# Pool generation operation test cases.
-class DicePoolTestCase(ut.TestCase):
-    @patch('random.randint')
-    def test_dice_pool(self, mock_randint):
-        """Generate a dice pool."""
+# Choice test cases.
+class ChoiceTestCase(ut.TestCase):
+    def test_choice_options(self):
+        """Generate choice options."""
         # Expected value.
-        exp = (3, 5, 1, 10, 8, 4, 3)
+        exp = ('spam', 'eggs')
 
         # Test data and state.
-        mock_randint.side_effect = exp
-        num = 7
-        size = 10
+        a = exp[0]
+        b = exp[1]
 
         # Run test.
-        act = op.dice_pool(num, size)
+        act = op.choice_options(a, b)
 
         # Determine test result.
-        self.assertTupleEqual(exp, act)
+        self.assertEqual(exp, act)
 
-
-class ExplodingPoolTestCase(ut.TestCase):
-    @patch('random.randint')
-    def test_exploding_pool(self, mock_randint):
-        """Generate a dice pool."""
+    def test_choice(self):
+        """Make a choice."""
         # Expected value.
-        exp = (2, 9, 1, 1, 13, 3)
+        exp = 'spam'
 
         # Test data and state.
-        mock_randint.side_effect = (2, 6, 1, 1, 6, 3, 3, 6, 1)
-        num = 6
-        size = 6
+        boolean = True
+        options = ('spam', 'eggs')
 
         # Run test.
-        act = op.exploding_pool(num, size)
+        act = op.choice(boolean, options)
 
         # Determine test result.
-        self.assertTupleEqual(exp, act)
+        self.assertEqual(exp, act)
 
 
 # Dice operation test cases.
@@ -197,6 +191,109 @@ class WildDie(ut.TestCase):
         self.assertEqual(exp, act)
 
 
+# Pool degeneration test cases.
+class PoolConcatenateTestCase(ut.TestCase):
+    def test_pool_concatenate(self):
+        """Concatenate the members in the pool."""
+        exp = 314
+        pool = (3, 1, 4)
+        act = op.pool_concatenate(pool)
+        self.assertEqual(exp, act)
+
+
+class PoolCountTestCase(ut.TestCase):
+    def test_pool_count(self):
+        """Count the members in the pool."""
+        exp = 3
+        pool = (3, 1, 4)
+        act = op.pool_count(pool)
+        self.assertEqual(exp, act)
+
+
+class PoolSumTestCase(ut.TestCase):
+    def test_pool_count(self):
+        """Sum the members in the pool."""
+        exp = 8
+        pool = (3, 1, 4)
+        act = op.pool_sum(pool)
+        self.assertEqual(exp, act)
+
+
+class CountSuccessesTestCase(ut.TestCase):
+    def test_count_successes(self):
+        """Count the number of values above or equal to a target."""
+        # Expected value.
+        exp = 5
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        target = 5
+
+        # Run test.
+        act = op.count_successes(pool, target)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
+class CountSuccessesWithBotchesTestCase(ut.TestCase):
+    def test_count_successes_with_botch(self):
+        """Count the number of values above or equal to a target and
+        remove botches.
+        """
+        # Expected value.
+        exp = 3
+
+        # Test data and state.
+        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
+        target = 5
+
+        # Run test.
+        act = op.count_successes_with_botch(pool, target)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+
+# Pool generation operation test cases.
+class DicePoolTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_dice_pool(self, mock_randint):
+        """Generate a dice pool."""
+        # Expected value.
+        exp = (3, 5, 1, 10, 8, 4, 3)
+
+        # Test data and state.
+        mock_randint.side_effect = exp
+        num = 7
+        size = 10
+
+        # Run test.
+        act = op.dice_pool(num, size)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
+class ExplodingPoolTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_exploding_pool(self, mock_randint):
+        """Generate a dice pool."""
+        # Expected value.
+        exp = (2, 9, 1, 1, 13, 3)
+
+        # Test data and state.
+        mock_randint.side_effect = (2, 6, 1, 1, 6, 3, 3, 6, 1)
+        num = 6
+        size = 6
+
+        # Run test.
+        act = op.exploding_pool(num, size)
+
+        # Determine test result.
+        self.assertTupleEqual(exp, act)
+
+
 # Pool operation test cases.
 class PoolKeepAbove(ut.TestCase):
     def test_pool_keep_above(self):
@@ -334,67 +431,3 @@ class PoolRemove(ut.TestCase):
 
         # Determine test result.
         self.assertTupleEqual(exp, act)
-
-
-# Pool degeneration test cases.
-class PoolConcatenateTestCase(ut.TestCase):
-    def test_pool_concatenate(self):
-        """Concatenate the members in the pool."""
-        exp = 314
-        pool = (3, 1, 4)
-        act = op.pool_concatenate(pool)
-        self.assertEqual(exp, act)
-
-
-class PoolCountTestCase(ut.TestCase):
-    def test_pool_count(self):
-        """Count the members in the pool."""
-        exp = 3
-        pool = (3, 1, 4)
-        act = op.pool_count(pool)
-        self.assertEqual(exp, act)
-
-
-class PoolSumTestCase(ut.TestCase):
-    def test_pool_count(self):
-        """Sum the members in the pool."""
-        exp = 8
-        pool = (3, 1, 4)
-        act = op.pool_sum(pool)
-        self.assertEqual(exp, act)
-
-
-class CountSuccessesTestCase(ut.TestCase):
-    def test_count_successes(self):
-        """Count the number of values above or equal to a target."""
-        # Expected value.
-        exp = 5
-
-        # Test data and state.
-        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
-        target = 5
-
-        # Run test.
-        act = op.count_successes(pool, target)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-
-class CountSuccessesWithBotchesTestCase(ut.TestCase):
-    def test_count_successes_with_botch(self):
-        """Count the number of values above or equal to a target and
-        remove botches.
-        """
-        # Expected value.
-        exp = 3
-
-        # Test data and state.
-        pool = (1, 2, 5, 6, 4, 5, 1, 6, 3, 6)
-        target = 5
-
-        # Run test.
-        act = op.count_successes_with_botch(pool, target)
-
-        # Determine test result.
-        self.assertEqual(exp, act)

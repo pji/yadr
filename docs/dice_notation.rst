@@ -114,22 +114,23 @@ BNF)::
     QUALIFIER_DELIMITER ::= "
     LETTER ::= [A-Za-z]
     SPACE = " "
-    WORD ::= LETTER
+    TEXT ::= LETTER
           | NUMBER
-          | WORD LETTER
-          | WORD NUMBER
-          | WORD SPACE
-          | WORD WORD
-    QUALIFIER ::= QUALIFIER_DELIMITER WORD QUALIFIER_DELIMITER
-
-    CHOICE_OPERATOR :: = ?
-    CHOICE_DELIMITER ::= :
-    CHOICE_OPTIONS ::= QUALIFIER CHOICE_DELIMITER QUALIFIER
-    CHOICE_EXPRESSION ::= EXPRESSION CHOICE_OPERATOR CHOICE_OPTIONS
-                       | POOL_EXPRESSION CHOICE_OPERATOR CHOICE_OPTIONS
+          | TEXT LETTER
+          | TEXT NUMBER
+          | TEXT SPACE
+          | TEXT TEXT
+    QUALIFIER ::= QUALIFIER_DELIMITER TEXT QUALIFIER_DELIMITER
 
     COMPARISON_OPERATOR ::= > | >= | == | != | <= | <
+    BOOLEAN ::= T | F
     COMPARISON_EXPRESSION ::= EXPRESION COMPARISON_OPERATOR CHOICE_EXPRESION
+
+    CHOICE_OPERATOR :: = ?
+    OPTIONS_OPERATOR ::= :
+    CHOICE_OPTIONS ::= QUALIFIER OPTIONS_OPERATOR QUALIFIER
+    CHOICE_EXPRESSION ::= EXPRESSION CHOICE_OPERATOR CHOICE_OPTIONS
+                       | POOL_EXPRESSION CHOICE_OPERATOR CHOICE_OPTIONS
 
     MAP_OPEN ::= {
     CLOSE_MAP ::= }
@@ -160,7 +161,7 @@ Order of Operations
 ===================
 The order of operations in YADN is as follows:
 
-#.  Grouping
+#.  Grouping and identity
 #.  Pool generation operations
 #.  Pool operations
 #.  Pool degeneration operations
@@ -168,6 +169,7 @@ The order of operations in YADN is as follows:
 #.  Exponentiation
 #.  Multiplication and division
 #.  Addition and subtraction
+#.  Options and choices
 
 Operations involving pools are placed high in the order to allow them
 to be generated, acted on, and collapsed before they would acted on
@@ -435,6 +437,7 @@ degeneration operator::
     n = S 6g6 >= 20 ? "success" : "failure"
     n = S [3, 2, 6, 6, 1, 3] >= 20 ? "success" : "failure"
     n = 21 >= 20 ? "success" : "failure"
+    n = true ? "success" : "failure"
     n = "success"
 
 .. note:

@@ -80,6 +80,67 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test comparison operators.
+    def test_greater_than(self):
+        """Perform greater than comparison."""
+        exp = True
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '>'),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_greater_than_or_equal(self):
+        """Perform greater than or equal comparison."""
+        exp = True
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '>='),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_less_than(self):
+        """Perform less than comparison."""
+        exp = False
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '<'),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_less_than_or_equal(self):
+        """Perform less than comparison."""
+        exp = False
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '<='),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_equal(self):
+        """Perform less than comparison."""
+        exp = False
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '=='),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_not_equal(self):
+        """Perform less than comparison."""
+        exp = True
+        tokens = (
+            (Token.NUMBER, 3),
+            (Token.COMPARISON_OPERATOR, '!='),
+            (Token.NUMBER, 2),
+        )
+        self.parser_test(exp, tokens)
+
     # Test dice operators.
     @patch('random.randint')
     def test_concat(self, mock_randint):
@@ -207,6 +268,17 @@ class ParseTestCase(ut.TestCase):
         tokens = (
             (Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (Token.NUMBER, (1, 5, 3)),
+        )
+        self.parser_test(exp, tokens)
+
+    # Test options operators.
+    def test_options_operator(self):
+        """Create a choice options."""
+        exp = ('spam', 'eggs')
+        tokens = (
+            (Token.QUALIFIER, 'spam'),
+            (Token.OPTIONS_OPERATOR, ':'),
+            (Token.QUALIFIER, 'eggs'),
         )
         self.parser_test(exp, tokens)
 

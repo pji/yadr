@@ -45,6 +45,9 @@ class Lexer:
             Token.WHITESPACE: self._whitespace,
             Token.QUALIFIER: self._qualifier,
             Token.QUALIFIER_CLOSE: self._qualifier_close,
+            Token.OPTIONS_OPERATOR: self._options_operator,
+            Token.COMPARISON_OPERATOR: self._comparison_operator,
+            Token.BOOLEAN: self._boolean,
             Token.END: self._start,
         }
         self.process = self._start
@@ -68,15 +71,21 @@ class Lexer:
                               Token.START,
                               Token.POOL_END,
                               Token.QUALIFIER_CLOSE]:
-            value: Char | int | tuple[int, ...] = self.buffer
+            value: Char | str | int | bool | tuple[int, ...] = self.buffer
             if self.state == Token.NUMBER and isinstance(value, Char):
                 value = int(value)
+            elif self.state == Token.QUALIFIER and isinstance(value, Char):
+                value = str(value[1:])
             elif self.state == Token.POOL and isinstance(value, Char):
                 plexer = PoolLexer()
                 value = plexer.lex(value)
             elif self.state in [Token.POOL, Token.NUMBER]:
                 msg = f'value must be str, was {type(value)}'
                 raise TypeError(msg)
+            elif self.state == Token.BOOLEAN:
+                value = False
+                if self.buffer == 'T':
+                    value = True
             token_info = (self.state, value)
             self.tokens.append(token_info)
 
@@ -86,6 +95,10 @@ class Lexer:
         self.process = self.state_map[new_state]
 
     # Lexing rules.
+    def _boolean(self, char: Char) -> None:
+        """Processing a boolean."""
+        raise NotImplementedError
+
     def _close_group(self, char: Char) -> None:
         """Processing a close group token."""
         if char.is_operator():
@@ -101,6 +114,23 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
+    def _comparison_operator(self, char: Char) -> None:
+        """Processing a comparison operator."""
+        new_state: Optional[Token] = None
+        if char.still_comparison_op():
+            self.buffer += char
+        elif char.isdigit():
+            new_state = Token.NUMBER
+        elif char.is_negative_sign():
+            new_state = Token.NUMBER
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow a comparison operator.'
+            raise ValueError(msg)
+        if new_state:
+            self._change_state(new_state, char)
+
     def _dice_operator(self, char: Char) -> None:
         """Processing an operator."""
         new_state: Token | None = None
@@ -113,7 +143,7 @@ class Lexer:
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
-            msg = f'{char} cannot follow dice operator.'
+            msg = f'{char} cannot follow a dice operator.'
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char)
@@ -143,12 +173,16 @@ class Lexer:
             new_state = Token.OPERATOR
         elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
+        elif char.is_pool_degen_op():
+            new_state = Token.POOL_DEGEN_OPERATOR
         elif char.is_pool_gen_op():
             new_state = Token.POOL_GEN_OPERATOR
         elif char.is_group_close():
             new_state = Token.GROUP_CLOSE
         elif char.is_roll_delim():
             new_state = Token.ROLL_DELIMITER
+        elif char.is_comparison_op():
+            new_state = Token.COMPARISON_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -169,6 +203,15 @@ class Lexer:
             new_state = Token.WHITESPACE
         else:
             msg = f'{char} cannot follow an operator.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
+
+    def _options_operator(self, char: Char) -> None:
+        """Processing an options operator."""
+        if char.is_qualifier_delim():
+            new_state = Token.QUALIFIER
+        else:
+            msg = '{} cannot follow an options operator.'
             raise ValueError(msg)
         self._change_state(new_state, char)
 
@@ -221,15 +264,13 @@ class Lexer:
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
-            msg = f'{char} cannot follow pool gen operator.'
+            msg = f'{char} cannot follow a pool generation operator.'
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char)
 
     def _qualifier(self, char: Char) -> None:
         """Processing a qualifier."""
-        if self.buffer[0].is_qualifier_delim():
-            self.buffer = self.buffer[1:]
         new_state: Optional[Token] = None
         if char.still_qualifier():
             self.buffer += char
@@ -240,7 +281,14 @@ class Lexer:
 
     def _qualifier_close(self, char: Char) -> None:
         """Process after a qualifier."""
-        raise NotImplementedError
+        if char.isspace():
+            new_state = Token.WHITESPACE
+        elif char.is_options_operator():
+            new_state = Token.OPTIONS_OPERATOR
+        else:
+            msg = f'{char} cannot follow a qualifier.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
 
     def _u_pool_degen_operator(self, char: Char) -> None:
         """Processing a unary pool degeneration operator."""
@@ -303,6 +351,8 @@ class Lexer:
             new_state = Token.U_POOL_DEGEN_OPERATOR
         elif char.is_qualifier_delim():
             new_state = Token.QUALIFIER
+        elif char.is_boolean():
+            new_state = Token.BOOLEAN
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
@@ -324,6 +374,8 @@ class Lexer:
             prev_state = self.tokens[-1][0]
         if prev_state == Token.POOL:
             prev_state = Token.POOL_END
+        elif prev_state == Token.QUALIFIER:
+            prev_state = Token.QUALIFIER_CLOSE
         self.ws_process = self.state_map[prev_state]
         self.ws_process(char)
 
@@ -433,35 +485,3 @@ class PoolLexer:
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char, False)
-
-
-# Delexer.
-class Encoder:
-    def __init__(self, yadn: str = '') -> None:
-        self.yadn = yadn
-
-    # Public methods.
-    def encode(self, data: Result) -> str:
-        """Turn computed Python object results into a YADN string."""
-        if isinstance(data, int):
-            self._encode_int(data)
-        elif isinstance(data, CompoundResult):
-            self._encode_compound_result(data)
-        elif isinstance(data, tuple):
-            self._encode_tuple(data)
-        return self.yadn
-
-    # Private methods.
-    def _encode_compound_result(self, data: CompoundResult) -> None:
-        for result in data[:-1]:
-            self.encode(result)
-            self.yadn += '; '
-        else:
-            self.encode(data[-1])
-
-    def _encode_int(self, data: int) -> None:
-        self.yadn = f'{self.yadn}{data}'
-
-    def _encode_tuple(self, data: tuple) -> None:
-        members = ', '.join(str(m) for m in data)
-        self.yadn = f'{self.yadn}[{members}]'

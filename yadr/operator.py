@@ -5,7 +5,22 @@ operator
 Operators for handling the dice part of dice notation.
 """
 import random
+import operator
 from typing import Sequence
+
+
+# Choice operators.
+def choice_options(a: str, b: str) -> tuple[str, str]:
+    """Create the options for a choice."""
+    return (a, b)
+
+
+def choice(boolean: bool, options: tuple[str, str]) -> str:
+    """Make a choice."""
+    result = options[0]
+    if not boolean:
+        result = options[1]
+    return result
 
 
 # Pool generation operator.
@@ -175,3 +190,56 @@ def _explode(value: int, size: int) -> int:
         explode_value = random.randint(1, size)
         value += _explode(explode_value, size)
     return value
+
+
+# Registration.
+ops_by_symbol = {
+    # Comparison operators.
+    '>': operator.gt,
+    '<': operator.le,
+    '>=': operator.ge,
+    '<=': operator.le,
+    '==': operator.eq,
+    '!=': operator.ne,
+
+    # Dice operators.
+    'd': die,
+    'd!': exploding_die,
+    'dc': concat,
+    'dh': keep_high_die,
+    'dl': keep_low_die,
+    'dw': wild_die,
+
+    # Operators.
+    '^': operator.pow,
+    '*': operator.mul,
+    '/': operator.floordiv,
+    '+': operator.add,
+    '-': operator.sub,
+
+    # Pool degeneration operators.
+    'nb': count_successes_with_botch,
+    'ns': count_successes,
+
+    # Pool generation operators.
+    'g': dice_pool,
+    'g!': exploding_pool,
+
+    # Pool operators.
+    'pa': pool_keep_above,
+    'pb': pool_keep_below,
+    'pc': pool_cap,
+    'pf': pool_floor,
+    'ph': pool_keep_high,
+    'pl': pool_keep_low,
+    'pr': pool_remove,
+    'p%': pool_modulo,
+
+    # Options operator.
+    ':': choice_options,
+
+    # Unary pool degeneration operators.
+    'C': pool_concatenate,
+    'N': pool_count,
+    'S': pool_sum,
+}
