@@ -73,8 +73,7 @@ def next_rule(next_rule: Callable) -> Callable:
     def outer_wrapper(fn: Callable) -> Callable:
         @wraps(fn)
         def inner_wrapper(*args, **kwargs) -> Callable:
-            left = next_rule(*args, **kwargs)
-            return fn(next_rule, left, *args, **kwargs)
+            return fn(next_rule, *args, **kwargs)
         return inner_wrapper
     return outer_wrapper
 
@@ -117,6 +116,20 @@ def _parse_roll(tokens: Sequence[TokenInfo]) -> int | tuple[int, ...] | None:
     return None
 
 
+# Rule templates.
+def _binary_rule(token: Token,
+                 next_rule: Callable,
+                 trees: list[Tree]) -> Tree:
+    """A binary parsing rule."""
+    left = next_rule(trees)
+    while (trees and trees[-1].kind == token):
+        tree = trees.pop()
+        tree.left = left
+        tree.right = next_rule(trees)
+        left = tree
+    return left
+
+
 # Parsing rules.
 def groups_and_numbers(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
@@ -135,29 +148,15 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
 
 
 @next_rule(groups_and_numbers)
-def pool_gen_operators(next_rule: Callable,
-                       left: Tree,
-                       trees: list[Tree]):
+def pool_gen_operators(next_rule: Callable, trees: list[Tree]):
     """Parse dice operations."""
-    while (trees and trees[-1].kind == Token.POOL_GEN_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.POOL_GEN_OPERATOR, next_rule, trees)
 
 
 @next_rule(pool_gen_operators)
-def pool_operators(next_rule: Callable,
-                   left: Tree,
-                   trees: list[Tree]):
+def pool_operators(next_rule: Callable, trees: list[Tree]):
     """Parse dice operations."""
-    while (trees and trees[-1].kind == Token.POOL_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.POOL_OPERATOR, next_rule, trees)
 
 
 @u_next_rule(pool_operators)
@@ -172,36 +171,21 @@ def u_pool_degen_operators(next_rule: Callable, trees: list[Tree]):
 
 
 @next_rule(u_pool_degen_operators)
-def pool_degen_operators(next_rule: Callable,
-                         left: Tree,
-                         trees: list[Tree]):
+def pool_degen_operators(next_rule: Callable, trees: list[Tree]):
     """Parse dice operations."""
-    while (trees and trees[-1].kind == Token.POOL_DEGEN_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.POOL_DEGEN_OPERATOR, next_rule, trees)
 
 
 @next_rule(pool_degen_operators)
-def dice_operators(next_rule: Callable,
-                   left: Tree,
-                   trees: list[Tree]):
+def dice_operators(next_rule: Callable, trees: list[Tree]):
     """Parse dice operations."""
-    while (trees and trees[-1].kind == Token.DICE_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.DICE_OPERATOR, next_rule, trees)
 
 
 @next_rule(dice_operators)
-def exponents(next_rule: Callable,
-              left: Tree,
-              trees: list[Tree]):
+def exponents(next_rule: Callable, trees: list[Tree]):
     """Parse exponents."""
+    left = next_rule(trees)
     while (trees
            and trees[-1].kind == Token.OPERATOR
            and trees[-1].value in '^'):             # type: ignore
@@ -213,10 +197,9 @@ def exponents(next_rule: Callable,
 
 
 @next_rule(exponents)
-def mul_div(next_rule: Callable,
-            left: Tree,
-            trees: list[Tree]):
+def mul_div(next_rule: Callable, trees: list[Tree]):
     """Parse multiplication and division."""
+    left = next_rule(trees)
     while (trees
            and trees[-1].kind == Token.OPERATOR
            and trees[-1].value in '*/'):            # type: ignore
@@ -228,10 +211,9 @@ def mul_div(next_rule: Callable,
 
 
 @next_rule(mul_div)
-def add_sub(next_rule: Callable,
-            left: Tree,
-            trees: list[Tree]):
+def add_sub(next_rule: Callable, trees: list[Tree]):
     """Parse addition and subtraction."""
+    left = next_rule(trees)
     while (trees
            and trees[-1].kind == Token.OPERATOR
            and trees[-1].value in '+-'):            # type: ignore
@@ -243,45 +225,21 @@ def add_sub(next_rule: Callable,
 
 
 @next_rule(add_sub)
-def comparison_op(next_rule: Callable,
-                  left: Tree,
-                  trees: list[Tree]):
+def comparison_op(next_rule: Callable, trees: list[Tree]):
     """Parse comparison operator."""
-    while (trees
-           and trees[-1].kind == Token.COMPARISON_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.COMPARISON_OPERATOR, next_rule, trees)
 
 
 @next_rule(comparison_op)
-def options_op(next_rule: Callable,
-               left: Tree,
-               trees: list[Tree]):
+def options_op(next_rule: Callable, trees: list[Tree]):
     """Parse options operator."""
-    while (trees
-           and trees[-1].kind == Token.OPTIONS_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.OPTIONS_OPERATOR, next_rule, trees)
 
 
 @next_rule(options_op)
-def choice_op(next_rule: Callable,
-              left: Tree,
-              trees: list[Tree]):
+def choice_op(next_rule: Callable, trees: list[Tree]):
     """Parse options operator."""
-    while (trees
-           and trees[-1].kind == Token.CHOICE_OPERATOR):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.CHOICE_OPERATOR, next_rule, trees)
 
 
 # Set the last rule in order of operations to make it a little easier
