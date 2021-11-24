@@ -9,7 +9,7 @@ future. Changes may be made in the code that are not reflected here.
 
 
 Purpose
--------
+=======
 The purposes of `yadr` are:
 
 *   Provide a random number generator that simulates the use of
@@ -19,7 +19,7 @@ The purposes of `yadr` are:
 
 
 Functional Requirements
------------------------
+=======================
 The following are the functional requirements for `yadr`:
 
 1.  `yadr` can generate a random integer (called a "roll").
@@ -63,7 +63,7 @@ The following are stretch requirements that would be nice to have:
 
 
 Technical Requirements
-----------------------
+======================
 The following are the technical requirements for `yadr`:
 
 #.  `yadr` can be seeded to allow predictable result for testing.
@@ -72,3 +72,44 @@ The following are stretch requirements that would be nice to have:
 
 #.  `yadr` can use the `secrets` standard Python library for better
     random number generation.
+
+
+Design Discussion
+=================
+The purpose of this section is to think through design challenges
+encountered in the course of developing `yadr`. As this is a living
+process, information here is not guaranteed to describe the current
+state of the package.
+
+
+Lexing Lookups
+--------------
+Right now, lexing follows the following process:
+
+*   Get character.
+*   Send character to processing method for current state.
+*   Check:
+    *   If character should be buffered,
+    *   If state changes,
+    *   If character allowed.
+
+The problem is that these checks are all bound to the processing method
+for the current state. It works, but it means that the processing method
+for each state must be updated each time a new token is created. This
+is getting tedious and error prone as the list of tokens increased.
+Maybe there is a better way to do this.
+
+I was thinking that we could reverse the situation, have each token
+define what can come before it. That doesn't solve the problem though.
+Whether you are determining what comes before or what comes after, you
+still have to detail the relationships between each token. With large
+numbers of tokens, that's going to be a large number of relationships.
+
+Still, maybe there is a way to set this up through configuration rather
+than large `if` structures.
+
+The ambiguity between the negative sign and subtraction operator is a
+problem. If I ignore that, I could probably collapse all the Char.is_*
+methods into one that returns a token. Maybe that's still the way to
+go. I'd just need a special case to handle the ambiguity of the
+hyphen character.

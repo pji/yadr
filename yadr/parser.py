@@ -131,7 +131,7 @@ def _binary_rule(token: Token,
 
 
 # Parsing rules.
-def groups_and_numbers(trees: list[Tree]) -> Tree:
+def groups_and_identity(trees: list[Tree]) -> Tree:
     """Final rule, covering numbers, groups, and unaries."""
     kind = trees[-1].kind
     if kind in id_tokens:
@@ -147,7 +147,7 @@ def groups_and_numbers(trees: list[Tree]) -> Tree:
     return expression
 
 
-@next_rule(groups_and_numbers)
+@next_rule(groups_and_identity)
 def pool_gen_operators(next_rule: Callable, trees: list[Tree]):
     """Parse dice operations."""
     return _binary_rule(Token.POOL_GEN_OPERATOR, next_rule, trees)

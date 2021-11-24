@@ -14,9 +14,11 @@ class Encoder:
     # Public methods.
     def encode(self, data: Result) -> str:
         """Turn computed Python object results into a YADN string."""
-        if isinstance(data, int):
+        if isinstance(data, bool):
+            self._encode_bool(data)
+        elif isinstance(data, int):
             self._encode_int(data)
-        if isinstance(data, str):
+        elif isinstance(data, str):
             self._encode_str(data)
         elif isinstance(data, CompoundResult):
             self._encode_compound_result(data)
@@ -25,6 +27,12 @@ class Encoder:
         return self.yadn
 
     # Private methods.
+    def _encode_bool(self, data: bool) -> None:
+        if data:
+            self.yadn = f'{self.yadn}T'
+        else:
+            self.yadn = f'{self.yadn}F'
+
     def _encode_compound_result(self, data: CompoundResult) -> None:
         for result in data[:-1]:
             self.encode(result)

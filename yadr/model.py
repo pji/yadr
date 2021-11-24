@@ -12,35 +12,35 @@ from typing import Generic, NamedTuple, Sequence, Tuple, TypeVar
 # Tokens.
 class Token(Enum):
     START = 0
-    WHITESPACE = 1
-    NUMBER = 2
-    OPERATOR = 3
-    GROUP_OPEN = 4
-    GROUP_CLOSE = 5
-    MEMBER_DELIMITER = 6
-    MEMBER = 7
-    POOL_OPEN = 8
-    POOL_CLOSE = 9
-    POOL = 10
-    DICE_OPERATOR = 11
-    POOL_GEN_OPERATOR = 12
-    POOL_OPERATOR = 13
-    U_POOL_DEGEN_OPERATOR = 14
-    POOL_DEGEN_OPERATOR = 15
-    POOL_END = 16
-    ROLL_DELIMITER = 17
-    NEGATIVE_SIGN = 18
-    QUALIFIER_DELIMITER = 19
-    QUALIFIER = 20
-    QUALIFIER_CLOSE = 21
-    OPTIONS_OPERATOR = 22
-    COMPARISON_OPERATOR = 23
-    BOOLEAN = 24
-    CHOICE_OPERATOR = 25
-    CHOICE_OPTIONS = 26
-    AS_OPERATOR = 27
-    MD_OPERATOR = 28
-    EX_OPERATOR = 29
+    AS_OPERATOR = 1
+    BOOLEAN = 2
+    CHOICE_OPERATOR = 3
+    CHOICE_OPTIONS = 4
+    COMPARISON_OPERATOR = 5
+    DICE_OPERATOR = 6
+    EX_OPERATOR = 7
+    GROUP_OPEN = 8
+    GROUP_CLOSE = 9
+    MD_OPERATOR = 10
+    MEMBER = 11
+    MEMBER_DELIMITER = 12
+    NEGATIVE_SIGN = 13
+    NUMBER = 14
+    OPERATOR = 15
+    OPTIONS_OPERATOR = 16
+    POOL = 17
+    POOL_CLOSE = 18
+    POOL_DEGEN_OPERATOR = 19
+    POOL_END = 20
+    POOL_GEN_OPERATOR = 21
+    POOL_OPEN = 22
+    POOL_OPERATOR = 23
+    QUALIFIER = 24
+    QUALIFIER_END = 25
+    QUALIFIER_DELIMITER = 26
+    ROLL_DELIMITER = 27
+    U_POOL_DEGEN_OPERATOR = 28
+    WHITESPACE = 29
     END = 30
 
 
@@ -64,127 +64,53 @@ id_tokens = (
     Token.POOL,
     Token.QUALIFIER,
 )
+symbols = {
+    Token.START: '',
+    Token.AS_OPERATOR: '+ -',
+    Token.BOOLEAN: 'T F',
+    Token.CHOICE_OPERATOR: '?',
+    Token.COMPARISON_OPERATOR: '< > >= <= != ==',
+    Token.DICE_OPERATOR: 'd d! dc dh dl dw',
+    Token.EX_OPERATOR: '^',
+    Token.GROUP_OPEN: '(',
+    Token.GROUP_CLOSE: ')',
+    Token.MEMBER_DELIMITER: ',',
+    Token.MD_OPERATOR: '* / %',
+    Token.NEGATIVE_SIGN: '-',
+    Token.NUMBER: '0 1 2 3 4 5 6 7 8 9',
+    Token.OPTIONS_OPERATOR: ':',
+    Token.POOL_CLOSE: ']',
+    Token.POOL: '',
+    Token.POOL_END: '',
+    Token.POOL_OPEN: '[',
+    Token.POOL_DEGEN_OPERATOR: 'nb ns',
+    Token.POOL_GEN_OPERATOR: 'g g!',
+    Token.POOL_OPERATOR: 'pa pb pc pf ph pl pr p%',
+    Token.QUALIFIER_DELIMITER: '"',
+    Token.QUALIFIER_END: '',
+    Token.ROLL_DELIMITER: ';',
+    Token.U_POOL_DEGEN_OPERATOR: 'C N S',
+}
+tokens = {k: v.split() for k,v in symbols.items()}
+tokens[Token.WHITESPACE] = [' ', '\t', '\n']
 
 
 # Classes.
 class Char(UserString):
     """A string with YADN detections."""
-    tokens: dict[Token, Sequence[str]] = {
-        Token.GROUP_OPEN: '(',
-        Token.GROUP_CLOSE: ')',
-        Token.MEMBER_DELIMITER: ',',
-        Token.AS_OPERATOR: '+-',
-        Token.MD_OPERATOR: '*/%',
-        Token.EX_OPERATOR: '^',
-        Token.DICE_OPERATOR: 'd d! dc dh dl dw'.split(),
-        Token.POOL_OPEN: '[',
-        Token.POOL_CLOSE: ']',
-        Token.POOL_GEN_OPERATOR: 'g g!'.split(),
-        Token.POOL_OPERATOR: 'pa pb pc pf ph pl pr p%'.split(),
-        Token.U_POOL_DEGEN_OPERATOR: 'C N S'.split(),
-        Token.POOL_DEGEN_OPERATOR: 'nb ns'.split(),
-        Token.ROLL_DELIMITER: ';',
-        Token.NEGATIVE_SIGN: '-',
-        Token.QUALIFIER_DELIMITER: '"',
-        Token.OPTIONS_OPERATOR: ':',
-        Token.COMPARISON_OPERATOR: '< > >= <= != =='.split(),
-        Token.BOOLEAN: 'T F'.split(),
-        Token.CHOICE_OPERATOR: '?',
-    }
+    tokens = tokens
 
-    # Change state tests.
-    def is_as_op(self) -> bool:
-        return self.data in self.tokens[Token.AS_OPERATOR]
-
-    def is_boolean(self) -> bool:
-        valid_char = {op[0] for op in self.tokens[Token.BOOLEAN]}
-        return self.data in valid_char
-
-    def is_choice_op(self) -> bool:
-        return self.data == self.tokens[Token.CHOICE_OPERATOR]
-
-    def is_comparison_op(self) -> bool:
-        valid_char = {op[0] for op in self.tokens[Token.COMPARISON_OPERATOR]}
-        return self.data in valid_char
-
-    def is_dice_op(self) -> bool:
-        return self.data in self.tokens[Token.DICE_OPERATOR]
-
-    def is_ex_op(self) -> bool:
-        return self.data in self.tokens[Token.EX_OPERATOR]
-
-    def is_group_open(self) -> bool:
-        return self.data in self.tokens[Token.GROUP_OPEN]
-
-    def is_group_close(self) -> bool:
-        return self.data in self.tokens[Token.GROUP_CLOSE]
-
-    def is_md_op(self) -> bool:
-        return self.data in self.tokens[Token.MD_OPERATOR]
-
-    def is_member_delim(self) -> bool:
-        return self.data in self.tokens[Token.MEMBER_DELIMITER]
-
-    def is_number(self) -> bool:
-        return self.data.isdigit() or self.is_negative_sign()
-
-    def is_negative_sign(self) -> bool:
-        return self.data in self.tokens[Token.NEGATIVE_SIGN]
-
-    def is_options_operator(self) -> bool:
-        return self.data == self.tokens[Token.OPTIONS_OPERATOR]
-
-    def is_pool_close(self) -> bool:
-        return self.data in self.tokens[Token.POOL_CLOSE]
-
-    def is_pool_degen_op(self) -> bool:
-        valid_char = {op[0] for op in self.tokens[Token.POOL_DEGEN_OPERATOR]}
-        return self.data in valid_char
-
-    def is_pool_gen_op(self) -> bool:
-        return self.data in self.tokens[Token.POOL_GEN_OPERATOR]
-
-    def is_pool_op(self) -> bool:
-        valid_char = {op[0] for op in self.tokens[Token.POOL_OPERATOR]}
-        return self.data in valid_char
-
-    def is_pool_open(self) -> bool:
-        return self.data in self.tokens[Token.POOL_OPEN]
-
-    def is_qualifier_delim(self) -> bool:
-        return self.data in self.tokens[Token.QUALIFIER_DELIMITER]
-
-    def is_roll_delim(self) -> bool:
-        return self.data in self.tokens[Token.ROLL_DELIMITER]
-
-    def is_u_pool_degen_op(self) -> bool:
-        return self.data in self.tokens[Token.U_POOL_DEGEN_OPERATOR]
-
-    # Maintain state tests.
-    def still_comparison_op(self) -> bool:
-        valid = [s[1] for s in self.tokens[Token.COMPARISON_OPERATOR][2:]]
+    def is_start(self, token: Token) -> bool:
+        valid = {s[0] for s in self.tokens[token]}
         return self.data in valid
 
-    def still_dice_op(self) -> bool:
-        valid = [s[1] for s in self.tokens[Token.DICE_OPERATOR][1:]]
-        return self.data in valid
-
-    def still_pool_op(self) -> bool:
-        valid = [s[1] for s in self.tokens[Token.POOL_OPERATOR]]
-        return self.data in valid
-
-    def still_pool_degen_op(self) -> bool:
-        valid = [s[1] for s in self.tokens[Token.POOL_DEGEN_OPERATOR]]
-        return self.data in valid
-
-    def still_pool_gen_op(self) -> bool:
-        valid = [s[1] for s in self.tokens[Token.POOL_GEN_OPERATOR][1:]]
-        return self.data in valid
-
-    def still_qualifier(self) -> bool:
-        return (self.data.isalpha()
-                or self.data.isdigit()
-                or self.data.isspace())
+    def is_still(self, token: Token) -> bool:
+        tokens = self.tokens[token]
+        relevant = [item for item in tokens if len(item) > 1]
+        if relevant:
+            valid = {s[1] for s in relevant}
+            return self.data in valid
+        return False
 
 
 class CompoundResult(Tuple):

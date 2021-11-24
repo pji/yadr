@@ -12,6 +12,9 @@ from yadr import model as m
 
 # Base test case.
 class BasicOperatorTestCase(ut.TestCase):
+    token = m.Token.START
+    allowed = None
+
     def setUp(self):
         self.lexer = lex.Lexer()
 
@@ -23,8 +26,217 @@ class BasicOperatorTestCase(ut.TestCase):
         act = self.lexer.lex(data)
         self.assertTupleEqual(exp, act)
 
+    def unallowed_test(self, char):
+        # Expected data and setup.
+        name = self.token.name
+        article = 'a'
+        if name[0] in 'AEIOU':
+            article = 'an'
+        escaped = char
+        if escaped in '+[](){}?^*':
+            escaped = f'\\{escaped}'
+
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = f'{escaped} cannot follow {article} {name}.'
+
+        # Test data and state.
+        case_no_space = f'3-{char}'
+        case_space = f'3- {char}'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        try:
+            with self.assertRaisesRegex(exp_ex, exp_msg):
+                _ = lexer.lex(case_no_space)
+            with self.assertRaisesRegex(exp_ex, exp_msg):
+                _ = lexer.lex(case_space)
+        except AssertionError as ex:
+            msg = f'{char} failed.'
+            raise AssertionError(msg) from ex
+
 
 # Symbol test cases.
+class ASOperatorTestCase(BasicOperatorTestCase):
+    token = m.Token.AS_OPERATOR
+    allowed = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+        m.Token.WHITESPACE,
+    ]
+
+    def test_basic_addition(self):
+        """Given a basic addition equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 15),
+            (lex.Token.AS_OPERATOR, '+'),
+            (lex.Token.NUMBER, 3),
+        )
+        data = '15+3'
+        self.lex_test(exp, data)
+
+    def test_basic_addition_with_spaces(self):
+        """Given a basic addition equation containing whitespace,
+        return the tokens that represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 15),
+            (lex.Token.AS_OPERATOR, '+'),
+            (lex.Token.NUMBER, 3),
+        )
+        data = ' 15 + 3 '
+        self.lex_test(exp, data)
+
+    def test_basic_subtraction(self):
+        """Given a basic subtraction equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 200),
+            (lex.Token.AS_OPERATOR, '-'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '200-10'
+        self.lex_test(exp, data)
+
+    # Allowed next operator.
+    def test_unallowed(self):
+        """Test tokens not allowed to follow AS_OPERATORS."""
+        unallowed = [token for token in m.Token if token not in self.allowed]
+        unallowed = [token for token in unallowed if token in m.tokens]
+        unsymbols = [m.tokens[t] for t in unallowed if m.tokens[t]]
+        unsymbols = [s[0] for s in unsymbols]
+        for unsymbol in unsymbols:
+            self.unallowed_test(unsymbol[0])
+
+    def test_group_can_follow_operator(self):
+        """Numbers can follow operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.AS_OPERATOR, '+'),
+            (lex.Token.GROUP_OPEN, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.MD_OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.GROUP_CLOSE, ')'),
+        )
+        data = '10+(10*10)'
+        self.lex_test(exp, data)
+
+    def test_group_can_follow_operator_whitespace(self):
+        """Numbers can follow operators."""
+        exp = (
+            (lex.Token.NUMBER, 10),
+            (lex.Token.AS_OPERATOR, '+'),
+            (lex.Token.GROUP_OPEN, '('),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.MD_OPERATOR, '*'),
+            (lex.Token.NUMBER, 10),
+            (lex.Token.GROUP_CLOSE, ')'),
+        )
+        data = '10+ (10*10)'
+        self.lex_test(exp, data)
+
+    def test_operator_cannot_follow_operator(self):
+        """And operator cannot be followed by an operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '3-+2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_operator_cannot_follow_operator_whitespace(self):
+        """And operator cannot be followed by an operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\+ cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '3- +2'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_pool_cannot_follow_operator(self):
+        """A pool cannot follow a operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\[ cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '3+[2,3]'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_pool_cannot_follow_operator_whitespace(self):
+        """A pool cannot follow a operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '\\[ cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '3+ [2,3]'
+        lexer = lex.Lexer()
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = lexer.lex(data)
+
+    def test_unary_pool_degen_can_follow_operator(self):
+        """Subtraction can be followed by a unary pool degeneration
+        operator.
+        """
+        exp = (
+            (lex.Token.NUMBER, 200),
+            (lex.Token.AS_OPERATOR, '-'),
+            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
+            (lex.Token.POOL, (2, 3, 4)),
+        )
+        data = '200-S[2,3,4]'
+        self.lex_test(exp, data)
+
+    def test_qualifier_cannot_follow_operator(self):
+        """Qualifiers cannot follow operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '" cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '5+"spam"'
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = self.lex_test(None, data)
+
+    def test_qualifier_cannot_follow_operator_whitespace(self):
+        """Qualifiers cannot follow operator."""
+        # Expected values.
+        exp_ex = ValueError
+        exp_msg = '" cannot follow an AS_OPERATOR.'
+
+        # Test data and state.
+        data = '5+ "spam"'
+
+        # Run test and determine the result.
+        with self.assertRaisesRegex(exp_ex, exp_msg):
+            _ = self.lex_test(None, data)
+
+
 class BooleanTestCase(BasicOperatorTestCase):
     def test_boolean_true(self):
         """Lex a boolean."""
@@ -235,7 +447,7 @@ class DiceOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow dice operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a dice operator.'
+        exp_msg = '" cannot follow a DICE_OPERATOR.'
 
         # Test data and state.
         data = '3d"spam"'
@@ -248,7 +460,7 @@ class DiceOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow dice operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a dice operator.'
+        exp_msg = '" cannot follow a DICE_OPERATOR.'
 
         # Test data and state.
         data = '3d "spam"'
@@ -256,6 +468,20 @@ class DiceOperatorTestCase(BasicOperatorTestCase):
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = self.lex_test(None, data)
+
+
+class ExOperatorTestCase(BasicOperatorTestCase):
+    def test_basic_exponentiation(self):
+        """Given a basic exponentiation equation, return the tokens that
+        represent the equation.
+        """
+        exp = (
+            (lex.Token.NUMBER, 20),
+            (lex.Token.EX_OPERATOR, '^'),
+            (lex.Token.NUMBER, 10),
+        )
+        data = '20^10'
+        self.lex_test(exp, data)
 
 
 class GroupingOperatorTestCase(BasicOperatorTestCase):
@@ -293,10 +519,10 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
 
     # Allowed interior symbol.
     def test_operator_cannot_follow_group_open(self):
-        """An operator cannot follow a group open."""
+        """An operator cannot follow a GROUP_CLOSE open."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow \\(.'
+        exp_msg = '\\+ cannot follow a GROUP_OPEN.'
 
         # Test data and state.
         data = '(+2)'
@@ -307,10 +533,10 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
             _ = lexer.lex(data)
 
     def test_operator_cannot_follow_group_open_whitespace(self):
-        """An operator cannot follow a group open."""
+        """An operator cannot follow a GROUP_CLOSE open."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow \\(.'
+        exp_msg = '\\+ cannot follow a GROUP_OPEN.'
 
         # Test data and state.
         data = '( +2)'
@@ -375,7 +601,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         """Numbers cannot follow groups."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '4 cannot follow a group.'
+        exp_msg = '4 cannot follow a GROUP_CLOSE.'
 
         # Test data and state.
         data = '(3+2) 4'
@@ -389,7 +615,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow groups."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a group.'
+        exp_msg = '" cannot follow a GROUP_CLOSE.'
 
         # Test data and state.
         data = '(3d10+5)"spam"'
@@ -402,7 +628,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow groups."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a group.'
+        exp_msg = '" cannot follow a GROUP_CLOSE.'
 
         # Test data and state.
         data = '(3d10+5) "spam"'
@@ -430,126 +656,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         self.lex_test(exp, data)
 
 
-class NumberTestCase(BasicOperatorTestCase):
-    # Allowed next symbol.
-    def test_group_cannot_follow_number(self):
-        """Groups cannot follow numbers."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '\\( cannot follow a number.'
-
-        # Test data and state.
-        data = '3(3+2)'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
-    def test_group_cannot_follow_number_after_whitespace(self):
-        """Groups cannot follow numbers."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '\\( cannot follow a number.'
-
-        # Test data and state.
-        data = '3 (3+2)'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
-    def test_number_cannot_follow_number(self):
-        """Numbers cannot follow numbers."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '4 cannot follow a number.'
-
-        # Test data and state.
-        data = '3 4'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
-    def test_pool_degen_operator_can_follow_number(self):
-        """Dice operators can follow groups."""
-        exp = (
-            (lex.Token.NUMBER, 5),
-            (lex.Token.POOL_GEN_OPERATOR, 'g'),
-            (lex.Token.NUMBER, 6),
-            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
-            (lex.Token.NUMBER, 7),
-        )
-        data = '5g6ns7'
-        self.lex_test(exp, data)
-
-    def test_pool_degen_operator_can_follow_number_whitespace(self):
-        """Dice operators can follow groups."""
-        exp = (
-            (lex.Token.NUMBER, 5),
-            (lex.Token.POOL_GEN_OPERATOR, 'g'),
-            (lex.Token.NUMBER, 6),
-            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
-            (lex.Token.NUMBER, 7),
-        )
-        data = '5g6 ns7'
-        self.lex_test(exp, data)
-
-    def test_qualifier_cannot_follow_number(self):
-        """Qualifiers cannot follow numbers."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '" cannot follow a number.'
-
-        # Test data and state.
-        data = '5"spam"'
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = self.lex_test(None, data)
-
-    def test_qualifier_cannot_follow_number_whitespace(self):
-        """Qualifiers cannot follow numbers."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '" cannot follow a number.'
-
-        # Test data and state.
-        data = '5 "spam"'
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = self.lex_test(None, data)
-
-
-class OperatorTestCase(BasicOperatorTestCase):
-    def test_basic_addition(self):
-        """Given a basic addition equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 15),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.NUMBER, 3),
-        )
-        data = '15+3'
-        self.lex_test(exp, data)
-
-    def test_basic_addition_with_spaces(self):
-        """Given a basic addition equation containing whitespace,
-        return the tokens that represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 15),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.NUMBER, 3),
-        )
-        data = ' 15 + 3 '
-        self.lex_test(exp, data)
-
+class MDOperatorTestCase(BasicOperatorTestCase):
     def test_basic_division(self):
         """Given a basic division equation, return the tokens that
         represent the equation.
@@ -598,137 +705,96 @@ class OperatorTestCase(BasicOperatorTestCase):
         data = '2*10'
         self.lex_test(exp, data)
 
-    def test_basic_subtraction(self):
-        """Given a basic subtraction equation, return the tokens that
-        represent the equation.
-        """
-        exp = (
-            (lex.Token.NUMBER, 200),
-            (lex.Token.AS_OPERATOR, '-'),
-            (lex.Token.NUMBER, 10),
-        )
-        data = '200-10'
-        self.lex_test(exp, data)
 
-    # Allowed next operator.
-    def test_group_can_follow_operator(self):
-        """Numbers can follow operators."""
-        exp = (
-            (lex.Token.NUMBER, 10),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.GROUP_OPEN, '('),
-            (lex.Token.NUMBER, 10),
-            (lex.Token.MD_OPERATOR, '*'),
-            (lex.Token.NUMBER, 10),
-            (lex.Token.GROUP_CLOSE, ')'),
-        )
-        data = '10+(10*10)'
-        self.lex_test(exp, data)
-
-    def test_group_can_follow_operator_whitespace(self):
-        """Numbers can follow operators."""
-        exp = (
-            (lex.Token.NUMBER, 10),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.GROUP_OPEN, '('),
-            (lex.Token.NUMBER, 10),
-            (lex.Token.MD_OPERATOR, '*'),
-            (lex.Token.NUMBER, 10),
-            (lex.Token.GROUP_CLOSE, ')'),
-        )
-        data = '10+ (10*10)'
-        self.lex_test(exp, data)
-
-    def test_operator_cannot_follow_operator(self):
-        """And operator cannot be followed by an operator."""
+class NumberTestCase(BasicOperatorTestCase):
+    # Allowed next symbol.
+    def test_group_cannot_follow_number(self):
+        """Groups cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow an operator.'
+        exp_msg = '\\( cannot follow a NUMBER.'
 
         # Test data and state.
-        data = '3-+2'
+        data = '3(3+2)'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = lexer.lex(data)
 
-    def test_operator_cannot_follow_operator_whitespace(self):
-        """And operator cannot be followed by an operator."""
+    def test_group_cannot_follow_number_after_whitespace(self):
+        """Groups cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow an operator.'
+        exp_msg = '\\( cannot follow a NUMBER.'
 
         # Test data and state.
-        data = '3- +2'
+        data = '3 (3+2)'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = lexer.lex(data)
 
-    def test_pool_cannot_follow_operator(self):
-        """A pool cannot follow a operator."""
+    def test_number_cannot_follow_number(self):
+        """Numbers cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\[ cannot follow an operator.'
+        exp_msg = '4 cannot follow a NUMBER.'
 
         # Test data and state.
-        data = '3+[2,3]'
+        data = '3 4'
         lexer = lex.Lexer()
 
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = lexer.lex(data)
 
-    def test_pool_cannot_follow_operator_whitespace(self):
-        """A pool cannot follow a operator."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = '\\[ cannot follow an operator.'
-
-        # Test data and state.
-        data = '3+ [2,3]'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
-    def test_unary_pool_degen_can_follow_operator(self):
-        """Subtraction can be followed by a unary pool degeneration
-        operator.
-        """
+    def test_pool_degen_operator_can_follow_number(self):
+        """Dice operators can follow groups."""
         exp = (
-            (lex.Token.NUMBER, 200),
-            (lex.Token.AS_OPERATOR, '-'),
-            (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
-            (lex.Token.POOL, (2, 3, 4)),
+            (lex.Token.NUMBER, 5),
+            (lex.Token.POOL_GEN_OPERATOR, 'g'),
+            (lex.Token.NUMBER, 6),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (lex.Token.NUMBER, 7),
         )
-        data = '200-S[2,3,4]'
+        data = '5g6ns7'
         self.lex_test(exp, data)
 
-    def test_qualifier_cannot_follow_operator(self):
-        """Qualifiers cannot follow operator."""
+    def test_pool_degen_operator_can_follow_number_whitespace(self):
+        """Dice operators can follow groups."""
+        exp = (
+            (lex.Token.NUMBER, 5),
+            (lex.Token.POOL_GEN_OPERATOR, 'g'),
+            (lex.Token.NUMBER, 6),
+            (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
+            (lex.Token.NUMBER, 7),
+        )
+        data = '5g6 ns7'
+        self.lex_test(exp, data)
+
+    def test_qualifier_cannot_follow_number(self):
+        """Qualifiers cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow an operator.'
+        exp_msg = '" cannot follow a NUMBER.'
 
         # Test data and state.
-        data = '5+"spam"'
+        data = '5"spam"'
 
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
             _ = self.lex_test(None, data)
 
-    def test_qualifier_cannot_follow_operator_whitespace(self):
-        """Qualifiers cannot follow operator."""
+    def test_qualifier_cannot_follow_number_whitespace(self):
+        """Qualifiers cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow an operator.'
+        exp_msg = '" cannot follow a NUMBER.'
 
         # Test data and state.
-        data = '5+ "spam"'
+        data = '5 "spam"'
 
         # Run test and determine the result.
         with self.assertRaisesRegex(exp_ex, exp_msg):
@@ -801,7 +867,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """Operators cannot occur after pool degen operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow a pool degeneration operator.'
+        exp_msg = '\\+ cannot follow a POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = '[5,1,9]ns+'
@@ -816,7 +882,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator follow by a pool degen operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow a pool degeneration operator.'
+        exp_msg = '\\+ cannot follow a POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]ns+2'
@@ -830,7 +896,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator follow by a pool degen operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow a pool degeneration operator.'
+        exp_msg = '\\+ cannot follow a POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]ns +2'
@@ -844,7 +910,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool degeneration operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool degeneration operator.'
+        exp_msg = '" cannot follow a POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = '5g6ns"spam"'
@@ -857,7 +923,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool degeneration operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool degeneration operator.'
+        exp_msg = '" cannot follow a POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = '5g6ns "spam"'
@@ -897,7 +963,7 @@ class PoolGenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool generation operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool generation operator.'
+        exp_msg = '" cannot follow a POOL_GEN_OPERATOR.'
 
         # Test data and state.
         data = '5g"spam"'
@@ -910,7 +976,7 @@ class PoolGenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool generation operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool generation operator.'
+        exp_msg = '" cannot follow a POOL_GEN_OPERATOR.'
 
         # Test data and state.
         data = '5g "spam"'
@@ -1014,7 +1080,7 @@ class PoolOperatorTestCase(BasicOperatorTestCase):
         """And operator follow by a pool operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow a pool operator.'
+        exp_msg = '\\+ cannot follow a POOL_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]ph+2'
@@ -1028,7 +1094,7 @@ class PoolOperatorTestCase(BasicOperatorTestCase):
         """And operator follow by a pool operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow a pool operator.'
+        exp_msg = '\\+ cannot follow a POOL_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]ph +2'
@@ -1042,7 +1108,7 @@ class PoolOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool operator.'
+        exp_msg = '" cannot follow a POOL_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]pa"spam"'
@@ -1055,7 +1121,7 @@ class PoolOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool operators."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool operator.'
+        exp_msg = '" cannot follow a POOL_OPERATOR.'
 
         # Test data and state.
         data = '[1,2,3]pa "spam"'
@@ -1089,7 +1155,7 @@ class PoolTestCase(BasicOperatorTestCase):
         """Numbers cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '4 cannot follow a pool.'
+        exp_msg = '4 cannot follow a POOL.'
 
         # Test data and state.
         data = '[1,2,3]4'
@@ -1103,7 +1169,7 @@ class PoolTestCase(BasicOperatorTestCase):
         """Numbers cannot follow numbers."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '4 cannot follow a pool.'
+        exp_msg = '4 cannot follow a POOL.'
 
         # Test data and state.
         data = '[1,2,3] 4'
@@ -1117,7 +1183,7 @@ class PoolTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool.'
+        exp_msg = '" cannot follow a POOL.'
 
         # Test data and state.
         data = '[1,2,3]"spam"'
@@ -1130,7 +1196,7 @@ class PoolTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow pool."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a pool.'
+        exp_msg = '" cannot follow a POOL.'
 
         # Test data and state.
         data = '[1,2,3] "spam"'
@@ -1168,7 +1234,7 @@ class QualifierTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow qualifier."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a qualifier.'
+        exp_msg = '" cannot follow a QUALIFIER.'
 
         # Test data and state.
         data = '"eggs""spam"'
@@ -1181,7 +1247,7 @@ class QualifierTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow qualifier."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow a qualifier.'
+        exp_msg = '" cannot follow a QUALIFIER.'
 
         # Test data and state.
         data = '"eggs" "spam"'
@@ -1275,7 +1341,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator cannot be followed by a unary pool degen."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = 'd cannot follow an unary pool degeneration operator.'
+        exp_msg = 'd cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'Sd20'
@@ -1289,7 +1355,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator cannot be followed by a unary pool degen."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = 'd cannot follow an unary pool degeneration operator.'
+        exp_msg = 'd cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'S d20'
@@ -1325,7 +1391,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator cannot be followed by a unary pool degen."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow an unary pool degeneration operator.'
+        exp_msg = '\\+ cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'S+2'
@@ -1339,7 +1405,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """And operator cannot be followed by a unary pool degen."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '\\+ cannot follow an unary pool degeneration operator.'
+        exp_msg = '\\+ cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'S +2'
@@ -1353,7 +1419,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow unary pool degeneration operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow an unary pool degeneration operator.'
+        exp_msg = '" cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'S"spam"'
@@ -1366,7 +1432,7 @@ class UnaryPoolDegenerationOperatorTestCase(BasicOperatorTestCase):
         """Qualifiers cannot follow unary pool degeneration operator."""
         # Expected values.
         exp_ex = ValueError
-        exp_msg = '" cannot follow an unary pool degeneration operator.'
+        exp_msg = '" cannot follow an U_POOL_DEGEN_OPERATOR.'
 
         # Test data and state.
         data = 'S "spam"'

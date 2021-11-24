@@ -18,6 +18,13 @@ class EncoderTestCase(ut.TestCase):
     def tearDown(self):
         self.encoder = None
 
+    def test_boolean(self):
+        """An bool becomes a string containing the YADN boolean."""
+        exp = 'T'
+        data = True
+        act = self.encoder.encode(data)
+        self.assertEqual(exp, act)
+
     def test_compound_result(self):
         """A CompoundResult becomes a string of roll delimited
         values.
