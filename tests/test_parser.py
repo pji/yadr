@@ -55,7 +55,7 @@ class ParseTestCase(ut.TestCase):
         exp = 9
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '^'),
+            (Token.EX_OPERATOR, '^'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -464,7 +464,7 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 3),
             (Token.MD_OPERATOR, '*'),
             (Token.NUMBER, 2),
-            (Token.OPERATOR, '^'),
+            (Token.EX_OPERATOR, '^'),
             (Token.NUMBER, 4),
         )
         self.parser_test(exp, tokens)

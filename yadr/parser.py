@@ -185,15 +185,7 @@ def dice_operators(next_rule: Callable, trees: list[Tree]):
 @next_rule(dice_operators)
 def exponents(next_rule: Callable, trees: list[Tree]):
     """Parse exponents."""
-    left = next_rule(trees)
-    while (trees
-           and trees[-1].kind == Token.OPERATOR
-           and trees[-1].value in '^'):             # type: ignore
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.EX_OPERATOR, next_rule, trees)
 
 
 @next_rule(exponents)

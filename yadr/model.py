@@ -40,7 +40,8 @@ class Token(Enum):
     CHOICE_OPTIONS = 26
     AS_OPERATOR = 27
     MD_OPERATOR = 28
-    END = 29
+    EX_OPERATOR = 29
+    END = 30
 
 
 op_tokens = (
@@ -55,6 +56,7 @@ op_tokens = (
     Token.OPERATOR,
     Token.AS_OPERATOR,
     Token.MD_OPERATOR,
+    Token.EX_OPERATOR,
 )
 id_tokens = (
     Token.BOOLEAN,
@@ -73,7 +75,7 @@ class Char(UserString):
         Token.MEMBER_DELIMITER: ',',
         Token.AS_OPERATOR: '+-',
         Token.MD_OPERATOR: '*/%',
-        Token.OPERATOR: '^',
+        Token.EX_OPERATOR: '^',
         Token.DICE_OPERATOR: 'd d! dc dh dl dw'.split(),
         Token.POOL_OPEN: '[',
         Token.POOL_CLOSE: ']',
@@ -108,6 +110,9 @@ class Char(UserString):
     def is_dice_op(self) -> bool:
         return self.data in self.tokens[Token.DICE_OPERATOR]
 
+    def is_ex_op(self) -> bool:
+        return self.data in self.tokens[Token.EX_OPERATOR]
+
     def is_group_open(self) -> bool:
         return self.data in self.tokens[Token.GROUP_OPEN]
 
@@ -125,9 +130,6 @@ class Char(UserString):
 
     def is_negative_sign(self) -> bool:
         return self.data in self.tokens[Token.NEGATIVE_SIGN]
-
-    def is_operator(self) -> bool:
-        return self.data in self.tokens[Token.OPERATOR]
 
     def is_options_operator(self) -> bool:
         return self.data == self.tokens[Token.OPTIONS_OPERATOR]

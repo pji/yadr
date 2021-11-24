@@ -31,7 +31,6 @@ class Lexer:
         self.state_map = {
             Token.START: self._start,
             Token.NUMBER: self._number,
-            Token.OPERATOR: self._operator,
             Token.GROUP_OPEN: self._open_group,
             Token.GROUP_CLOSE: self._close_group,
             Token.DICE_OPERATOR: self._dice_operator,
@@ -51,6 +50,7 @@ class Lexer:
             Token.CHOICE_OPERATOR: self._choice_operator,
             Token.AS_OPERATOR: self._as_operator,
             Token.MD_OPERATOR: self._md_operator,
+            Token.EX_OPERATOR: self._ex_operator,
             Token.END: self._start,
         }
         self.process = self._start
@@ -133,12 +133,12 @@ class Lexer:
 
     def _close_group(self, char: Char) -> None:
         """Processing a close group token."""
-        if char.is_operator():
-            new_state = Token.OPERATOR
-        elif char.is_as_op():
+        if char.is_as_op():
             new_state = Token.AS_OPERATOR
         elif char.is_md_op():
             new_state = Token.MD_OPERATOR
+        elif char.is_ex_op():
+            new_state = Token.EX_OPERATOR
         elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
         elif char.isspace():
@@ -184,6 +184,21 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
+    def _ex_operator(self, char: Char) -> None:
+        """Processing an operator."""
+        if char.isdigit() or char.is_negative_sign():
+            new_state = Token.NUMBER
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
+        elif char.is_u_pool_degen_op():
+            new_state = Token.U_POOL_DEGEN_OPERATOR
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow an operator.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
+
     def _md_operator(self, char: Char) -> None:
         """Processing an operator."""
         if char.is_number():
@@ -211,8 +226,8 @@ class Lexer:
             new_state = Token.AS_OPERATOR
         elif char.is_md_op():
             new_state = Token.MD_OPERATOR
-        elif char.is_operator():
-            new_state = Token.OPERATOR
+        elif char.is_ex_op():
+            new_state = Token.EX_OPERATOR
         elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
         elif char.is_pool_degen_op():
@@ -243,21 +258,6 @@ class Lexer:
             new_state = Token.WHITESPACE
         else:
             msg = f'{char} cannot follow (.'
-            raise ValueError(msg)
-        self._change_state(new_state, char)
-
-    def _operator(self, char: Char) -> None:
-        """Processing an operator."""
-        if char.isdigit() or char.is_negative_sign():
-            new_state = Token.NUMBER
-        elif char.is_group_open():
-            new_state = Token.GROUP_OPEN
-        elif char.is_u_pool_degen_op():
-            new_state = Token.U_POOL_DEGEN_OPERATOR
-        elif char.isspace():
-            new_state = Token.WHITESPACE
-        else:
-            msg = f'{char} cannot follow an operator.'
             raise ValueError(msg)
         self._change_state(new_state, char)
 

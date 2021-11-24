@@ -568,7 +568,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 20),
-            (lex.Token.OPERATOR, '^'),
+            (lex.Token.EX_OPERATOR, '^'),
             (lex.Token.NUMBER, 10),
         )
         data = '20^10'
