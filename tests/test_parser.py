@@ -25,7 +25,7 @@ class ParseTestCase(ut.TestCase):
         exp = 5
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -75,7 +75,7 @@ class ParseTestCase(ut.TestCase):
         exp = 1
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '-'),
+            (Token.AS_OPERATOR, '-'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -429,7 +429,7 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 1),
             (Token.DICE_OPERATOR, 'd'),
             (Token.NUMBER, 10),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 2)
         )
         self.parser_test(exp, tokens)
@@ -440,9 +440,9 @@ class ParseTestCase(ut.TestCase):
         exp = 9
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 2),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 4),
         )
         self.parser_test(exp, tokens)
@@ -464,7 +464,7 @@ class ParseTestCase(ut.TestCase):
         exp = 11
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 2),
             (Token.OPERATOR, '*'),
             (Token.NUMBER, 4),
@@ -479,7 +479,7 @@ class ParseTestCase(ut.TestCase):
             (Token.OPERATOR, '*'),
             (Token.GROUP_OPEN, '('),
             (Token.NUMBER, 2),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 4),
             (Token.GROUP_CLOSE, ')'),
         )
@@ -525,7 +525,7 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 5),
             (Token.POOL_GEN_OPERATOR, 'g'),
             (Token.NUMBER, 6),
-            (Token.OPERATOR, '+'),
+            (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 5),
         )
 

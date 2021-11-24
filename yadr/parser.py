@@ -213,15 +213,7 @@ def mul_div(next_rule: Callable, trees: list[Tree]):
 @next_rule(mul_div)
 def add_sub(next_rule: Callable, trees: list[Tree]):
     """Parse addition and subtraction."""
-    left = next_rule(trees)
-    while (trees
-           and trees[-1].kind == Token.OPERATOR
-           and trees[-1].value in '+-'):            # type: ignore
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
+    return _binary_rule(Token.AS_OPERATOR, next_rule, trees)
 
 
 @next_rule(add_sub)

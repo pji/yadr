@@ -49,6 +49,7 @@ class Lexer:
             Token.COMPARISON_OPERATOR: self._comparison_operator,
             Token.BOOLEAN: self._boolean,
             Token.CHOICE_OPERATOR: self._choice_operator,
+            Token.AS_OPERATOR: self._as_operator,
             Token.END: self._start,
         }
         self.process = self._start
@@ -96,6 +97,21 @@ class Lexer:
         self.process = self.state_map[new_state]
 
     # Lexing rules.
+    def _as_operator(self, char: Char) -> None:
+        """Processing an operator."""
+        if char.is_number():
+            new_state = Token.NUMBER
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
+        elif char.is_u_pool_degen_op():
+            new_state = Token.U_POOL_DEGEN_OPERATOR
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow an operator.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
+
     def _boolean(self, char: Char) -> None:
         """Processing a boolean."""
         if char.is_choice_op():
@@ -184,6 +200,8 @@ class Lexer:
         # number.
         if char.isdigit() and self.state == Token.NUMBER:
             self.buffer += char
+        elif char.is_as_op():
+            new_state = Token.AS_OPERATOR
         elif char.is_operator():
             new_state = Token.OPERATOR
         elif char.is_dice_op():

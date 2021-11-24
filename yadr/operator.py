@@ -217,6 +217,8 @@ ops_by_symbol = {
     '^': operator.pow,
     '*': operator.mul,
     '/': operator.floordiv,
+
+    # Addition/subtraction operators.
     '+': operator.add,
     '-': operator.sub,
 

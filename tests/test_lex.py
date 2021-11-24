@@ -266,7 +266,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         exp = (
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 32),
-            (lex.Token.OPERATOR, '-'),
+            (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
             (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.OPERATOR, '*'),
@@ -282,7 +282,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         exp = (
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 32),
-            (lex.Token.OPERATOR, '-'),
+            (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
             (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.OPERATOR, '*'),
@@ -418,7 +418,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.NUMBER, 2),
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, 1),
             (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.ROLL_DELIMITER, ';'),
@@ -532,7 +532,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 15),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, 3),
         )
         data = '15+3'
@@ -544,7 +544,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 15),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, 3),
         )
         data = ' 15 + 3 '
@@ -592,7 +592,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 200),
-            (lex.Token.OPERATOR, '-'),
+            (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.NUMBER, 10),
         )
         data = '200-10'
@@ -603,7 +603,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """Numbers can follow operators."""
         exp = (
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
@@ -617,7 +617,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """Numbers can follow operators."""
         exp = (
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
             (lex.Token.OPERATOR, '*'),
@@ -689,7 +689,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 200),
-            (lex.Token.OPERATOR, '-'),
+            (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.U_POOL_DEGEN_OPERATOR, 'S'),
             (lex.Token.POOL, (2, 3, 4)),
         )
@@ -767,7 +767,7 @@ class PoolDegenerationOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.POOL_DEGEN_OPERATOR, 'ns'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 3),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, 2),
             (lex.Token.GROUP_CLOSE, ')'),
         )
@@ -1407,7 +1407,7 @@ class OrderOfOperationsTestCase(BasicOperatorTestCase):
         """Tokenize a number that starts with a negative sign."""
         exp = (
             (lex.Token.NUMBER, 3),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, -24),
         )
         data = '3+-24'
@@ -1417,7 +1417,7 @@ class OrderOfOperationsTestCase(BasicOperatorTestCase):
         """Tokenize a number that starts with a negative sign."""
         exp = (
             (lex.Token.NUMBER, 3),
-            (lex.Token.OPERATOR, '+'),
+            (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.NUMBER, -24),
         )
         data = '3 + -24'
