@@ -50,6 +50,7 @@ class Lexer:
             Token.BOOLEAN: self._boolean,
             Token.CHOICE_OPERATOR: self._choice_operator,
             Token.AS_OPERATOR: self._as_operator,
+            Token.MD_OPERATOR: self._md_operator,
             Token.END: self._start,
         }
         self.process = self._start
@@ -134,6 +135,10 @@ class Lexer:
         """Processing a close group token."""
         if char.is_operator():
             new_state = Token.OPERATOR
+        elif char.is_as_op():
+            new_state = Token.AD_OPERATOR
+        elif char.is_md_op():
+            new_state = Token.MD_OPERATOR
         elif char.is_dice_op():
             new_state = Token.DICE_OPERATOR
         elif char.isspace():
@@ -179,16 +184,18 @@ class Lexer:
         if new_state:
             self._change_state(new_state, char)
 
-    def _open_group(self, char: Char) -> None:
-        """Processing an open group token."""
-        if char.isdigit():
+    def _md_operator(self, char: Char) -> None:
+        """Processing an operator."""
+        if char.is_number():
             new_state = Token.NUMBER
+        elif char.is_group_open():
+            new_state = Token.GROUP_OPEN
         elif char.is_u_pool_degen_op():
             new_state = Token.U_POOL_DEGEN_OPERATOR
         elif char.isspace():
             new_state = Token.WHITESPACE
         else:
-            msg = f'{char} cannot follow (.'
+            msg = f'{char} cannot follow an operator.'
             raise ValueError(msg)
         self._change_state(new_state, char)
 
@@ -202,6 +209,8 @@ class Lexer:
             self.buffer += char
         elif char.is_as_op():
             new_state = Token.AS_OPERATOR
+        elif char.is_md_op():
+            new_state = Token.MD_OPERATOR
         elif char.is_operator():
             new_state = Token.OPERATOR
         elif char.is_dice_op():
@@ -223,6 +232,19 @@ class Lexer:
             raise ValueError(msg)
         if new_state:
             self._change_state(new_state, char)
+
+    def _open_group(self, char: Char) -> None:
+        """Processing an open group token."""
+        if char.isdigit():
+            new_state = Token.NUMBER
+        elif char.is_u_pool_degen_op():
+            new_state = Token.U_POOL_DEGEN_OPERATOR
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow (.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
 
     def _operator(self, char: Char) -> None:
         """Processing an operator."""
@@ -323,19 +345,6 @@ class Lexer:
             raise ValueError(msg)
         self._change_state(new_state, char)
 
-    def _u_pool_degen_operator(self, char: Char) -> None:
-        """Processing a unary pool degeneration operator."""
-        if char.isdigit() or char.is_negative_sign():
-            new_state = Token.NUMBER
-        elif char.is_pool_open():
-            new_state = Token.POOL
-        elif char.isspace():
-            new_state = Token.WHITESPACE
-        else:
-            msg = f'{char} cannot follow an unary pool degeneration operator.'
-            raise ValueError(msg)
-        self._change_state(new_state, char)
-
     def _pool_degen_operator(self, char: Char) -> None:
         """Processing a pool degeneration operator."""
         new_state: Token | None = None
@@ -398,6 +407,19 @@ class Lexer:
         if self.tokens:
             self.tokens = []
         self._roll_delimiter(char)
+
+    def _u_pool_degen_operator(self, char: Char) -> None:
+        """Processing a unary pool degeneration operator."""
+        if char.isdigit() or char.is_negative_sign():
+            new_state = Token.NUMBER
+        elif char.is_pool_open():
+            new_state = Token.POOL
+        elif char.isspace():
+            new_state = Token.WHITESPACE
+        else:
+            msg = f'{char} cannot follow an unary pool degeneration operator.'
+            raise ValueError(msg)
+        self._change_state(new_state, char)
 
     def _whitespace(self, char: Char) -> None:
         if char.isspace():

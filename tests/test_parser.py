@@ -35,7 +35,7 @@ class ParseTestCase(ut.TestCase):
         exp = 2
         tokens = (
             (Token.NUMBER, 4),
-            (Token.OPERATOR, '/'),
+            (Token.MD_OPERATOR, '/'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -45,7 +45,7 @@ class ParseTestCase(ut.TestCase):
         exp = 2
         tokens = (
             (Token.NUMBER, 5),
-            (Token.OPERATOR, '/'),
+            (Token.MD_OPERATOR, '/'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -65,7 +65,7 @@ class ParseTestCase(ut.TestCase):
         exp = 6
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '*'),
+            (Token.MD_OPERATOR, '*'),
             (Token.NUMBER, 2),
         )
         self.parser_test(exp, tokens)
@@ -452,7 +452,7 @@ class ParseTestCase(ut.TestCase):
         exp = 48
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '*'),
+            (Token.MD_OPERATOR, '*'),
             (Token.NUMBER, 2),
             (Token.OPERATOR, '^'),
             (Token.NUMBER, 4),
@@ -466,7 +466,7 @@ class ParseTestCase(ut.TestCase):
             (Token.NUMBER, 3),
             (Token.AS_OPERATOR, '+'),
             (Token.NUMBER, 2),
-            (Token.OPERATOR, '*'),
+            (Token.MD_OPERATOR, '*'),
             (Token.NUMBER, 4),
         )
         self.parser_test(exp, tokens)
@@ -476,7 +476,7 @@ class ParseTestCase(ut.TestCase):
         exp = 18
         tokens = (
             (Token.NUMBER, 3),
-            (Token.OPERATOR, '*'),
+            (Token.MD_OPERATOR, '*'),
             (Token.GROUP_OPEN, '('),
             (Token.NUMBER, 2),
             (Token.AS_OPERATOR, '+'),

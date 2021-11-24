@@ -39,7 +39,8 @@ class Token(Enum):
     CHOICE_OPERATOR = 25
     CHOICE_OPTIONS = 26
     AS_OPERATOR = 27
-    END = 28
+    MD_OPERATOR = 28
+    END = 29
 
 
 op_tokens = (
@@ -53,6 +54,7 @@ op_tokens = (
     Token.OPTIONS_OPERATOR,
     Token.OPERATOR,
     Token.AS_OPERATOR,
+    Token.MD_OPERATOR,
 )
 id_tokens = (
     Token.BOOLEAN,
@@ -70,7 +72,8 @@ class Char(UserString):
         Token.GROUP_CLOSE: ')',
         Token.MEMBER_DELIMITER: ',',
         Token.AS_OPERATOR: '+-',
-        Token.OPERATOR: '^*/',
+        Token.MD_OPERATOR: '*/',
+        Token.OPERATOR: '^',
         Token.DICE_OPERATOR: 'd d! dc dh dl dw'.split(),
         Token.POOL_OPEN: '[',
         Token.POOL_CLOSE: ']',
@@ -110,6 +113,9 @@ class Char(UserString):
 
     def is_group_close(self) -> bool:
         return self.data in self.tokens[Token.GROUP_CLOSE]
+
+    def is_md_op(self) -> bool:
+        return self.data in self.tokens[Token.MD_OPERATOR]
 
     def is_member_delim(self) -> bool:
         return self.data in self.tokens[Token.MEMBER_DELIMITER]

@@ -210,7 +210,7 @@ class DiceOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
         )
@@ -224,7 +224,7 @@ class DiceOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.DICE_OPERATOR, 'd'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
         )
@@ -269,7 +269,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
             (lex.Token.GROUP_CLOSE, ')'),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 21),
         )
         data = '(32-5)*21'
@@ -285,7 +285,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
             (lex.Token.AS_OPERATOR, '-'),
             (lex.Token.NUMBER, 5),
             (lex.Token.GROUP_CLOSE, ')'),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 21),
         )
         data = '( 32 - 5 ) * 21'
@@ -348,7 +348,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         exp = (
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.DICE_OPERATOR, 'd'),
@@ -362,7 +362,7 @@ class GroupingOperatorTestCase(BasicOperatorTestCase):
         exp = (
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
             (lex.Token.DICE_OPERATOR, 'd'),
@@ -556,7 +556,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 20),
-            (lex.Token.OPERATOR, '/'),
+            (lex.Token.MD_OPERATOR, '/'),
             (lex.Token.NUMBER, 10),
         )
         data = '20/10'
@@ -580,7 +580,7 @@ class OperatorTestCase(BasicOperatorTestCase):
         """
         exp = (
             (lex.Token.NUMBER, 2),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
         )
         data = '2*10'
@@ -606,7 +606,7 @@ class OperatorTestCase(BasicOperatorTestCase):
             (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
         )
@@ -620,7 +620,7 @@ class OperatorTestCase(BasicOperatorTestCase):
             (lex.Token.AS_OPERATOR, '+'),
             (lex.Token.GROUP_OPEN, '('),
             (lex.Token.NUMBER, 10),
-            (lex.Token.OPERATOR, '*'),
+            (lex.Token.MD_OPERATOR, '*'),
             (lex.Token.NUMBER, 10),
             (lex.Token.GROUP_CLOSE, ')'),
         )
