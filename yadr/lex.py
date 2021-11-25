@@ -32,7 +32,7 @@ class BaseLexer:
         for char in chars:
             self.process(char)
         else:
-            self._change_state(Token.END, Char(''))
+            self._change_state(Token.START, Char(''))
         return tuple(self.tokens)
 
     # Private operation method.
@@ -104,8 +104,8 @@ class Lexer(BaseLexer):
         self.state_map = {
             Token.START: self._start,
             Token.NUMBER: self._number,
-            Token.GROUP_OPEN: self._open_group,
-            Token.GROUP_CLOSE: self._close_group,
+            Token.GROUP_OPEN: self._group_open,
+            Token.GROUP_CLOSE: self._group_close,
             Token.DICE_OPERATOR: self._dice_operator,
             Token.POOL: self._pool,
             Token.POOL_END: self._pool_end,
@@ -178,24 +178,16 @@ class Lexer(BaseLexer):
         """Processing a boolean."""
         can_follow = [
             Token.CHOICE_OPERATOR,
+            Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
 
     def _choice_operator(self, char: Char) -> None:
         """Processing a choice operator."""
         can_follow = [
+            Token.QUALIFIER,
             Token.QUALIFIER_DELIMITER,
-        ]
-        self._check_char(char, can_follow)
-
-    def _close_group(self, char: Char) -> None:
-        """Processing a close group token."""
-        can_follow = [
-            Token.AS_OPERATOR,
-            Token.MD_OPERATOR,
-            Token.EX_OPERATOR,
-            Token.DICE_OPERATOR,
-            Token.ROLL_DELIMITER,
+            Token.CHOICE_OPTIONS,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -203,8 +195,10 @@ class Lexer(BaseLexer):
     def _comparison_operator(self, char: Char) -> None:
         """Processing a comparison operator."""
         can_follow = [
-            Token.NUMBER,
+            Token.GROUP_OPEN,
             Token.NEGATIVE_SIGN,
+            Token.NUMBER,
+            Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -215,6 +209,7 @@ class Lexer(BaseLexer):
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
             Token.GROUP_OPEN,
+            Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -225,6 +220,33 @@ class Lexer(BaseLexer):
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
             Token.GROUP_OPEN,
+            Token.U_POOL_DEGEN_OPERATOR,
+            Token.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
+    def _group_close(self, char: Char) -> None:
+        """Processing a close group token."""
+        can_follow = [
+            Token.AS_OPERATOR,
+            Token.MD_OPERATOR,
+            Token.EX_OPERATOR,
+            Token.DICE_OPERATOR,
+            Token.GROUP_CLOSE,
+            Token.POOL_OPERATOR,
+            Token.POOL_GEN_OPERATOR,
+            Token.ROLL_DELIMITER,
+            Token.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
+    def _group_open(self, char: Char) -> None:
+        """Processing an open group token."""
+        can_follow = [
+            Token.GROUP_OPEN,
+            Token.NUMBER,
+            Token.NEGATIVE_SIGN,
+            Token.POOL_OPEN,
             Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
@@ -250,7 +272,6 @@ class Lexer(BaseLexer):
             Token.EX_OPERATOR,
             Token.GROUP_CLOSE,
             Token.MD_OPERATOR,
-            Token.POOL_DEGEN_OPERATOR,
             Token.POOL_GEN_OPERATOR,
             Token.ROLL_DELIMITER,
             Token.WHITESPACE,
@@ -265,16 +286,6 @@ class Lexer(BaseLexer):
             self.buffer += char
         else:
             self._check_char(char, can_follow)
-
-    def _open_group(self, char: Char) -> None:
-        """Processing an open group token."""
-        can_follow = [
-            Token.NUMBER,
-            Token.NEGATIVE_SIGN,
-            Token.U_POOL_DEGEN_OPERATOR,
-            Token.WHITESPACE,
-        ]
-        self._check_char(char, can_follow)
 
     def _options_operator(self, char: Char) -> None:
         """Processing an options operator."""
@@ -308,6 +319,7 @@ class Lexer(BaseLexer):
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
             Token.GROUP_OPEN,
+            Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -324,6 +336,7 @@ class Lexer(BaseLexer):
         """Process after a qualifier."""
         can_follow = [
             Token.OPTIONS_OPERATOR,
+            Token.ROLL_DELIMITER,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -342,8 +355,10 @@ class Lexer(BaseLexer):
     def _pool_operator(self, char: Char) -> None:
         """Lex pool operators."""
         can_follow = [
+            Token.GROUP_OPEN,
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
+            Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
@@ -353,6 +368,7 @@ class Lexer(BaseLexer):
         can_follow = [
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
+            Token.BOOLEAN,
             Token.GROUP_OPEN,
             Token.POOL_OPEN,
             Token.U_POOL_DEGEN_OPERATOR,
@@ -371,9 +387,11 @@ class Lexer(BaseLexer):
     def _u_pool_degen_operator(self, char: Char) -> None:
         """Processing a unary pool degeneration operator."""
         can_follow = [
+            Token.GROUP_OPEN,
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
             Token.POOL_OPEN,
+            Token.U_POOL_DEGEN_OPERATOR,
             Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)
