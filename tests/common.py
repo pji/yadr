@@ -150,51 +150,44 @@ class BaseTests:
                     symbol = ('spam', 'eggs')
             return symbol
 
+        def get_example(self, token, before=True):
+            example_dict = self.example_before
+            if not before:
+                example_dict = self.example_after
+            test, exp = example_dict[token]
+            symbol = self.get_symbol_for_token(token)
+            token_info = (token, symbol)
+            if token == m.Token.BOOLEAN:
+                token_info = (token, True)
+            elif token == m.Token.QUALIFIER_DELIMITER:
+                token_info = (m.Token.QUALIFIER, 'spam')
+            if token == m.Token.QUALIFIER:
+                symbol = f'"{symbol}"'
+            elif token == m.Token.POOL:
+                symbol = str(symbol)
+                symbol = f'[{symbol[1:-1]}]'
+            if before:
+                exp = (*exp, token_info)
+                test = f'{test}{symbol}'
+            elif not before and token in (m.Token.NEGATIVE_SIGN,
+                                          m.Token.POOL_OPEN):
+                test = f'{symbol}{test}'
+            else:
+                exp = (token_info, *exp)
+                test = f'{symbol}{test}'
+            return exp, test
+
         def allowed_test(self, state_token, test_token):
             # Expected data and setup.
-            before_test, before_exp = self.example_before[state_token]
-            state_symbol = self.get_symbol_for_token(state_token)
-            state_token_info = (state_token, state_symbol)
-            if state_token == m.Token.BOOLEAN:
-                state_token_info = (state_token, True)
-            elif state_token == m.Token.QUALIFIER_DELIMITER:
-                state_token_info = (m.Token.QUALIFIER, 'spam')
-            if state_token == m.Token.QUALIFIER:
-                state_symbol = f'"{state_symbol}"'
-            elif state_token == m.Token.POOL:
-                state_symbol = str(state_symbol)
-                state_symbol = f'[{state_symbol[1:-1]}]'
-
-            after_test, after_exp = self.example_after[test_token]
-            test_symbol = self.get_symbol_for_token(test_token)
-            test_token_info = (test_token, test_symbol)
-            if test_token == m.Token.BOOLEAN:
-                test_token_info = (test_token, True)
-            elif test_token == m.Token.QUALIFIER_DELIMITER:
-                test_token_info = (m.Token.QUALIFIER, 'spam')
-            if test_token == m.Token.QUALIFIER:
-                test_symbol = f'"{test_symbol}"'
-            elif test_token == m.Token.POOL:
-                test_symbol = str(test_symbol)
-                test_symbol = f'[{test_symbol[1:-1]}]'
+            b_exp, b_test = self.get_example(state_token)
+            a_exp, a_test = self.get_example(test_token, False)
 
             # Expected value.
-            exp = (
-                *before_exp,
-                state_token_info,
-                test_token_info,
-                *after_exp,
-            )
-            if test_token in (m.Token.NEGATIVE_SIGN, m.Token.POOL_OPEN):
-                exp = (
-                    *before_exp,
-                    state_token_info,
-                    *after_exp,
-                )
+            exp = (*b_exp, *a_exp)
 
             # Test data and state.
-            yadn = f'{before_test}{state_symbol}{test_symbol}{after_test}'
-            yadn_ws = f'{before_test}{state_symbol} {test_symbol}{after_test}'
+            yadn = f'{b_test}{a_test}'
+            yadn_ws = f'{b_test} {a_test}'
 
             # Run test and determine result.
             try:
@@ -216,27 +209,10 @@ class BaseTests:
             if name[0] in 'AEIOU':
                 article = 'an'
 
-            before_test, _ = self.example_before[state_token]
-            state_symbol = self.get_symbol_for_token(state_token)
-            if state_token == m.Token.QUALIFIER:
-                state_symbol = f'"{state_symbol}"'
-            elif state_token == m.Token.POOL:
-                state_symbol = str(state_symbol)
-                state_symbol = f'[{state_symbol[1:-1]}]'
-            elif state_token == m.Token.CHOICE_OPTIONS:
-                state_symbol = '"spam":"eggs"'
+            _, b_test = self.get_example(state_token)
+            _, a_test = self.get_example(test_token, False)
 
-            after_test, _ = self.example_after[test_token]
-            test_symbol = self.get_symbol_for_token(test_token)
-            if test_token == m.Token.QUALIFIER:
-                test_symbol = f'"{test_symbol}"'
-            elif test_token == m.Token.POOL:
-                test_symbol = str(test_symbol)
-                test_symbol = f'[{test_symbol[1:-1]}]'
-            elif state_token == m.Token.CHOICE_OPTIONS:
-                state_symbol = '"spam":"eggs"'
-
-            escaped = test_symbol
+            escaped = a_test[0]
             if isinstance(escaped, str):
                 escaped = escaped[0]
                 if escaped in '+[](){}?^*':
@@ -247,20 +223,28 @@ class BaseTests:
             exp_msg = f'{escaped} cannot follow {article} {name}.'
 
             # Test data and state.
-            yadn = f'{before_test}{state_symbol}{test_symbol}{after_test}'
-            yadn_ws = f'{before_test}{state_symbol} {test_symbol}{after_test}'
+            yadn = f'{b_test}{a_test}'
+            yadn_ws = f'{b_test} {a_test}'
 
             # Run test and determine the result.
             try:
                 with self.assertRaisesRegex(exp_ex, exp_msg):
                     _ = self.lexer.lex(yadn)
+            except AssertionError as ex:
+                msg = f'{test_token} failed on {yadn}.'
+                raise AssertionError(msg) from ex
+            finally:
+                self.lexer.state = m.Token.START
+                self.lexer.process = self.lexer._start
+
+            try:
                 if m.Token.WHITESPACE in self.allowed:
                     self.lexer.state = m.Token.START
                     self.lexer.process = self.lexer._start
                     with self.assertRaisesRegex(exp_ex, exp_msg):
                         _ = self.lexer.lex(yadn_ws)
             except AssertionError as ex:
-                msg = f'{test_token} failed.'
+                msg = f'{test_token} failed on {yadn_ws}.'
                 raise AssertionError(msg) from ex
             finally:
                 self.lexer.state = m.Token.START
