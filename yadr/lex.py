@@ -125,7 +125,7 @@ class Lexer(BaseLexer):
             Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
-            
+
             # Mapping tokens.
             Token.MAP_OPEN: self._map_open,
             Token.MAP_CLOSE: self._map_close,

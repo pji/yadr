@@ -42,7 +42,7 @@ class Token(Enum):
     U_POOL_DEGEN_OPERATOR = 28
     WHITESPACE = 29
     END = 30
-    
+
     # Dice mapping tokens.
     MAP_OPEN = 31
     MAP_CLOSE = 32
@@ -96,7 +96,7 @@ symbols = {
     Token.QUALIFIER_END: '',
     Token.ROLL_DELIMITER: ';',
     Token.U_POOL_DEGEN_OPERATOR: 'C N S',
-    
+
     # Dice mapping symbols.
     Token.MAP_OPEN: '{',
     Token.MAP_CLOSE: '}',

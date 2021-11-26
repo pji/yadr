@@ -83,7 +83,7 @@ class BaseTests:
                 '[3,3]',
                 ((m.Token.POOL, (3, 3)), )
             ),
-            
+
             # Mapping tokens.
             m.Token.MAP_OPEN: ('', ()),
             m.Token.MAP_CLOSE: ('', ()),
