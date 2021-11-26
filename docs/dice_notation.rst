@@ -136,7 +136,7 @@ BNF)::
                        | BOOLEAN CHOICE_OPERATOR CHOICE_OPTIONS
 
     MAP_OPEN ::= {
-    CLOSE_MAP ::= }
+    MAP_CLOSE ::= }
     KEY ::= NUMBER | POOL | QUALIFIER
     VALUE ::= NUMBER | POOL | QUALIFIER
     KV_DELIMITER ::= :

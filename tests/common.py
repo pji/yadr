@@ -83,6 +83,10 @@ class BaseTests:
                 '[3,3]',
                 ((m.Token.POOL, (3, 3)), )
             ),
+            
+            # Mapping tokens.
+            m.Token.MAP_OPEN: ('', ()),
+            m.Token.MAP_CLOSE: ('', ()),
         }
         example_before = {
             m.Token.AS_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
@@ -121,6 +125,10 @@ class BaseTests:
             m.Token.QUALIFIER_END: ('"spam"', ((m.Token.QUALIFIER, 'spam'), )),
             m.Token.ROLL_DELIMITER: ('3', ((m.Token.NUMBER, 3), )),
             m.Token.U_POOL_DEGEN_OPERATOR: ('', ()),
+
+            # Mapping tokens.
+            m.Token.MAP_OPEN: ('', ()),
+            m.Token.MAP_CLOSE: ('{', ((m.Token.MAP_OPEN, '{'), )),
         }
 
         def setUp(self):

@@ -103,28 +103,32 @@ class Lexer(BaseLexer):
         super().__init__()
         self.state_map = {
             Token.START: self._start,
-            Token.NUMBER: self._number,
-            Token.GROUP_OPEN: self._group_open,
-            Token.GROUP_CLOSE: self._group_close,
-            Token.DICE_OPERATOR: self._dice_operator,
-            Token.POOL: self._pool,
-            Token.POOL_END: self._pool_end,
-            Token.POOL_OPERATOR: self._pool_operator,
-            Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
-            Token.POOL_GEN_OPERATOR: self._pool_gen_operator,
-            Token.POOL_DEGEN_OPERATOR: self._pool_degen_operator,
-            Token.ROLL_DELIMITER: self._roll_delimiter,
-            Token.WHITESPACE: self._whitespace,
-            Token.QUALIFIER: self._qualifier,
-            Token.QUALIFIER_END: self._qualifier_end,
-            Token.OPTIONS_OPERATOR: self._options_operator,
-            Token.COMPARISON_OPERATOR: self._comparison_operator,
+            Token.AS_OPERATOR: self._as_operator,
             Token.BOOLEAN: self._boolean,
             Token.CHOICE_OPERATOR: self._choice_operator,
-            Token.AS_OPERATOR: self._as_operator,
-            Token.MD_OPERATOR: self._md_operator,
+            Token.COMPARISON_OPERATOR: self._comparison_operator,
+            Token.DICE_OPERATOR: self._dice_operator,
             Token.EX_OPERATOR: self._ex_operator,
+            Token.GROUP_OPEN: self._group_open,
+            Token.GROUP_CLOSE: self._group_close,
+            Token.MD_OPERATOR: self._md_operator,
+            Token.NUMBER: self._number,
+            Token.OPTIONS_OPERATOR: self._options_operator,
+            Token.POOL: self._pool,
+            Token.POOL_DEGEN_OPERATOR: self._pool_degen_operator,
+            Token.POOL_END: self._pool_end,
+            Token.POOL_GEN_OPERATOR: self._pool_gen_operator,
+            Token.POOL_OPERATOR: self._pool_operator,
+            Token.QUALIFIER: self._qualifier,
+            Token.QUALIFIER_END: self._qualifier_end,
+            Token.ROLL_DELIMITER: self._roll_delimiter,
+            Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
+            Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
+            
+            # Mapping tokens.
+            Token.MAP_OPEN: self._map_open,
+            Token.MAP_CLOSE: self._map_close,
         }
         self.process = self._start
 
@@ -252,6 +256,24 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
+    def _map_close(self, char: Char) -> None:
+        """Processing a choice operator."""
+        can_follow = [
+            Token.ROLL_DELIMITER,
+            Token.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
+    def _map_open(self, char: Char) -> None:
+        """Processing a choice operator."""
+        can_follow = [
+            Token.MAP_CLOSE,
+            Token.QUALIFIER,
+            Token.QUALIFIER_DELIMITER,
+            Token.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
     def _md_operator(self, char: Char) -> None:
         """Processing an operator."""
         can_follow = [
@@ -366,6 +388,7 @@ class Lexer(BaseLexer):
     def _roll_delimiter(self, char: Char) -> None:
         """Lex roll delimiters."""
         can_follow = [
+            Token.MAP_OPEN,
             Token.NUMBER,
             Token.NEGATIVE_SIGN,
             Token.BOOLEAN,
