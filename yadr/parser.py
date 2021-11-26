@@ -108,7 +108,7 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
 
 
 def _parse_roll(tokens: Sequence[TokenInfo]) -> Result:
-    trees = [Tree(*token) for token in tokens]
+    trees = [Tree(*token) for token in tokens]      # type: ignore
     trees = trees[::-1]
     parsed = last_rule(trees)
     if parsed:

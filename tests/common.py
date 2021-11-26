@@ -7,6 +7,7 @@ Common classes for testing.
 import unittest as ut
 
 from yadr import lex
+from yadr import maps
 from yadr import model as m
 
 
@@ -291,3 +292,14 @@ class BaseTests:
                 except Exception as ex:
                     msg = f'{token} failed.'
                     raise ex.__class__(msg) from ex
+
+    class MapLexTestCase(ut.TestCase):
+        def setUp(self):
+            self.lexer = maps.Lexer()
+
+        def tearDown(self):
+            self.lexer = None
+
+        def lex_test(self, exp, yadn):
+            act = self.lexer.lex(yadn)
+            self.assertTupleEqual(exp, act)

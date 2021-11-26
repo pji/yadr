@@ -48,6 +48,12 @@ class Token(Enum):
     MAP_CLOSE = 32
 
 
+class MapToken(Enum):
+    START = 0
+    END = 1
+    MAP_OPEN = 2
+
+
 op_tokens = (
     Token.CHOICE_OPERATOR,
     Token.COMPARISON_OPERATOR,
@@ -101,33 +107,19 @@ symbols = {
     Token.MAP_OPEN: '{',
     Token.MAP_CLOSE: '}',
 }
-tokens = {k: v.split() for k,v in symbols.items()}
-tokens[Token.WHITESPACE] = [' ', '\t', '\n']
 
 
 # Classes.
-class Char(UserString):
-    """A string with YADN detections."""
-    tokens = tokens
-
-    def is_start(self, token: Token) -> bool:
-        valid = {s[0] for s in self.tokens[token]}
-        return self.data in valid
-
-    def is_still(self, token: Token) -> bool:
-        tokens = self.tokens[token]
-        relevant = [item for item in tokens if len(item) > 1]
-        if relevant:
-            valid = {s[1] for s in relevant}
-            return self.data in valid
-        return False
-
-
 class CompoundResult(Tuple):
     """The result of multiple rolls."""
 
 
 # Types.
-Result = Union[int, Tuple[int], None]
-T = TypeVar('T', str, int, Tuple[int])
-TokenInfo = tuple[Token, T]
+BaseToken = Union[Token, MapToken]
+Result = Union[int, bool, str, Tuple[int], None]
+TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
+
+
+# Symbols by token.
+tokens: dict[BaseToken, list[str]] = {k: v.split() for k,v in symbols.items()}
+tokens[Token.WHITESPACE] = [' ', '\t', '\n']

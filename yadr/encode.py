@@ -47,5 +47,5 @@ class Encoder:
         members = ', '.join(str(m) for m in data)
         self.yadn = f'{self.yadn}[{members}]'
 
-    def _encode_str(self, data: int) -> None:
+    def _encode_str(self, data: str) -> None:
         self.yadn = f'{self.yadn}"{data}"'

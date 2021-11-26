@@ -7,101 +7,27 @@ A lexer for `yadr` dice notation.
 from functools import wraps
 from typing import Callable, Optional
 
+from yadr.base import BaseLexer
 from yadr.model import (
-    Char,
+    BaseToken,
     CompoundResult,
     Result,
     Token,
     TokenInfo,
+    tokens
 )
-
-
-# Base class.
-class BaseLexer:
-    def __init__(self) -> None:
-        self.buffer = Char('')
-        self.tokens: list[TokenInfo] = []
-        self.state = Token.START
-        self.state_map: dict[Token, Callable] = {}
-        self.process = self._start
-
-    # Public methods.
-    def lex(self, text: str | Char) -> tuple[TokenInfo, ...]:
-        """Lex a dice notation string."""
-        chars = [Char(c) for c in text]
-        for char in chars:
-            self.process(char)
-        else:
-            self._change_state(Token.START, Char(''))
-        return tuple(self.tokens)
-
-    # Private operation method.
-    def _change_state(self, new_state: Token, char: Char) -> None:
-        ...
-
-    def _check_char(self, char: Char, can_follow: list[Token]) -> None:
-        """Determine how to process a character."""
-        new_state: Optional[Token] = None
-
-        # If the character doesn't change the state, add it to the
-        # buffer and stop processing.
-        if char.is_still(self.state):
-            self.buffer += char
-            return None
-
-        # Check to see if the character starts a token that is allowed
-        # to follow the current token. Stop looking once you find one.
-        for token in can_follow:
-            if char.is_start(token):
-                new_state = token
-                break
-
-        # If not, throw an exception. Since whitespace isn't a token in
-        # YADN, an exception saying a character can't follow WHITESPACE
-        # isn't useful. Therefore handle that case by looking at the
-        # last stored token.
-        else:
-            state = self.state.name
-            if state == 'WHITESPACE' and self.tokens:
-                state = self.tokens[-1][0].name
-            elif state == 'WHITESPACE':
-                state = 'START'
-            if state == 'QUALIFIER_END':
-                state = 'QUALIFIER'
-
-            if state == 'START':
-                msg = f'Cannot start with {char}.'
-            else:
-                article = 'a'
-                if state[0] in 'AEIOU':
-                    article = 'an'
-                msg = f'{char} cannot follow {article} {state}.'
-
-            raise ValueError(msg)
-
-        # Some tokens start a state that doesn't match the token.
-        if new_state == Token.NEGATIVE_SIGN:
-            new_state = Token.NUMBER
-        elif new_state == Token.QUALIFIER_DELIMITER:
-            new_state = Token.QUALIFIER
-        elif new_state == Token.POOL_OPEN:
-            new_state = Token.POOL
-
-        # If the state changed, change the state.
-        if new_state:
-            self._change_state(new_state, char)
-
-    # Lexing rules.
-    def _start(self, char: Char) -> None:
-        ...
 
 
 # Lexers.
 class Lexer(BaseLexer):
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
-        super().__init__()
-        self.state_map = {
+        bracket_states: dict[BaseToken, BaseToken] = {
+            Token.NEGATIVE_SIGN: Token.NUMBER,
+            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
+            Token.POOL_OPEN: Token.POOL,
+        }
+        state_map: dict[BaseToken, Callable] = {
             Token.START: self._start,
             Token.AS_OPERATOR: self._as_operator,
             Token.BOOLEAN: self._boolean,
@@ -130,44 +56,48 @@ class Lexer(BaseLexer):
             Token.MAP_OPEN: self._map_open,
             Token.MAP_CLOSE: self._map_close,
         }
+        tokens_: dict[BaseToken, list[str]] = tokens
+        result_map: dict[BaseToken, Callable] = {
+            Token.BOOLEAN: self._tf_boolean,
+            Token.NUMBER: self._tf_number,
+            Token.POOL: self._tf_pool,
+            Token.QUALIFIER: self._tf_qualifier,
+        }
+        no_store: list[BaseToken] = [
+            Token.WHITESPACE,
+            Token.START,
+            Token.POOL_END,
+            Token.QUALIFIER_END,
+        ]
+        super().__init__(
+            bracket_states,
+            state_map,
+            tokens_,
+            result_map,
+            no_store
+        )
         self.process = self._start
 
-    # Private operation methods.
-    def _change_state(self, new_state: Token,
-                      char: Char) -> None:
-        """Terminate the previous token and start a new one."""
-        # Terminate and store the old token.
-        if self.state not in [Token.WHITESPACE,
-                              Token.START,
-                              Token.POOL_END,
-                              Token.QUALIFIER_END]:
-            value: Char | str | int | bool | tuple[int, ...] = self.buffer
-            if self.state == Token.NUMBER and isinstance(value, Char):
-                value = int(value)
-            elif self.state == Token.QUALIFIER and isinstance(value, Char):
-                value = str(value[1:])
-            elif self.state == Token.POOL and isinstance(value, Char):
-                plexer = PoolLexer()
-                lexed = plexer.lex(value)
-                value = tuple(L[1] for L in lexed if L[0] == Token.NUMBER)
-#                 value = plexer.lex(value)
-            elif self.state in [Token.POOL, Token.NUMBER]:
-                msg = f'value must be str, was {type(value)}'
-                raise TypeError(msg)
-            elif self.state == Token.BOOLEAN:
-                value = False
-                if self.buffer == 'T':
-                    value = True
-            token_info = (self.state, value)
-            self.tokens.append(token_info)
+    # Value transforms.
+    def _tf_boolean(self, value: str) -> bool:
+        if value == 'T':
+            return True
+        return False
 
-        # Set new state.
-        self.buffer = char
-        self.state = new_state
-        self.process = self.state_map[new_state]
+    def _tf_number(self, value: str) -> int:
+        return int(value)
+
+    def _tf_pool(self, value: str) -> tuple[int, ...]:
+        plexer = PoolLexer()
+        lexed = plexer.lex(value)
+        gen = (L[1] for L in lexed if L[0] == Token.NUMBER)
+        return tuple(gen)                           # type: ignore
+
+    def _tf_qualifier(self, value: str) -> str:
+        return value[1:-1]
 
     # Lexing rules.
-    def _as_operator(self, char: Char) -> None:
+    def _as_operator(self, char: str) -> None:
         """Processing an operator."""
         can_follow = [
             Token.NUMBER,
@@ -178,7 +108,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _boolean(self, char: Char) -> None:
+    def _boolean(self, char: str) -> None:
         """Processing a boolean."""
         can_follow = [
             Token.CHOICE_OPERATOR,
@@ -186,7 +116,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _choice_operator(self, char: Char) -> None:
+    def _choice_operator(self, char: str) -> None:
         """Processing a choice operator."""
         can_follow = [
             Token.QUALIFIER,
@@ -196,7 +126,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _comparison_operator(self, char: Char) -> None:
+    def _comparison_operator(self, char: str) -> None:
         """Processing a comparison operator."""
         can_follow = [
             Token.GROUP_OPEN,
@@ -207,7 +137,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _dice_operator(self, char: Char) -> None:
+    def _dice_operator(self, char: str) -> None:
         """Processing an operator."""
         can_follow = [
             Token.NUMBER,
@@ -218,7 +148,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _ex_operator(self, char: Char) -> None:
+    def _ex_operator(self, char: str) -> None:
         """Processing an operator."""
         can_follow = [
             Token.NUMBER,
@@ -229,7 +159,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _group_close(self, char: Char) -> None:
+    def _group_close(self, char: str) -> None:
         """Processing a close group token."""
         can_follow = [
             Token.AS_OPERATOR,
@@ -244,7 +174,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _group_open(self, char: Char) -> None:
+    def _group_open(self, char: str) -> None:
         """Processing an open group token."""
         can_follow = [
             Token.GROUP_OPEN,
@@ -256,7 +186,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _map_close(self, char: Char) -> None:
+    def _map_close(self, char: str) -> None:
         """Processing a choice operator."""
         can_follow = [
             Token.ROLL_DELIMITER,
@@ -264,7 +194,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _map_open(self, char: Char) -> None:
+    def _map_open(self, char: str) -> None:
         """Processing a choice operator."""
         can_follow = [
             Token.MAP_CLOSE,
@@ -274,7 +204,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _md_operator(self, char: Char) -> None:
+    def _md_operator(self, char: str) -> None:
         """Processing an operator."""
         can_follow = [
             Token.NUMBER,
@@ -285,7 +215,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _number(self, char: Char) -> None:
+    def _number(self, char: str) -> None:
         """Processing a number."""
         can_follow = [
             Token.AS_OPERATOR,
@@ -309,7 +239,7 @@ class Lexer(BaseLexer):
         else:
             self._check_char(char, can_follow)
 
-    def _options_operator(self, char: Char) -> None:
+    def _options_operator(self, char: str) -> None:
         """Processing an options operator."""
         can_follow = [
             Token.QUALIFIER_DELIMITER,
@@ -317,14 +247,14 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _pool(self, char: Char) -> None:
+    def _pool(self, char: str) -> None:
         """Processing a pool."""
         self.buffer += char
-        if char.is_start(Token.POOL_CLOSE):
+        if self._is_token_start(Token.POOL_CLOSE, char):
             new_state = Token.POOL_END
             self._change_state(new_state, char)
 
-    def _pool_end(self, char: Char) -> None:
+    def _pool_end(self, char: str) -> None:
         """Processing after a pool."""
         can_follow = [
             Token.GROUP_CLOSE,
@@ -335,7 +265,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _pool_gen_operator(self, char: Char) -> None:
+    def _pool_gen_operator(self, char: str) -> None:
         """Processing an pool generation operator."""
         can_follow = [
             Token.NUMBER,
@@ -346,15 +276,14 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _qualifier(self, char: Char) -> None:
+    def _qualifier(self, char: str) -> None:
         """Processing a qualifier."""
-        if not char.is_start(Token.QUALIFIER_DELIMITER):
-            self.buffer += char
-        else:
+        self.buffer += char
+        if self._is_token_start(Token.QUALIFIER_DELIMITER, char):
             new_state = Token.QUALIFIER_END
             self._change_state(new_state, char)
 
-    def _qualifier_end(self, char: Char) -> None:
+    def _qualifier_end(self, char: str) -> None:
         """Process after a qualifier."""
         can_follow = [
             Token.OPTIONS_OPERATOR,
@@ -363,7 +292,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _pool_degen_operator(self, char: Char) -> None:
+    def _pool_degen_operator(self, char: str) -> None:
         """Processing a pool degeneration operator."""
         can_follow = [
             Token.NUMBER,
@@ -374,7 +303,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _pool_operator(self, char: Char) -> None:
+    def _pool_operator(self, char: str) -> None:
         """Lex pool operators."""
         can_follow = [
             Token.GROUP_OPEN,
@@ -385,7 +314,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _roll_delimiter(self, char: Char) -> None:
+    def _roll_delimiter(self, char: str) -> None:
         """Lex roll delimiters."""
         can_follow = [
             Token.MAP_OPEN,
@@ -401,13 +330,13 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _start(self, char: Char) -> None:
+    def _start(self, char: str) -> None:
         """The starting state."""
         if self.tokens:
             self.tokens = []
         self._roll_delimiter(char)
 
-    def _u_pool_degen_operator(self, char: Char) -> None:
+    def _u_pool_degen_operator(self, char: str) -> None:
         """Processing a unary pool degeneration operator."""
         can_follow = [
             Token.GROUP_OPEN,
@@ -419,10 +348,10 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _whitespace(self, char: Char) -> None:
+    def _whitespace(self, char: str) -> None:
         if char.isspace():
             return None
-        prev_state = Token.START
+        prev_state: BaseToken = Token.START
         if self.tokens:
             prev_state = self.tokens[-1][0]
         if prev_state == Token.POOL:
@@ -435,8 +364,12 @@ class Lexer(BaseLexer):
 
 class PoolLexer(BaseLexer):
     def __init__(self) -> None:
-        super().__init__()
-        self.state_map = {
+        bracket_states: dict[BaseToken, BaseToken] = {
+            Token.NEGATIVE_SIGN: Token.NUMBER,
+            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
+            Token.POOL_OPEN: Token.POOL,
+        }
+        state_map: dict[BaseToken, Callable] = {
             Token.NUMBER: self._number,
             Token.MEMBER_DELIMITER: self._member_delimiter,
             Token.POOL: self._pool,
@@ -445,27 +378,30 @@ class PoolLexer(BaseLexer):
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
         }
+        tokens_: dict[BaseToken, list[str]] = tokens
+        result_map: dict[BaseToken, Callable] = {
+            Token.NUMBER: self._tf_number,
+        }
+        no_store: list[BaseToken] = [
+            Token.POOL_OPEN,
+            Token.POOL_CLOSE,
+            Token.WHITESPACE,
+        ]
+        super().__init__(
+            bracket_states,
+            state_map,
+            tokens,
+            result_map,
+            no_store
+        )
         self.process = self._start
 
-    # Private operation methods.
-    def _change_state(self, new_state: Token,
-                      char: Char) -> None:
-        """Terminate the previous token and start a new one."""
-        # Terminate and store the old token.
-        if self.state in [Token.NUMBER, Token.MEMBER_DELIMITER]:
-            value: int | Char = self.buffer
-            if self.state == Token.NUMBER:
-                value = int(value)
-            token_info = (self.state, value)
-            self.tokens.append(token_info)
-
-        # Set new state.
-        self.buffer = char
-        self.state = new_state
-        self.process = self.state_map[new_state]
+    # Value transforms.
+    def _tf_number(self, value: str) -> int:
+        return int(value)
 
     # Lexing rules.
-    def _member_delimiter(self, char: Char) -> None:
+    def _member_delimiter(self, char: str) -> None:
         """Lex a member delimiter."""
         can_follow = [
             Token.NUMBER,
@@ -474,7 +410,7 @@ class PoolLexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _number(self, char: Char) -> None:
+    def _number(self, char: str) -> None:
         """Lex a member."""
         can_follow = [
             Token.MEMBER_DELIMITER,
@@ -492,12 +428,12 @@ class PoolLexer(BaseLexer):
         else:
             self._check_char(char, can_follow)
 
-    def _pool_close(self, char: Char) -> None:
+    def _pool_close(self, char: str) -> None:
         """Lex a pool close."""
         msg = '[ cannot follow a ]'
         raise ValueError(msg)
 
-    def _pool(self, char: Char) -> None:
+    def _pool(self, char: str) -> None:
         """Lex a pool open."""
         can_follow = [
             Token.NUMBER,
@@ -506,14 +442,14 @@ class PoolLexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _start(self, char: Char) -> None:
+    def _start(self, char: str) -> None:
         """Start lexing the string."""
         can_follow = [
             Token.POOL_OPEN,
         ]
         self._check_char(char, can_follow)
 
-    def _whitespace(self, char: Char) -> None:
+    def _whitespace(self, char: str) -> None:
         """Processing whitespace."""
         can_follow = [
             Token.NUMBER,
