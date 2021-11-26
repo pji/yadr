@@ -4,4 +4,4 @@ __init__
 
 Initialization for the `yadr` package.
 """
-from yadr.parser import parse
+from yadr.yadr import roll

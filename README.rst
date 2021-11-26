@@ -81,9 +81,20 @@ I'll keep it at 3.10.
 
 How do I use this package?
 ==========================
-It's not hit 0.0.1 release yet, so don't expect the interface to be
-stable. Still, importing it into your Python script and passing a YADN
-string to `yadr.parse()` will probably work.
+If you want to execute the package from the command line, you can
+install the package using `pip` or other Python package manager, and
+run it as a module with the following::
+
+    python -m yadr <YADN_string>
+
+If you want to import it into your own code, install and import the
+package as usual. You can then use the `roll()` function in the `yadr`
+module to execute a string of YADN.::
+
+    >>> import yadr
+    >>>
+    >>> yadn = '3d6'
+    >>> result = yadr.roll(yadn)
 
 
 How do I run the tests?

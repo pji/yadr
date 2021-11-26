@@ -6,7 +6,7 @@ Common data elements for the yadr package.
 """
 from collections import UserString
 from enum import Enum
-from typing import Generic, NamedTuple, Sequence, Tuple, TypeVar
+from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
 
 
 # Tokens.
@@ -120,6 +120,6 @@ class CompoundResult(Tuple):
 
 
 # Types.
-Result = TypeVar('Result', int, Tuple[int], None)
+Result = Union[int, Tuple[int], None]
 T = TypeVar('T', str, int, Tuple[int])
 TokenInfo = tuple[Token, T]
