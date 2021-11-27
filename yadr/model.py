@@ -164,7 +164,7 @@ TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 def split_symbols(d: dict, enum: EnumMeta) -> dict[BaseToken, list[str]]:
     """Split the symbol strings and add whitespace."""
     split_symbols = {k: v.split() for k, v in d.items()}
-    for member in enum:                         # type: ignore
+    for member in enum:                                     # type: ignore
         if member.name == 'WHITESPACE':
             split_symbols[member] = [' ', '\t', '\n']
             break

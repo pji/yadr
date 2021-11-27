@@ -22,6 +22,7 @@ class Lexer(BaseLexer):
         state_map: dict[BaseToken, Callable] = {
             MapToken.START: self._start,
             MapToken.END: self._start,
+            MapToken.KV_DELIMITER: self._kv_delimiter,
             MapToken.MAP_CLOSE: self._map_close,
             MapToken.MAP_OPEN: self._map_open,
             MapToken.NAME_DELIMITER: self._name_delimiter,
@@ -54,6 +55,14 @@ class Lexer(BaseLexer):
         return value[1:-1]
 
     # Lexing rules.
+    def _kv_delimiter(self, char: str) -> None:
+        """Lex a map open symbol."""
+        can_follow = [
+            MapToken.QUALIFIER_DELIMITER,
+            MapToken.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
     def _map_close(self, char: str) -> None:
         """Lex a map close symbol."""
         can_follow: list[BaseToken] = []
@@ -85,6 +94,7 @@ class Lexer(BaseLexer):
 
     def _qualifier_end(self, char: str) -> None:
         can_follow = [
+            MapToken.KV_DELIMITER,
             MapToken.MAP_CLOSE,
             MapToken.NAME_DELIMITER,
             MapToken.WHITESPACE,
