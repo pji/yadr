@@ -143,7 +143,13 @@ class NumberTestCase(BaseTests.MapLexTokenTestCase):
         self.lex_test(exp, yadn)
 
 
-class PairDelimiterTestCase(BaseTests.MapLexTestCase):
+class PairDelimiterTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.NAME_DELIMITER
+    allowed = [
+        MapToken.NUMBER,
+        MapToken.WHITESPACE,
+    ]
+
     def test_kv_delimiter(self):
         """Given a pair delimiter, return the proper tokens."""
         exp = (
@@ -173,7 +179,15 @@ class PairDelimiterTestCase(BaseTests.MapLexTestCase):
         self.lex_test(exp, yadn)
 
 
-class QualifierTestCase(BaseTests.MapLexTestCase):
+class QualifierTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.QUALIFIER
+    allowed = [
+        MapToken.MAP_CLOSE,
+        MapToken.NAME_DELIMITER,
+        MapToken.PAIR_DELIMITER,
+        MapToken.WHITESPACE,
+    ]
+
     def test_qualifier(self):
         """Given a qualifier, return the proper tokens."""
         exp = (

@@ -329,6 +329,15 @@ class BaseTests:
             ),
             m.MapToken.MAP_CLOSE: ('', ()),
             m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
+            m.MapToken.NAME_DELIMITER: (
+                '1:"spam"}',
+                (
+                    (m.MapToken.NUMBER, 1),
+                    (m.MapToken.KV_DELIMITER, ':'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.MAP_CLOSE, '}'),
+                )
+            ),
             m.MapToken.NUMBER: (
                 ':"eggs"}',
                 (
@@ -388,6 +397,18 @@ class BaseTests:
                     (m.MapToken.NAME_DELIMITER, '='),
                 )
             ),
+            m.MapToken.PAIR_DELIMITER: (
+                '{"spam"=1:"eggs"',
+                (
+                    (m.MapToken.MAP_OPEN, '{'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.NAME_DELIMITER, '='),
+                    (m.MapToken.NUMBER, 1),
+                    (m.MapToken.KV_DELIMITER, ':'),
+                    (m.MapToken.QUALIFIER, 'eggs'),
+                )
+            ),
+            m.MapToken.QUALIFIER: ('{', ((m.MapToken.MAP_OPEN, '{'),))
         }
 
         def setUp(self):
