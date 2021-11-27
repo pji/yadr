@@ -12,7 +12,12 @@ from yadr.model import MapToken
 
 
 # Test cases.
-class KVDelimiterTestCase(BaseTests.MapLexTestCase):
+class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.KV_DELIMITER
+    allowed = [
+        MapToken.QUALIFIER_DELIMITER,
+    ]
+
     def test_kv_delimiter(self):
         """Given a key-value delimiter, return the proper tokens."""
         exp = (
@@ -87,6 +92,60 @@ class NameDelimiterTestCase(BaseTests.MapLexTestCase):
             (MapToken.NAME_DELIMITER, '=')
         )
         yadn = '{"spam" ='
+        self.lex_test(exp, yadn)
+
+
+class NumberTestCase(BaseTests.MapLexTestCase):
+    def test_number(self):
+        """Given a number, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.NUMBER, 1),
+        )
+        yadn = '{"spam"=1'
+        self.lex_test(exp, yadn)
+
+    def test_number_whitespace(self):
+        """Given a number, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.NUMBER, 1),
+        )
+        yadn = '{"spam"= 1'
+        self.lex_test(exp, yadn)
+
+
+class PairDelimiterTestCase(BaseTests.MapLexTestCase):
+    def test_kv_delimiter(self):
+        """Given a pair delimiter, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.QUALIFIER, 'key'),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'value'),
+            (MapToken.PAIR_DELIMITER, ','),
+        )
+        yadn = '{"spam"="key":"value",'
+        self.lex_test(exp, yadn)
+
+    def test_kv_delimiter_whitespace(self):
+        """Given a pair delimiter, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.QUALIFIER, 'key'),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'value'),
+            (MapToken.PAIR_DELIMITER, ','),
+        )
+        yadn = '{"spam"="key":"value" ,'
         self.lex_test(exp, yadn)
 
 

@@ -28,6 +28,8 @@ class BaseTests:
     class LexTokenTestCase(ut.TestCase):
         token = m.Token.START
         allowed = []
+        tokens = m.Token
+        symbols_raw = m.yadn_symbols_raw
 
         # To test for what is allowed, the YADN sent must be legal. Some
         # of the tokens that need to be tested cannot be the end of a roll.
@@ -144,20 +146,25 @@ class BaseTests:
             self.assertTupleEqual(exp, act)
 
         def get_symbol_for_token(self, token):
-            symbols = m.yadn_symbols_raw[token]
+            symbols = self.symbols_raw[token]
             symbol = ''
             if symbols:
                 symbol = symbols[0]
-                if token == m.Token.NUMBER:
+                if token.name == "NUMBER":
                     symbol = int(symbol)
             else:
-                if token == m.Token.POOL:
+                if token.name == "POOL":
                     symbol = (3, 3)
-                if token == m.Token.QUALIFIER:
+                if token.name == "QUALIFIER":
                     symbol = 'spam'
-                if token == m.Token.CHOICE_OPTIONS:
+                if token.name == "CHOICE_OPTIONS":
                     symbol = ('spam', 'eggs')
             return symbol
+
+        def get_token_for_name(self, name):
+            for token in self.tokens:
+                if token.name == name:
+                    return token
 
         def get_example(self, token, before=True):
             example_dict = self.example_before
@@ -166,20 +173,21 @@ class BaseTests:
             test, exp = example_dict[token]
             symbol = self.get_symbol_for_token(token)
             token_info = (token, symbol)
-            if token == m.Token.BOOLEAN:
+            if token.name == "BOOLEAN":
                 token_info = (token, True)
-            elif token == m.Token.QUALIFIER_DELIMITER:
-                token_info = (m.Token.QUALIFIER, 'spam')
-            if token == m.Token.QUALIFIER:
+            elif token.name == "QUALIFIER_DELIMITER":
+                new_token = self.get_token_for_name('QUALIFIER')
+                token_info = (new_token, 'spam')
+            if token.name == "QUALIFIER":
                 symbol = f'"{symbol}"'
-            elif token == m.Token.POOL:
+            elif token.name == "POOL":
                 symbol = str(symbol)
                 symbol = f'[{symbol[1:-1]}]'
             if before:
                 exp = (*exp, token_info)
                 test = f'{test}{symbol}'
-            elif not before and token in (m.Token.NEGATIVE_SIGN,
-                                          m.Token.POOL_OPEN):
+            elif not before and token.name in ("NEGATIVE_SIGN",
+                                               "POOL_OPEN"):
                 test = f'{symbol}{test}'
             else:
                 exp = (token_info, *exp)
@@ -205,7 +213,7 @@ class BaseTests:
                 msg = f'{yadn} failed.'
                 raise ex.__class__(msg) from ex
             try:
-                if m.Token.WHITESPACE in self.allowed:
+                if "WHITESPACE" in [t.name for t in self.allowed]:
                     self.lex_test(exp, yadn_ws)
             except Exception as ex:
                 msg = f'{yadn} failed.'
@@ -272,7 +280,7 @@ class BaseTests:
 
         def test_unalloweds(self):
             """Test tokens not allowed to follow."""
-            unallowed = [t for t in m.Token if t not in self.allowed]
+            unallowed = [t for t in self.tokens if t not in self.allowed]
             unallowed = [t for t in unallowed if t in m.symbols]
             ignore = [
                 m.Token.WHITESPACE,
@@ -294,6 +302,40 @@ class BaseTests:
                     raise ex.__class__(msg) from ex
 
     class MapLexTestCase(ut.TestCase):
+        def setUp(self):
+            self.lexer = maps.Lexer()
+
+        def tearDown(self):
+            self.lexer = None
+
+        def lex_test(self, exp, yadn):
+            act = self.lexer.lex(yadn)
+            self.assertTupleEqual(exp, act)
+
+    class MapLexTokenTestCase(LexTokenTestCase):
+        token = m.MapToken.START
+        allowed = []
+        tokens = m.MapToken
+        symbols_raw = m.map_symbols_raw
+
+        # Details for the allowed and unallowed tests.
+        example_after = {
+            m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
+            m.MapToken.QUALIFIER_DELIMITER: ('spam"', ()),
+        }
+        example_before = {
+            m.MapToken.KV_DELIMITER: (
+                '{"spam"="eggs"',
+                (
+                    (m.MapToken.MAP_OPEN, '{'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.NAME_DELIMITER, '='),
+                    (m.MapToken.QUALIFIER, 'eggs'),
+                )
+            ),
+            m.MapToken.MAP_OPEN: ('', ())
+        }
+
         def setUp(self):
             self.lexer = maps.Lexer()
 
