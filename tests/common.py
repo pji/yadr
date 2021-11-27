@@ -320,6 +320,13 @@ class BaseTests:
 
         # Details for the allowed and unallowed tests.
         example_after = {
+            m.MapToken.KV_DELIMITER: (
+                '"spam"}',
+                (
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.MAP_CLOSE, '}'),
+                )
+            ),
             m.MapToken.MAP_CLOSE: ('', ()),
             m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
             m.MapToken.NUMBER: (
@@ -327,6 +334,15 @@ class BaseTests:
                 (
                     (m.MapToken.KV_DELIMITER, ':'),
                     (m.MapToken.QUALIFIER, 'eggs'),
+                    (m.MapToken.MAP_CLOSE, '}'),
+                )
+            ),
+            m.MapToken.PAIR_DELIMITER: (
+                '2:"spam"}',
+                (
+                    (m.MapToken.NUMBER, 2),
+                    (m.MapToken.KV_DELIMITER, ':'),
+                    (m.MapToken.QUALIFIER, 'spam'),
                     (m.MapToken.MAP_CLOSE, '}'),
                 )
             ),
@@ -363,7 +379,15 @@ class BaseTests:
                     (m.MapToken.MAP_OPEN, '{'),
                     (m.MapToken.QUALIFIER, 'spam'),
                 )
-            )
+            ),
+            m.MapToken.NUMBER: (
+                '{"spam"=',
+                (
+                    (m.MapToken.MAP_OPEN, '{'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.NAME_DELIMITER, '='),
+                )
+            ),
         }
 
         def setUp(self):

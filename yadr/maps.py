@@ -96,6 +96,8 @@ class Lexer(BaseLexer):
         """Processing a number."""
         can_follow = [
             MapToken.KV_DELIMITER,
+            MapToken.MAP_CLOSE,
+            MapToken.PAIR_DELIMITER,
         ]
 
         # Check here if the character is a digit because the checks in
@@ -111,7 +113,7 @@ class Lexer(BaseLexer):
     def _pair_delimiter(self, char: str) -> None:
         """Lex a pair delimiter symbol."""
         can_follow = [
-            MapToken.QUALIFIER_DELIMITER,
+            MapToken.NUMBER,
             MapToken.WHITESPACE,
         ]
         self._check_char(char, can_follow)

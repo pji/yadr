@@ -112,7 +112,14 @@ class NameDelimiterTestCase(BaseTests.MapLexTokenTestCase):
         self.lex_test(exp, yadn)
 
 
-class NumberTestCase(BaseTests.MapLexTestCase):
+class NumberTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.NUMBER
+    allowed = [
+        MapToken.KV_DELIMITER,
+        MapToken.MAP_CLOSE,
+        MapToken.PAIR_DELIMITER,
+    ]
+
     def test_number(self):
         """Given a number, return the proper tokens."""
         exp = (
