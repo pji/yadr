@@ -44,7 +44,10 @@ class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
         self.lex_test(exp, yadn)
 
 
-class MapCloseTestCase(BaseTests.MapLexTestCase):
+class MapCloseTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.MAP_CLOSE
+    allowed = []
+
     def test_map_close(self):
         """Given a map close character, return the proper tokens."""
         exp = (
@@ -64,7 +67,14 @@ class MapCloseTestCase(BaseTests.MapLexTestCase):
         self.lex_test(exp, yadn)
 
 
-class MapOpenTestCase(BaseTests.MapLexTestCase):
+class MapOpenTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.MAP_OPEN
+    allowed = [
+        MapToken.MAP_CLOSE,
+        MapToken.QUALIFIER_DELIMITER,
+        MapToken.WHITESPACE,
+    ]
+
     def test_map_open(self):
         """Given a map open character, return the proper tokens."""
         exp = (
@@ -74,7 +84,13 @@ class MapOpenTestCase(BaseTests.MapLexTestCase):
         self.lex_test(exp, yadn)
 
 
-class NameDelimiterTestCase(BaseTests.MapLexTestCase):
+class NameDelimiterTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.NAME_DELIMITER
+    allowed = [
+        MapToken.NUMBER,
+        MapToken.WHITESPACE,
+    ]
+
     def test_name_delimiter(self):
         """Given a name delimiter, return the proper tokens."""
         exp = (

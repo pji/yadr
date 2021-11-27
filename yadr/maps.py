@@ -94,7 +94,9 @@ class Lexer(BaseLexer):
 
     def _number(self, char: str) -> None:
         """Processing a number."""
-        can_follow = []
+        can_follow = [
+            MapToken.KV_DELIMITER,
+        ]
 
         # Check here if the character is a digit because the checks in
         # Char are currently limited to tokens that no longer than two
