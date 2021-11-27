@@ -62,12 +62,19 @@ op_tokens = (
     Token.MD_OPERATOR,
     Token.EX_OPERATOR,
 )
+
 id_tokens = (
     Token.BOOLEAN,
     Token.NUMBER,
     Token.POOL,
     Token.QUALIFIER,
 )
+
+# Symbols for YADN tokens.
+# This maps the symbols used in YADN to tokens for lexing. This isn't
+# a direct mapping from the YADN specification document. It's just
+# the basic things that can be handled by the lexer easily. More
+# complicated things are handled through the lexer itself.
 yadn_symbols_raw = {
     Token.START: '',
     Token.AS_OPERATOR: '+ -',
@@ -103,7 +110,10 @@ yadn_symbols_raw = {
 }
 
 
-# Dice mapping tokens.
+# YADN dice mapping tokens.
+# These are the YADN tokens that are specific to dice maps. These are
+# split out so they won't confuse the main YADN lexer. Dice maps are
+# parsed by their own lexer.
 class MapToken(Enum):
     START = auto()
     END = auto()
@@ -116,8 +126,11 @@ class MapToken(Enum):
     PAIR_DELIMITER = auto()
     QUALIFIER = auto()
     QUALIFIER_DELIMITER = auto()
+    QUALIFIER_END = auto()
+    WHITESPACE = auto()
 
 
+# Symbols for YADN dice mapping tokens.
 map_symbols_raw = {
     MapToken.START: '',
     MapToken.END: '',
@@ -130,8 +143,8 @@ map_symbols_raw = {
     MapToken.PAIR_DELIMITER: ',',
     MapToken.QUALIFIER: '',
     MapToken.QUALIFIER_DELIMITER: '"',
+    MapToken.QUALIFIER_END: '',
 }
-map_symbols = {k: v.split() for k, v in map_symbols_raw.items()}
 
 
 # Classes.
@@ -147,8 +160,11 @@ TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 # Symbols by token.
 def split_symbols(d: dict) -> dict[BaseToken, list[str]]:
-    return {k: v.split() for k, v in d.items()}
+    """Split the symbol strings and add whitespace."""
+    split_symbols = {k: v.split() for k, v in d.items()}
+    split_symbols[Token.WHITESPACE] = [' ', '\t', '\n']
+    return split_symbols
 
 
 symbols = split_symbols(yadn_symbols_raw)
-symbols[Token.WHITESPACE] = [' ', '\t', '\n']
+map_symbols = split_symbols(map_symbols_raw)

@@ -33,6 +33,7 @@ class BaseLexer:
         self.symbol_map = _mutable(symbol_map, dict)
         self.result_map = _mutable(result_map, dict)
         self.no_store = _mutable(no_store)
+        self.init_state = init_state
         self.state = init_state
 
         self.process = self._start
@@ -45,7 +46,7 @@ class BaseLexer:
         for char in text:
             self.process(char)
         else:
-            self._change_state(Token.START, '')
+            self._change_state(self.init_state, '')
         return tuple(self.tokens)
 
     # Private operation method.
