@@ -27,6 +27,10 @@ class Lexer(BaseLexer):
             Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
             Token.POOL_OPEN: Token.POOL,
         }
+        bracket_ends: dict[BaseToken, BaseToken] = {
+            Token.QUALIFIER: Token.QUALIFIER_END,
+            Token.POOL: Token.POOL_END,
+        }
         state_map: dict[BaseToken, Callable] = {
             Token.START: self._start,
             Token.AS_OPERATOR: self._as_operator,
@@ -74,7 +78,9 @@ class Lexer(BaseLexer):
             state_map,
             symbol_map,
             result_map,
-            no_store
+            no_store,
+            Token.START,
+            bracket_ends
         )
         self.process = self._start
 
@@ -348,19 +354,6 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _whitespace(self, char: str) -> None:
-        if char.isspace():
-            return None
-        prev_state: BaseToken = Token.START
-        if self.tokens:
-            prev_state = self.tokens[-1][0]
-        if prev_state == Token.POOL:
-            prev_state = Token.POOL_END
-        elif prev_state == Token.QUALIFIER:
-            prev_state = Token.QUALIFIER_END
-        self.ws_process = self.state_map[prev_state]
-        self.ws_process(char)
-
 
 class PoolLexer(BaseLexer):
     def __init__(self) -> None:
@@ -369,6 +362,7 @@ class PoolLexer(BaseLexer):
             Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
             Token.POOL_OPEN: Token.POOL,
         }
+        bracket_ends: dict[BaseToken, BaseToken] = {}
         state_map: dict[BaseToken, Callable] = {
             Token.NUMBER: self._number,
             Token.MEMBER_DELIMITER: self._member_delimiter,
@@ -392,7 +386,9 @@ class PoolLexer(BaseLexer):
             state_map,
             symbol_map,
             result_map,
-            no_store
+            no_store,
+            Token.START,
+            bracket_ends
         )
         self.process = self._start
 
@@ -446,16 +442,5 @@ class PoolLexer(BaseLexer):
         """Start lexing the string."""
         can_follow = [
             Token.POOL_OPEN,
-        ]
-        self._check_char(char, can_follow)
-
-    def _whitespace(self, char: str) -> None:
-        """Processing whitespace."""
-        can_follow = [
-            Token.NUMBER,
-            Token.MEMBER_DELIMITER,
-            Token.NEGATIVE_SIGN,
-            Token.POOL_CLOSE,
-            Token.WHITESPACE,
         ]
         self._check_char(char, can_follow)

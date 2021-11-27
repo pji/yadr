@@ -27,8 +27,11 @@ class BaseLexer:
                  symbol_map: Optional[dict[BaseToken, list[str]]] = None,
                  result_map: Optional[dict[BaseToken, Callable]] = None,
                  no_store: Optional[list[BaseToken]] = None,
-                 init_state: BaseToken = Token.START) -> None:
+                 init_state: BaseToken = Token.START,
+                 bracket_ends: Optional[dict[BaseToken, BaseToken]] = None
+                 ) -> None:
         self.bracket_states = _mutable(bracket_states, dict)
+        self.bracket_ends = _mutable(bracket_ends, dict)
         self.state_map = _mutable(state_map, dict)
         self.symbol_map = _mutable(symbol_map, dict)
         self.result_map = _mutable(result_map, dict)
@@ -135,3 +138,15 @@ class BaseLexer:
     # Lexing rules.
     def _start(self, char: str) -> None:
         ...
+
+    def _whitespace(self, char: str) -> None:
+        """Lex white space."""
+        if char.isspace():
+            return None
+        prev_state = self.init_state
+        if self.tokens:
+            prev_state = self.tokens[-1][0]
+        if prev_state in self.bracket_ends:
+            prev_state = self.bracket_ends[prev_state]
+        process = self.state_map[prev_state]
+        process(char)

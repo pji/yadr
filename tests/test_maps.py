@@ -22,6 +22,15 @@ class MapCloseTestCase(BaseTests.MapLexTestCase):
         yadn = '{}'
         self.lex_test(exp, yadn)
 
+    def test_map_close_whitespace(self):
+        """Given a map close character, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.MAP_CLOSE, '}'),
+        )
+        yadn = '{ }'
+        self.lex_test(exp, yadn)
+
 
 class MapOpenTestCase(BaseTests.MapLexTestCase):
     def test_map_open(self):
@@ -33,13 +42,34 @@ class MapOpenTestCase(BaseTests.MapLexTestCase):
         self.lex_test(exp, yadn)
 
 
+class NameDelimiterTestCase(BaseTests.MapLexTestCase):
+    def test_name_delimiter(self):
+        """Given a name delimiter, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '=')
+        )
+        yadn = '{"spam"='
+        self.lex_test(exp, yadn)
+
+    def test_name_delimiter_whitespace(self):
+        """Given a name delimiter, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '=')
+        )
+        yadn = '{"spam" ='
+        self.lex_test(exp, yadn)
+
+
 class QualifierTestCase(BaseTests.MapLexTestCase):
     def test_qualifier(self):
         """Given a qualifier, return the proper tokens."""
         exp = (
             (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.MAP_CLOSE, '}'),
+            (MapToken.QUALIFIER, 'spam')
         )
-        yadn = '{"spam"}'
+        yadn = '{"spam"'
         self.lex_test(exp, yadn)

@@ -16,13 +16,18 @@ class Lexer(BaseLexer):
         bracket_states: dict[BaseToken, BaseToken] = {
             MapToken.QUALIFIER_DELIMITER: MapToken.QUALIFIER,
         }
+        bracket_ends: dict[BaseToken, BaseToken] = {
+            MapToken.QUALIFIER: MapToken.QUALIFIER_END,
+        }
         state_map: dict[BaseToken, Callable] = {
             MapToken.START: self._start,
             MapToken.END: self._start,
             MapToken.MAP_CLOSE: self._map_close,
             MapToken.MAP_OPEN: self._map_open,
+            MapToken.NAME_DELIMITER: self._name_delimiter,
             MapToken.QUALIFIER: self._qualifier,
             MapToken.QUALIFIER_END: self._qualifier_end,
+            MapToken.WHITESPACE: self._whitespace,
         }
         symbol_map: dict[BaseToken, list[str]] = map_symbols
         result_map: dict[BaseToken, Callable] = {
@@ -31,6 +36,7 @@ class Lexer(BaseLexer):
         no_store: list[BaseToken] = [
             MapToken.START,
             MapToken.QUALIFIER_END,
+            MapToken.WHITESPACE,
         ]
         init_state: BaseToken = MapToken.START
         super().__init__(
@@ -39,7 +45,8 @@ class Lexer(BaseLexer):
             symbol_map,
             result_map,
             no_store,
-            init_state
+            init_state,
+            bracket_ends
         )
 
     # Result transformation rules.
@@ -61,6 +68,14 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
+    def _name_delimiter(self, char: str) -> None:
+        """Lex a map open symbol."""
+        can_follow = [
+            MapToken.QUALIFIER_DELIMITER,
+            MapToken.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
+
     def _qualifier(self, char: str) -> None:
         """Lex a qualifier."""
         self.buffer += char
@@ -71,6 +86,7 @@ class Lexer(BaseLexer):
     def _qualifier_end(self, char: str) -> None:
         can_follow = [
             MapToken.MAP_CLOSE,
+            MapToken.NAME_DELIMITER,
             MapToken.WHITESPACE,
         ]
         self._check_char(char, can_follow)

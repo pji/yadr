@@ -5,7 +5,7 @@ model
 Common data elements for the yadr package.
 """
 from collections import UserString
-from enum import Enum, auto
+from enum import Enum, EnumMeta, auto
 from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
 
 
@@ -103,6 +103,7 @@ yadn_symbols_raw = {
     Token.QUALIFIER_END: '',
     Token.ROLL_DELIMITER: ';',
     Token.U_POOL_DEGEN_OPERATOR: 'C N S',
+    Token.WHITESPACE: '',
 
     # Dice mapping symbols.
     Token.MAP_OPEN: '{',
@@ -144,6 +145,7 @@ map_symbols_raw = {
     MapToken.QUALIFIER: '',
     MapToken.QUALIFIER_DELIMITER: '"',
     MapToken.QUALIFIER_END: '',
+    MapToken.WHITESPACE: '',
 }
 
 
@@ -159,12 +161,15 @@ TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 
 # Symbols by token.
-def split_symbols(d: dict) -> dict[BaseToken, list[str]]:
+def split_symbols(d: dict, enum: EnumMeta) -> dict[BaseToken, list[str]]:
     """Split the symbol strings and add whitespace."""
     split_symbols = {k: v.split() for k, v in d.items()}
-    split_symbols[Token.WHITESPACE] = [' ', '\t', '\n']
+    for member in enum:                         # type: ignore
+        if member.name == 'WHITESPACE':
+            split_symbols[member] = [' ', '\t', '\n']
+            break
     return split_symbols
 
 
-symbols = split_symbols(yadn_symbols_raw)
-map_symbols = split_symbols(map_symbols_raw)
+symbols = split_symbols(yadn_symbols_raw, Token)
+map_symbols = split_symbols(map_symbols_raw, MapToken)
