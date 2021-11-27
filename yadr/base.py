@@ -24,13 +24,13 @@ class BaseLexer:
     def __init__(self,
                  bracket_states: Optional[dict[BaseToken, BaseToken]] = None,
                  state_map: Optional[dict[BaseToken, Callable]] = None,
-                 token_map: Optional[dict[BaseToken, list[str]]] = None,
+                 symbol_map: Optional[dict[BaseToken, list[str]]] = None,
                  result_map: Optional[dict[BaseToken, Callable]] = None,
                  no_store: Optional[list[BaseToken]] = None,
                  init_state: BaseToken = Token.START) -> None:
         self.bracket_states = _mutable(bracket_states, dict)
         self.state_map = _mutable(state_map, dict)
-        self.token_map = _mutable(token_map, dict)
+        self.symbol_map = _mutable(symbol_map, dict)
         self.result_map = _mutable(result_map, dict)
         self.no_store = _mutable(no_store)
         self.state = init_state
@@ -51,13 +51,13 @@ class BaseLexer:
     # Private operation method.
     def _is_token_start(self, token: BaseToken, char: str) -> bool:
         """Is the given character the start of a new token."""
-        valid = {s[0] for s in self.token_map[token]}
+        valid = {s[0] for s in self.symbol_map[token]}
         return char in valid
 
     def _is_token_still(self, char: str) -> bool:
         """Is the given character still a part of the current token."""
         index = len(self.buffer)
-        tokens = [t for t in self.token_map[self.state] if len(t) > index]
+        tokens = [t for t in self.symbol_map[self.state] if len(t) > index]
         if tokens:
             valid = {s[index] for s in tokens}
             return char in valid

@@ -14,7 +14,7 @@ from yadr.model import (
     Result,
     Token,
     TokenInfo,
-    tokens
+    symbols
 )
 
 
@@ -56,7 +56,7 @@ class Lexer(BaseLexer):
             Token.MAP_OPEN: self._map_open,
             Token.MAP_CLOSE: self._map_close,
         }
-        tokens_: dict[BaseToken, list[str]] = tokens
+        symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {
             Token.BOOLEAN: self._tf_boolean,
             Token.NUMBER: self._tf_number,
@@ -72,7 +72,7 @@ class Lexer(BaseLexer):
         super().__init__(
             bracket_states,
             state_map,
-            tokens_,
+            symbol_map,
             result_map,
             no_store
         )
@@ -378,7 +378,7 @@ class PoolLexer(BaseLexer):
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
         }
-        tokens_: dict[BaseToken, list[str]] = tokens
+        symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {
             Token.NUMBER: self._tf_number,
         }
@@ -390,7 +390,7 @@ class PoolLexer(BaseLexer):
         super().__init__(
             bracket_states,
             state_map,
-            tokens,
+            symbol_map,
             result_map,
             no_store
         )

@@ -144,7 +144,7 @@ class BaseTests:
             self.assertTupleEqual(exp, act)
 
         def get_symbol_for_token(self, token):
-            symbols = m.symbols[token]
+            symbols = m.yadn_symbols_raw[token]
             symbol = ''
             if symbols:
                 symbol = symbols[0]
@@ -273,7 +273,7 @@ class BaseTests:
         def test_unalloweds(self):
             """Test tokens not allowed to follow."""
             unallowed = [t for t in m.Token if t not in self.allowed]
-            unallowed = [t for t in unallowed if t in m.tokens]
+            unallowed = [t for t in unallowed if t in m.symbols]
             ignore = [
                 m.Token.WHITESPACE,
                 m.Token.START,

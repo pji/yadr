@@ -5,11 +5,11 @@ model
 Common data elements for the yadr package.
 """
 from collections import UserString
-from enum import Enum
+from enum import Enum, auto
 from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
 
 
-# Tokens.
+# YADN Tokens.
 class Token(Enum):
     START = 0
     AS_OPERATOR = 1
@@ -44,14 +44,8 @@ class Token(Enum):
     END = 30
 
     # Dice mapping tokens.
-    MAP_OPEN = 31
-    MAP_CLOSE = 32
-
-
-class MapToken(Enum):
-    START = 0
-    END = 1
-    MAP_OPEN = 2
+    MAP_OPEN = auto()
+    MAP_CLOSE = auto()
 
 
 op_tokens = (
@@ -74,7 +68,7 @@ id_tokens = (
     Token.POOL,
     Token.QUALIFIER,
 )
-symbols = {
+yadn_symbols_raw = {
     Token.START: '',
     Token.AS_OPERATOR: '+ -',
     Token.BOOLEAN: 'T F',
@@ -109,6 +103,37 @@ symbols = {
 }
 
 
+# Dice mapping tokens.
+class MapToken(Enum):
+    START = auto()
+    END = auto()
+    KV_DELIMITER = auto()
+    MAP_CLOSE = auto()
+    MAP_OPEN = auto()
+    NAME_DELIMITER = auto()
+    NEGATIVE_SIGN = auto()
+    NUMBER = auto()
+    PAIR_DELIMITER = auto()
+    QUALIFIER = auto()
+    QUALIFIER_DELIMITER = auto()
+
+
+map_symbols_raw = {
+    MapToken.START: '',
+    MapToken.END: '',
+    MapToken.KV_DELIMITER: ':',
+    MapToken.MAP_CLOSE: '}',
+    MapToken.MAP_OPEN: '{',
+    MapToken.NAME_DELIMITER: '=',
+    MapToken.NEGATIVE_SIGN: '-',
+    MapToken.NUMBER: '0 1 2 3 4 5 6 7 8 9',
+    MapToken.PAIR_DELIMITER: ',',
+    MapToken.QUALIFIER: '',
+    MapToken.QUALIFIER_DELIMITER: '"',
+}
+map_symbols = {k: v.split() for k, v in map_symbols_raw.items()}
+
+
 # Classes.
 class CompoundResult(Tuple):
     """The result of multiple rolls."""
@@ -121,5 +146,9 @@ TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 
 # Symbols by token.
-tokens: dict[BaseToken, list[str]] = {k: v.split() for k,v in symbols.items()}
-tokens[Token.WHITESPACE] = [' ', '\t', '\n']
+def split_symbols(d: dict) -> dict[BaseToken, list[str]]:
+    return {k: v.split() for k, v in d.items()}
+
+
+symbols = split_symbols(yadn_symbols_raw)
+symbols[Token.WHITESPACE] = [' ', '\t', '\n']
