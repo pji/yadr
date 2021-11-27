@@ -270,7 +270,7 @@ class BaseTests:
         # Allowed next operator.
         def test_alloweds(self):
             """Test tokens allowed to follow."""
-            allowed = [t for t in self.allowed if t != m.Token.WHITESPACE]
+            allowed = [t for t in self.allowed if t.name != "WHITESPACE"]
             for token in allowed:
                 try:
                     self.allowed_test(self.token, token)
@@ -321,7 +321,10 @@ class BaseTests:
         # Details for the allowed and unallowed tests.
         example_after = {
             m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
-            m.MapToken.QUALIFIER_DELIMITER: ('spam"', ()),
+            m.MapToken.QUALIFIER_DELIMITER: (
+                'spam"}',
+                ((m.MapToken.MAP_CLOSE, '}'),)
+            ),
         }
         example_before = {
             m.MapToken.KV_DELIMITER: (

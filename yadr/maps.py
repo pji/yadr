@@ -133,6 +133,8 @@ class Lexer(BaseLexer):
 
     def _start(self, char: str) -> None:
         """Initial lexer state."""
+        if self.tokens:
+            self.tokens = []
         can_follow = [
             MapToken.MAP_OPEN,
             MapToken.WHITESPACE,

@@ -16,6 +16,7 @@ class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
     token = MapToken.KV_DELIMITER
     allowed = [
         MapToken.QUALIFIER_DELIMITER,
+        MapToken.WHITESPACE,
     ]
 
     def test_kv_delimiter(self):
