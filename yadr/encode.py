@@ -12,7 +12,7 @@ class Encoder:
         self.yadn = yadn
 
     # Public methods.
-    def encode(self, data: Result) -> str:
+    def encode(self, data: Result | CompoundResult) -> str:
         """Turn computed Python object results into a YADN string."""
         if isinstance(data, bool):
             self._encode_bool(data)

@@ -55,3 +55,20 @@ class RollTestCase(ut.TestCase):
 
         # Determine test results.
         self.assertEqual(exp, act)
+
+    @patch('random.randint')
+    def test_roll_yadn_out(self, mock_randint):
+        """Execute a YADN string."""
+        # Expected value.
+        exp = '11'
+
+        # Test data and state.
+        mock_randint.side_effect = (4, 4, 3)
+        yadn = '3d6'
+        yadn_out = True
+
+        # Run test.
+        act = yadr.roll(yadn, yadn_out)
+
+        # Determine test results.
+        self.assertEqual(exp, act)

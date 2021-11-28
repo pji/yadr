@@ -11,44 +11,42 @@ from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
 
 # YADN Tokens.
 class Token(Enum):
-    START = 0
-    AS_OPERATOR = 1
-    BOOLEAN = 2
-    CHOICE_OPERATOR = 3
-    CHOICE_OPTIONS = 4
-    COMPARISON_OPERATOR = 5
-    DICE_OPERATOR = 6
-    EX_OPERATOR = 7
-    GROUP_OPEN = 8
-    GROUP_CLOSE = 9
-    MD_OPERATOR = 10
-    MEMBER = 11
-    MEMBER_DELIMITER = 12
-    NEGATIVE_SIGN = 13
-    NUMBER = 14
-    OPERATOR = 15
-    OPTIONS_OPERATOR = 16
-    POOL = 17
-    POOL_CLOSE = 18
-    POOL_DEGEN_OPERATOR = 19
-    POOL_END = 20
-    POOL_GEN_OPERATOR = 21
-    POOL_OPEN = 22
-    POOL_OPERATOR = 23
-    QUALIFIER = 24
-    QUALIFIER_END = 25
-    QUALIFIER_DELIMITER = 26
-    ROLL_DELIMITER = 27
-    U_POOL_DEGEN_OPERATOR = 28
-    WHITESPACE = 29
-    END = 30
-
-    # Dice mapping tokens.
-    MAP_OPEN = auto()
-    MAP_CLOSE = auto()
+    START = auto()
+    END = auto()
+    AS_OPERATOR = auto()
+    BOOLEAN = auto()
+    CHOICE_OPERATOR = auto()
+    CHOICE_OPTIONS = auto()
+    COMPARISON_OPERATOR = auto()
+    DICE_OPERATOR = auto()
+    EX_OPERATOR = auto()
+    GROUP_OPEN = auto()
+    GROUP_CLOSE = auto()
     MAP = auto()
+    MAP_CLOSE = auto()
     MAP_END = auto()
+    MAP_OPEN = auto()
     MAPPING_OPERATOR = auto()
+    MD_OPERATOR = auto()
+    MEMBER = auto()
+    MEMBER_DELIMITER = auto()
+    NEGATIVE_SIGN = auto()
+    NUMBER = auto()
+    OPERATOR = auto()
+    OPTIONS_OPERATOR = auto()
+    POOL = auto()
+    POOL_CLOSE = auto()
+    POOL_DEGEN_OPERATOR = auto()
+    POOL_END = auto()
+    POOL_GEN_OPERATOR = auto()
+    POOL_OPEN = auto()
+    POOL_OPERATOR = auto()
+    QUALIFIER = auto()
+    QUALIFIER_END = auto()
+    QUALIFIER_DELIMITER = auto()
+    ROLL_DELIMITER = auto()
+    U_POOL_DEGEN_OPERATOR = auto()
+    WHITESPACE = auto()
 
 
 op_tokens = (
@@ -90,8 +88,13 @@ yadn_symbols_raw = {
     Token.EX_OPERATOR: '^',
     Token.GROUP_OPEN: '(',
     Token.GROUP_CLOSE: ')',
-    Token.MEMBER_DELIMITER: ',',
+    Token.MAP: '',
+    Token.MAP_CLOSE: '}',
+    Token.MAP_END: '',
+    Token.MAP_OPEN: '{',
+    Token.MAPPING_OPERATOR: 'm',
     Token.MD_OPERATOR: '* / %',
+    Token.MEMBER_DELIMITER: ',',
     Token.NEGATIVE_SIGN: '-',
     Token.NUMBER: '0 1 2 3 4 5 6 7 8 9',
     Token.OPTIONS_OPERATOR: ':',
@@ -108,13 +111,6 @@ yadn_symbols_raw = {
     Token.ROLL_DELIMITER: ';',
     Token.U_POOL_DEGEN_OPERATOR: 'C N S',
     Token.WHITESPACE: '',
-
-    # Dice mapping symbols.
-    Token.MAP_OPEN: '{',
-    Token.MAP_CLOSE: '}',
-    Token.MAP: '',
-    Token.MAP_END: '',
-    Token.MAPPING_OPERATOR: 'm',
 }
 
 

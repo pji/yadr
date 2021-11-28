@@ -63,8 +63,16 @@ class BaseTests:
                 ),
             ),
             m.Token.GROUP_CLOSE: ('', ()),
-            m.Token.MEMBER_DELIMITER: ('3]', ()),
+            m.Token.MAP: ('', ()),
+            m.Token.MAP_CLOSE: ('', ()),
+            m.Token.MAP_END: ('', ()),
+            m.Token.MAP_OPEN: ('}', ((m.Token.MAP, ('', {})),)),
+            m.Token.MAPPING_OPERATOR: (
+                '"spam"',
+                ((m.Token.QUALIFIER, 'spam'), )
+            ),
             m.Token.MD_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
+            m.Token.MEMBER_DELIMITER: ('3]', ()),
             m.Token.NEGATIVE_SIGN: ('3', ((m.Token.NUMBER, -3), )),
             m.Token.NUMBER: ('', ()),
             m.Token.OPTIONS_OPERATOR: (
@@ -86,16 +94,6 @@ class BaseTests:
                 '[3,3]',
                 ((m.Token.POOL, (3, 3)), )
             ),
-
-            # Mapping tokens.
-            m.Token.MAP_OPEN: ('}', ((m.Token.MAP, ('', {})),)),
-            m.Token.MAP_CLOSE: ('', ()),
-            m.Token.MAP: ('', ()),
-            m.Token.MAP_END: ('', ()),
-            m.Token.MAPPING_OPERATOR: (
-                '"spam"',
-                ((m.Token.QUALIFIER, 'spam'), )
-            ),
         }
         example_before = {
             m.Token.AS_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
@@ -114,8 +112,16 @@ class BaseTests:
                     (m.Token.NUMBER, 3),
                 ),
             ),
-            m.Token.MEMBER_DELIMITER: ('[3', ()),
+            m.Token.MAP: ('', ()),
+            m.Token.MAP_CLOSE: ('{', ((m.Token.MAP, ('', {})), )),
+            m.Token.MAP_END: ('{}', ((m.Token.MAP, ('', {})), )),
+            m.Token.MAP_OPEN: ('', ()),
+            m.Token.MAPPING_OPERATOR: (
+                '3',
+                ((m.Token.NUMBER, 3), )
+            ),
             m.Token.MD_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
+            m.Token.MEMBER_DELIMITER: ('[3', ()),
             m.Token.NEGATIVE_SIGN: ('', ()),
             m.Token.NUMBER: ('', ()),
             m.Token.OPTIONS_OPERATOR: (
@@ -134,16 +140,6 @@ class BaseTests:
             m.Token.QUALIFIER_END: ('"spam"', ((m.Token.QUALIFIER, 'spam'), )),
             m.Token.ROLL_DELIMITER: ('3', ((m.Token.NUMBER, 3), )),
             m.Token.U_POOL_DEGEN_OPERATOR: ('', ()),
-
-            # Mapping tokens.
-            m.Token.MAP_OPEN: ('', ()),
-            m.Token.MAP_CLOSE: ('{', ((m.Token.MAP, ('', {})), )),
-            m.Token.MAP: ('', ()),
-            m.Token.MAP_END: ('{}', ((m.Token.MAP, ('', {})), )),
-            m.Token.MAPPING_OPERATOR: (
-                '3',
-                ((m.Token.NUMBER, 3), )
-            ),
         }
 
         def setUp(self):
