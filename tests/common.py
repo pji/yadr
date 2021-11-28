@@ -92,6 +92,10 @@ class BaseTests:
             m.Token.MAP_CLOSE: ('', ()),
             m.Token.MAP: ('', ()),
             m.Token.MAP_END: ('', ()),
+            m.Token.MAPPING_OPERATOR: (
+                '"spam"',
+                ((m.Token.QUALIFIER, 'spam'), )
+            ),
         }
         example_before = {
             m.Token.AS_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
@@ -136,6 +140,10 @@ class BaseTests:
             m.Token.MAP_CLOSE: ('{', ((m.Token.MAP, ('', {})), )),
             m.Token.MAP: ('', ()),
             m.Token.MAP_END: ('{}', ((m.Token.MAP, ('', {})), )),
+            m.Token.MAPPING_OPERATOR: (
+                '3',
+                ((m.Token.NUMBER, 3), )
+            ),
         }
 
         def setUp(self):

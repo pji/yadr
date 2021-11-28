@@ -62,6 +62,7 @@ class Lexer(BaseLexer):
             # Mapping tokens.
             Token.MAP: self._map,
             Token.MAP_END: self._map_end,
+            Token.MAPPING_OPERATOR: self._mapping_operator,
         }
         symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {
@@ -219,13 +220,13 @@ class Lexer(BaseLexer):
             new_state = Token.MAP_END
             self._change_state(new_state, char)
 
-#         can_follow = [
-#             Token.MAP_CLOSE,
-#             Token.QUALIFIER,
-#             Token.QUALIFIER_DELIMITER,
-#             Token.WHITESPACE,
-#         ]
-#         self._check_char(char, can_follow)
+    def _mapping_operator(self, char: str) -> None:
+        can_follow = [
+            Token.QUALIFIER,
+            Token.QUALIFIER_DELIMITER,
+            Token.WHITESPACE,
+        ]
+        self._check_char(char, can_follow)
 
     def _md_operator(self, char: str) -> None:
         """Processing an operator."""
@@ -246,6 +247,7 @@ class Lexer(BaseLexer):
             Token.DICE_OPERATOR,
             Token.EX_OPERATOR,
             Token.GROUP_CLOSE,
+            Token.MAPPING_OPERATOR,
             Token.MD_OPERATOR,
             Token.POOL_GEN_OPERATOR,
             Token.ROLL_DELIMITER,

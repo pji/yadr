@@ -11,7 +11,6 @@ from typing import Callable, Generic, Optional, Sequence, TypeVar
 from yadr import operator as yo
 from yadr.model import (
     CompoundResult,
-    DiceMap,
     Result,
     Token,
     TokenInfo,
@@ -23,13 +22,13 @@ from yadr.model import (
 # The dice map.
 # This needs to not be a global value, but it will require a very large
 # change to this module to get that to work. This will work for now.
-dice_map: dict[str, DiceMap] = {}
+dice_map: dict[str, dict] = {}
 
 
 # Parser specific operations.
 def map_result(result: int, key: str) -> str:
     """Map a roll result to a dice map."""
-    raise NotImplementedError
+    return dice_map[key][result]
 
 
 # Utility classes and functions.
@@ -56,7 +55,7 @@ class Tree:
         right = self.right.compute()
         if self.kind in op_tokens:
             ops_by_symbol = yo.ops_by_symbol
-            ops_by_symbol['m='] = map_result
+            ops_by_symbol['m'] = map_result
             op = ops_by_symbol[self.value]
         else:
             msg = f'Unknown token {self.kind}'
@@ -239,6 +238,12 @@ def choice_op(next_rule: Callable, trees: list[Tree]):
     return _binary_rule(Token.CHOICE_OPERATOR, next_rule, trees)
 
 
+@next_rule(choice_op)
+def map_op(next_rule: Callable, trees: list[Tree]):
+    """Parse options operator."""
+    return _binary_rule(Token.MAPPING_OPERATOR, next_rule, trees)
+
+
 # Set the last rule in order of operations to make it a little easier
 # to update as new operations are added.
-last_rule = choice_op
+last_rule = map_op

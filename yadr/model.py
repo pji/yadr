@@ -48,6 +48,7 @@ class Token(Enum):
     MAP_CLOSE = auto()
     MAP = auto()
     MAP_END = auto()
+    MAPPING_OPERATOR = auto()
 
 
 op_tokens = (
@@ -63,6 +64,7 @@ op_tokens = (
     Token.AS_OPERATOR,
     Token.MD_OPERATOR,
     Token.EX_OPERATOR,
+    Token.MAPPING_OPERATOR,
 )
 
 id_tokens = (
@@ -112,6 +114,7 @@ yadn_symbols_raw = {
     Token.MAP_CLOSE: '}',
     Token.MAP: '',
     Token.MAP_END: '',
+    Token.MAPPING_OPERATOR: 'm',
 }
 
 
@@ -166,8 +169,7 @@ class CompoundResult(Tuple):
 
 # Types.
 BaseToken = Union[Token, MapToken]
-DiceMap = tuple[str, dict[int, str]]
-Result = Union[int, bool, str, Tuple[int], DiceMap, None]
+Result = Union[int, bool, str, Tuple[int], dict, None]
 TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 

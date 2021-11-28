@@ -378,6 +378,25 @@ class MapTestCase(BaseTests.LexTokenTestCase):
         self.lex_test(exp, yadn)
 
 
+class MappingOperatorTestCase(BaseTests.LexTokenTestCase):
+    token = m.Token.MAPPING_OPERATOR
+    allowed = [
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+        m.Token.WHITESPACE,
+    ]
+
+    def test_mapping_operator(self):
+        """Lex a mapping operator."""
+        exp = (
+            (lex.Token.NUMBER, 3),
+            (lex.Token.MAPPING_OPERATOR, 'm'),
+            (lex.Token.QUALIFIER, 'spam'),
+        )
+        data = '3m"spam"'
+        self.lex_test(exp, data)
+
+
 class MDOperatorTestCase(BaseTests.LexTokenTestCase):
     token = m.Token.MD_OPERATOR
     allowed = [
@@ -442,10 +461,11 @@ class NumberTestCase(BaseTests.LexTokenTestCase):
     allowed = [
         m.Token.AS_OPERATOR,
         m.Token.COMPARISON_OPERATOR,
-        m.Token.MD_OPERATOR,
         m.Token.EX_OPERATOR,
         m.Token.DICE_OPERATOR,
         m.Token.GROUP_CLOSE,
+        m.Token.MAPPING_OPERATOR,
+        m.Token.MD_OPERATOR,
         m.Token.POOL_GEN_OPERATOR,
         m.Token.ROLL_DELIMITER,
         m.Token.WHITESPACE,
