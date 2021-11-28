@@ -11,12 +11,19 @@ from typing import Callable, Generic, Optional, Sequence, TypeVar
 from yadr import operator as yo
 from yadr.model import (
     CompoundResult,
+    DiceMap,
     Result,
     Token,
     TokenInfo,
     op_tokens,
     id_tokens
 )
+
+
+# The dice map.
+# This needs to not be a global value, but it will require a very large
+# change to this module to get that to work. This will work for now.
+dice_map: dict[str, DiceMap] = {}
 
 
 # Utility classes and functions.
@@ -132,10 +139,16 @@ def _binary_rule(token: Token,
 
 # Parsing rules.
 def groups_and_identity(trees: list[Tree]) -> Tree:
-    """Final rule, covering numbers, groups, and unaries."""
+    """Final rule, covering identities, groups, and maps."""
     kind = trees[-1].kind
+    value = trees[-1].value
     if kind in id_tokens:
         return trees.pop()
+    elif kind == Token.MAP and isinstance(value, tuple):
+        name, map_ = value
+        global dice_map
+        dice_map[name] = map_
+        return None
     elif kind == Token.GROUP_OPEN:
         _ = trees.pop()
     else:

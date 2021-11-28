@@ -425,6 +425,24 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
+    # Test dice mapping.
+    def test_map(self):
+        """Parse and store a dice map."""
+        # Expected value.
+        exp = 'success'
+
+        # Test data and state.
+        tokens = (
+            (Token.MAP, ('spam', {1: 'none', 2: 'success'})),
+        )
+        _ = p.parse(tokens)
+
+        # Run test.
+        act = p.dice_map['spam'][2]
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
     @patch('random.randint')
     # Test rolls and results.
     def test_roll_delimiter(self, mock_randint):
