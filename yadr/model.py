@@ -118,9 +118,11 @@ yadn_symbols_raw = {
 class MapToken(Enum):
     START = auto()
     END = auto()
+    KEY = auto()
     KV_DELIMITER = auto()
     MAP_CLOSE = auto()
     MAP_OPEN = auto()
+    NAME = auto()
     NAME_DELIMITER = auto()
     NEGATIVE_SIGN = auto()
     NUMBER = auto()
@@ -128,6 +130,7 @@ class MapToken(Enum):
     QUALIFIER = auto()
     QUALIFIER_DELIMITER = auto()
     QUALIFIER_END = auto()
+    VALUE = auto()
     WHITESPACE = auto()
 
 
@@ -135,9 +138,11 @@ class MapToken(Enum):
 map_symbols_raw = {
     MapToken.START: '',
     MapToken.END: '',
+    MapToken.KEY: '',
     MapToken.KV_DELIMITER: ':',
     MapToken.MAP_CLOSE: '}',
     MapToken.MAP_OPEN: '{',
+    MapToken.NAME: '',
     MapToken.NAME_DELIMITER: '=',
     MapToken.NEGATIVE_SIGN: '-',
     MapToken.NUMBER: '0 1 2 3 4 5 6 7 8 9',
@@ -145,6 +150,7 @@ map_symbols_raw = {
     MapToken.QUALIFIER: '',
     MapToken.QUALIFIER_DELIMITER: '"',
     MapToken.QUALIFIER_END: '',
+    MapToken.VALUE: '',
     MapToken.WHITESPACE: '',
 }
 

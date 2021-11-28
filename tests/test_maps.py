@@ -11,7 +11,7 @@ from yadr import maps
 from yadr.model import MapToken
 
 
-# Test cases.
+# Lexing test cases.
 class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
     token = MapToken.KV_DELIMITER
     allowed = [
@@ -205,3 +205,52 @@ class QualifierTestCase(BaseTests.MapLexTokenTestCase):
         )
         yadn = '{ "spam"'
         self.lex_test(exp, yadn)
+
+
+# Parsing test cases.
+class ParseTestCase(ut.TestCase):
+    def setUp(self):
+        self.parser = maps.Parser()
+
+    def tearDown(self):
+        self.parser = None
+
+    def parser_test(self, exp, tokens):
+        act = self.parser.parse(tokens)
+        self.assertEqual(exp, act)
+
+    # Test cases.
+    def test_parser(self):
+        """A basic dice mapping can be parsed."""
+        exp = (
+            'name',
+            {
+                1: "none",
+                2: "success",
+                3: "success",
+                4: "success success",
+            }
+        )
+        tokens = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'name'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.NUMBER, 1),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'none'),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.NUMBER, 2),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'success'),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.NUMBER, 3),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'success'),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.NUMBER, 4),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.QUALIFIER, 'success success'),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.MAP_CLOSE, '}'),
+        )
+        self.parser_test(exp, tokens)

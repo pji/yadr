@@ -4,10 +4,10 @@ maps
 
 A module for handling YADN dice maps.
 """
-from typing import Callable
+from typing import Callable, Optional
 
 from yadr.base import BaseLexer
-from yadr.model import BaseToken, MapToken, map_symbols
+from yadr.model import BaseToken, MapToken, map_symbols, Result, TokenInfo
 
 
 # Lexing.
@@ -144,3 +144,72 @@ class Lexer(BaseLexer):
             MapToken.WHITESPACE,
         ]
         self._check_char(char, can_follow)
+
+
+# Parsing.
+class Parser:
+    def __init__(self):
+        self.name = ''
+        self.pairs = []
+        self.buffer: Optional[int] = None
+        self.state = MapToken.START
+        self.state_map = {
+            MapToken.START: self._start,
+            MapToken.END: self._start,
+            MapToken.KEY: self._key,
+            MapToken.NAME: self._name,
+            MapToken.VALUE: self._value,
+        }
+
+    def parse(self, tokens: tuple[TokenInfo, ...]) -> tuple[str, dict]:
+        """Parse YADN dice mapping tokens."""
+        for token_info in tokens:
+            process = self.state_map[self.state]
+            process(token_info)
+        return (self.name, {k: v for k, v in self.pairs})
+
+    # Parsing rules.
+    def _key(self, token_info: tuple[BaseToken, Result]) -> None:
+        token, value = token_info
+        if token == MapToken.NUMBER and isinstance(value, int):
+            self.buffer = value
+        elif token == MapToken.KV_DELIMITER:
+            self.state = MapToken.VALUE
+        elif token == MapToken.MAP_CLOSE:
+            ...
+        else:
+            msg = f'KEY cannot contain {token.name}.'
+            raise ValueError(msg)
+
+    def _name(self, token_info: tuple[BaseToken, Result]) -> None:
+        token, value = token_info
+        if token == MapToken.QUALIFIER:
+            self.name = value
+        elif token == MapToken.NAME_DELIMITER:
+            self.state = MapToken.KEY
+        else:
+            msg = f'NAME cannot contain {token.name}.'
+            raise ValueError(msg)
+
+    def _value(self, token_info: tuple[BaseToken, Result]) -> None:
+        token, value = token_info
+        if token == MapToken.QUALIFIER:
+            key = self.buffer
+            pair = (key, value)
+            self.pairs.append(pair)
+            self.buffer = None
+        elif token == MapToken.PAIR_DELIMITER:
+            self.state = MapToken.KEY
+        elif token == MapToken.MAP_CLOSE:
+            ...
+        else:
+            msg = f'VALUE cannot contain {token.name}.'
+            raise ValueError(msg)
+
+    def _start(self, token_info: tuple[BaseToken, Result]) -> None:
+        token, value = token_info
+        if token == MapToken.MAP_OPEN:
+            self.state = MapToken.NAME
+        else:
+            msg = f'Dice mapping cannot start with a {value}'
+            raise ValueError(msg)
