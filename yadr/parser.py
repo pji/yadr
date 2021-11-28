@@ -26,6 +26,12 @@ from yadr.model import (
 dice_map: dict[str, DiceMap] = {}
 
 
+# Parser specific operations.
+def map_result(result: int, key: str) -> str:
+    """Map a roll result to a dice map."""
+    raise NotImplementedError
+
+
 # Utility classes and functions.
 class Tree:
     """A binary tree."""
@@ -49,7 +55,9 @@ class Tree:
         left = self.left.compute()
         right = self.right.compute()
         if self.kind in op_tokens:
-            op = yo.ops_by_symbol[self.value]
+            ops_by_symbol = yo.ops_by_symbol
+            ops_by_symbol['m='] = map_result
+            op = ops_by_symbol[self.value]
         else:
             msg = f'Unknown token {self.kind}'
             raise TypeError(msg)
