@@ -187,6 +187,8 @@ class Parser:
             self.name = value
         elif token == MapToken.NAME_DELIMITER:
             self.state = MapToken.KEY
+        elif token == MapToken.MAP_CLOSE:
+            ...
         else:
             msg = f'NAME cannot contain {token.name}.'
             raise ValueError(msg)

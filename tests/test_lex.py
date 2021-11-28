@@ -351,43 +351,31 @@ class GroupOpenTestCase(BaseTests.LexTokenTestCase):
     ]
 
 
-class MapCloseTestCase(BaseTests.LexTokenTestCase):
-    token = m.Token.MAP_CLOSE
+class MapTestCase(BaseTests.LexTokenTestCase):
+    token = m.Token.MAP
     allowed = [
         m.Token.ROLL_DELIMITER,
         m.Token.WHITESPACE,
     ]
 
-    def test_map_open(self):
-        """Given a statement containing quotation marks, return the
-        tokenized equation.
+    def test_map(self):
+        """Given a statement containing a map, return the tokenized
+        dice mapping.
         """
-        exp = (
-            (lex.Token.MAP_OPEN, '{'),
-            (lex.Token.MAP_CLOSE, '}'),
-        )
-        data = '{}'
-        self.lex_test(exp, data)
-
-
-class MapOpenTestCase(BaseTests.LexTokenTestCase):
-    token = m.Token.MAP_OPEN
-    allowed = [
-        m.Token.MAP_CLOSE,
-        m.Token.QUALIFIER,
-        m.Token.QUALIFIER_DELIMITER,
-        m.Token.WHITESPACE,
-    ]
-
-    def test_map_open(self):
-        """Given a statement containing quotation marks, return the
-        tokenized equation.
-        """
-        exp = (
-            (lex.Token.MAP_OPEN, '{'),
-        )
-        data = '{'
-        self.lex_test(exp, data)
+        exp = ((
+            m.Token.MAP,
+            (
+                'name',
+                {
+                    1: "none",
+                    2: "success",
+                    3: "success",
+                    4: "success success",
+                }
+            )
+        ),)
+        yadn = '{"name"=1:"none",2:"success",3:"success",4:"success success"}'
+        self.lex_test(exp, yadn)
 
 
 class MDOperatorTestCase(BaseTests.LexTokenTestCase):
@@ -760,6 +748,7 @@ class ResultsRollTestCase(BaseTests.LexTokenTestCase):
         m.Token.BOOLEAN,
         m.Token.GROUP_OPEN,
         m.Token.MAP_OPEN,
+        m.Token.MAP,
         m.Token.NEGATIVE_SIGN,
         m.Token.NUMBER,
         m.Token.POOL,

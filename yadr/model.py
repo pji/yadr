@@ -46,6 +46,8 @@ class Token(Enum):
     # Dice mapping tokens.
     MAP_OPEN = auto()
     MAP_CLOSE = auto()
+    MAP = auto()
+    MAP_END = auto()
 
 
 op_tokens = (
@@ -108,6 +110,8 @@ yadn_symbols_raw = {
     # Dice mapping symbols.
     Token.MAP_OPEN: '{',
     Token.MAP_CLOSE: '}',
+    Token.MAP: '',
+    Token.MAP_END: '',
 }
 
 
@@ -162,7 +166,8 @@ class CompoundResult(Tuple):
 
 # Types.
 BaseToken = Union[Token, MapToken]
-Result = Union[int, bool, str, Tuple[int], None]
+DiceMap = tuple[str, dict[int, str]]
+Result = Union[int, bool, str, Tuple[int], DiceMap, None]
 TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 

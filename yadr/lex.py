@@ -7,6 +7,7 @@ A lexer for `yadr` dice notation.
 from functools import wraps
 from typing import Callable, Optional
 
+from yadr import maps
 from yadr.base import BaseLexer
 from yadr.model import (
     BaseToken,
@@ -23,11 +24,13 @@ class Lexer(BaseLexer):
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
         bracket_states: dict[BaseToken, BaseToken] = {
+            Token.MAP_OPEN: Token.MAP,
             Token.NEGATIVE_SIGN: Token.NUMBER,
             Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
             Token.POOL_OPEN: Token.POOL,
         }
         bracket_ends: dict[BaseToken, BaseToken] = {
+            Token.MAP: Token.MAP_END,
             Token.QUALIFIER: Token.QUALIFIER_END,
             Token.POOL: Token.POOL_END,
         }
@@ -57,12 +60,13 @@ class Lexer(BaseLexer):
             Token.END: self._start,
 
             # Mapping tokens.
-            Token.MAP_OPEN: self._map_open,
-            Token.MAP_CLOSE: self._map_close,
+            Token.MAP: self._map,
+            Token.MAP_END: self._map_end,
         }
         symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {
             Token.BOOLEAN: self._tf_boolean,
+            Token.MAP: self._tf_maps,
             Token.NUMBER: self._tf_number,
             Token.POOL: self._tf_pool,
             Token.QUALIFIER: self._tf_qualifier,
@@ -70,6 +74,7 @@ class Lexer(BaseLexer):
         no_store: list[BaseToken] = [
             Token.WHITESPACE,
             Token.START,
+            Token.MAP_END,
             Token.POOL_END,
             Token.QUALIFIER_END,
         ]
@@ -89,6 +94,13 @@ class Lexer(BaseLexer):
         if value == 'T':
             return True
         return False
+
+    def _tf_maps(self, value:str) -> tuple[str, dict]:
+        mlexer = maps.Lexer()
+        lexed = mlexer.lex(value)
+        mparser = maps.Parser()
+        parsed = mparser.parse(lexed)
+        return parsed
 
     def _tf_number(self, value: str) -> int:
         return int(value)
@@ -192,7 +204,7 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _map_close(self, char: str) -> None:
+    def _map_end(self, char: str) -> None:
         """Processing a choice operator."""
         can_follow = [
             Token.ROLL_DELIMITER,
@@ -200,15 +212,20 @@ class Lexer(BaseLexer):
         ]
         self._check_char(char, can_follow)
 
-    def _map_open(self, char: str) -> None:
+    def _map(self, char: str) -> None:
         """Processing a choice operator."""
-        can_follow = [
-            Token.MAP_CLOSE,
-            Token.QUALIFIER,
-            Token.QUALIFIER_DELIMITER,
-            Token.WHITESPACE,
-        ]
-        self._check_char(char, can_follow)
+        self.buffer += char
+        if self._is_token_start(Token.MAP_CLOSE, char):
+            new_state = Token.MAP_END
+            self._change_state(new_state, char)
+
+#         can_follow = [
+#             Token.MAP_CLOSE,
+#             Token.QUALIFIER,
+#             Token.QUALIFIER_DELIMITER,
+#             Token.WHITESPACE,
+#         ]
+#         self._check_char(char, can_follow)
 
     def _md_operator(self, char: str) -> None:
         """Processing an operator."""

@@ -88,8 +88,10 @@ class BaseTests:
             ),
 
             # Mapping tokens.
-            m.Token.MAP_OPEN: ('', ()),
+            m.Token.MAP_OPEN: ('}', ((m.Token.MAP, ('', {})),)),
             m.Token.MAP_CLOSE: ('', ()),
+            m.Token.MAP: ('', ()),
+            m.Token.MAP_END: ('', ()),
         }
         example_before = {
             m.Token.AS_OPERATOR: ('3', ((m.Token.NUMBER, 3), )),
@@ -131,7 +133,9 @@ class BaseTests:
 
             # Mapping tokens.
             m.Token.MAP_OPEN: ('', ()),
-            m.Token.MAP_CLOSE: ('{', ((m.Token.MAP_OPEN, '{'), )),
+            m.Token.MAP_CLOSE: ('{', ((m.Token.MAP, ('', {})), )),
+            m.Token.MAP: ('', ()),
+            m.Token.MAP_END: ('{}', ((m.Token.MAP, ('', {})), )),
         }
 
         def setUp(self):
@@ -153,6 +157,16 @@ class BaseTests:
                 if token.name == "NUMBER":
                     symbol = int(symbol)
             else:
+                if token.name == 'MAP':
+                    symbol = (
+                        'name',
+                        {
+                            1: 'none',
+                            2: 'success',
+                            3: 'success',
+                            4: 'success success',
+                        }
+                    )
                 if token.name == "POOL":
                     symbol = (3, 3)
                 if token.name == "QUALIFIER":
@@ -180,6 +194,11 @@ class BaseTests:
                 token_info = (new_token, 'spam')
             if token.name == "QUALIFIER":
                 symbol = f'"{symbol}"'
+            elif token.name == "MAP":
+                symbol = (
+                    '{"name"=1:"none",2:"success",3:"success"'
+                    ',4:"success success"}'
+                )
             elif token.name == "POOL":
                 symbol = str(symbol)
                 symbol = f'[{symbol[1:-1]}]'
@@ -187,7 +206,8 @@ class BaseTests:
                 exp = (*exp, token_info)
                 test = f'{test}{symbol}'
             elif not before and token.name in ("NEGATIVE_SIGN",
-                                               "POOL_OPEN"):
+                                               "POOL_OPEN",
+                                               "MAP_OPEN",):
                 test = f'{symbol}{test}'
             else:
                 exp = (token_info, *exp)
@@ -285,6 +305,7 @@ class BaseTests:
             ignore = [
                 m.Token.WHITESPACE,
                 m.Token.START,
+                m.Token.MAP_END,
                 m.Token.POOL_END,
                 m.Token.QUALIFIER_END,
                 m.Token.CHOICE_OPTIONS,
