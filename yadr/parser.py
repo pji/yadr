@@ -118,7 +118,10 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
     results: Sequence[Result] = []
     for roll in rolls:
         results.append(parse(roll))             # type: ignore
-    return CompoundResult(results)
+        results = [result for result in results if result is not None]
+    if len(results) > 1:
+        return CompoundResult(results)
+    return results[0]
 
 
 def _parse_roll(tokens: Sequence[TokenInfo]) -> Result:

@@ -209,16 +209,6 @@ x g! y (exploding pool):
 
 Pool Operators
 ==============
-
-.. note::
-    The initial design of YADN used "roll operators" rather than
-    "pool operators" that would act on any dice expression as a
-    pool, even those resulting in integers. Implementation of
-    this required dice expressions to have a memory of the
-    pool that was generated before it was collapsed into a number,
-    which proved complex. Pool operators seemed easier to
-    implement and understand, if occasionally more verbose.
-
 Pool operators interact with or change a pool or its members. They
 are defined as follows:
 
