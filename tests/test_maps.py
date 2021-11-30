@@ -15,6 +15,7 @@ from yadr.model import MapToken
 class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
     token = MapToken.KV_DELIMITER
     allowed = [
+        MapToken.NUMBER,
         MapToken.QUALIFIER_DELIMITER,
         MapToken.WHITESPACE,
     ]
@@ -109,6 +110,24 @@ class NameDelimiterTestCase(BaseTests.MapLexTokenTestCase):
             (MapToken.NAME_DELIMITER, '=')
         )
         yadn = '{"spam" ='
+        self.lex_test(exp, yadn)
+
+
+class NegativeSignTestCase(BaseTests.MapLexTokenTestCase):
+    token = MapToken.NEGATIVE_SIGN
+    allowed = [
+        MapToken.NUMBER,
+    ]
+
+    def test_negative_sign(self):
+        """Given a negative sign, return the proper tokens."""
+        exp = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'spam'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.NUMBER, -1),
+        )
+        yadn = '{"spam"=-1'
         self.lex_test(exp, yadn)
 
 
@@ -251,6 +270,35 @@ class ParseTestCase(ut.TestCase):
             (MapToken.KV_DELIMITER, ':'),
             (MapToken.QUALIFIER, 'success success'),
             (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.MAP_CLOSE, '}'),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_parser_with_numbers(self):
+        """A basic dice mapping can be parsed."""
+        exp = (
+            'name',
+            {
+                1: -1,
+                2: 0,
+                3: 1,
+            }
+        )
+        tokens = (
+            (MapToken.MAP_OPEN, '{'),
+            (MapToken.QUALIFIER, 'name'),
+            (MapToken.NAME_DELIMITER, '='),
+            (MapToken.NUMBER, 1),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.NUMBER, -1),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.NUMBER, 2),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.NUMBER, 0),
+            (MapToken.PAIR_DELIMITER, ','),
+            (MapToken.NUMBER, 3),
+            (MapToken.KV_DELIMITER, ':'),
+            (MapToken.NUMBER, 1),
             (MapToken.MAP_CLOSE, '}'),
         )
         self.parser_test(exp, tokens)

@@ -474,6 +474,36 @@ class ParseTestCase(ut.TestCase):
         self.assertEqual(exp, act)
 
     @patch('random.randint')
+    def test_map_result_pool(self, mock_randint):
+        """Given a map and a roll with a dice map operator, return the
+        correct result.
+        """
+        # Expected value.
+        exp = ('success', 'none')
+
+        # Test data and state.
+        mock_randint.side_effect = (3, 1, )
+        p.dice_map['_test_map_result'] = {
+            1: 'none',
+            2: 'success',
+            3: 'success',
+            4: 'success success',
+        }
+        tokens = (
+            (Token.NUMBER, 2),
+            (Token.DICE_OPERATOR, 'g'),
+            (Token.NUMBER, 4),
+            (Token.MAPPING_OPERATOR, 'm'),
+            (Token.QUALIFIER, '_test_map_result'),
+        )
+
+        # Run test.
+        act = p.parse(tokens)
+
+        # Determine test result.
+        self.assertEqual(exp, act)
+
+    @patch('random.randint')
     # Test rolls and results.
     def test_roll_delimiter(self, mock_randint):
         """Return the result of two rolls."""

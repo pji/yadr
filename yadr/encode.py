@@ -44,7 +44,11 @@ class Encoder:
         self.yadn = f'{self.yadn}{data}'
 
     def _encode_tuple(self, data: tuple) -> None:
-        members = ', '.join(str(m) for m in data)
+        if isinstance(data[0], int):
+            members = ', '.join(str(m) for m in data)
+        else:
+            quoted = [f'"{m}"' for m in data]
+            members = ', '.join(str(m) for m in quoted)
         self.yadn = f'{self.yadn}[{members}]'
 
     def _encode_str(self, data: str) -> None:

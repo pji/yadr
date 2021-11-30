@@ -185,12 +185,22 @@ class BaseTests:
                     return token
 
         def get_example(self, token, before=True):
+            # Pick which dictionary you are getting the test code and
+            # expected values from.
             example_dict = self.example_before
             if not before:
                 example_dict = self.example_after
+
+            # Look up the token being tested in the relevant dictionary.
+            # Get the test code and expected results for that token.
+            # Then get the symbol for the token being tested and build
+            # a token for it to add into the expected results.
             test, exp = example_dict[token]
             symbol = self.get_symbol_for_token(token)
             token_info = (token, symbol)
+
+            # Handle complicated tokens where the needed test information
+            # couldn't fit into the dictionary well.
             if token.name == "BOOLEAN":
                 token_info = (token, True)
             elif token.name == "QUALIFIER_DELIMITER":
@@ -206,12 +216,19 @@ class BaseTests:
             elif token.name == "POOL":
                 symbol = str(symbol)
                 symbol = f'[{symbol[1:-1]}]'
-            if before:
+
+            # Add the symbol and token being tested into the code and
+            # the expected results. The order they are placed in depends
+            # on whether we are looking at the code that comes before
+            # the token or after.
+            if before and token.name == 'NEGATIVE_SIGN':
+                test = f'{test}{symbol}'
+            elif before:
                 exp = (*exp, token_info)
                 test = f'{test}{symbol}'
-            elif not before and token.name in ("NEGATIVE_SIGN",
+            elif not before and token.name in ["NEGATIVE_SIGN",
                                                "POOL_OPEN",
-                                               "MAP_OPEN",):
+                                               "MAP_OPEN",]:
                 test = f'{symbol}{test}'
             else:
                 exp = (token_info, *exp)
@@ -343,7 +360,8 @@ class BaseTests:
         tokens = m.MapToken
         symbols_raw = m.map_symbols_raw
 
-        # Details for the allowed and unallowed tests.
+        # Details for the allowed and unallowed tests. See
+        # LexTokenTestCase above for more explanation.
         example_after = {
             m.MapToken.KV_DELIMITER: (
                 '"spam"}',
@@ -354,6 +372,15 @@ class BaseTests:
             ),
             m.MapToken.MAP_CLOSE: ('', ()),
             m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
+            m.MapToken.NEGATIVE_SIGN: (
+                '1:"spam"}',
+                (
+                    (m.MapToken.NUMBER, 1),
+                    (m.MapToken.KV_DELIMITER, ':'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.MAP_CLOSE, '}'),
+                )
+            ),
             m.MapToken.NAME_DELIMITER: (
                 '1:"spam"}',
                 (
@@ -412,6 +439,14 @@ class BaseTests:
                 (
                     (m.MapToken.MAP_OPEN, '{'),
                     (m.MapToken.QUALIFIER, 'spam'),
+                )
+            ),
+            m.MapToken.NEGATIVE_SIGN: (
+                '{"spam"=',
+                (
+                    (m.MapToken.MAP_OPEN, '{'),
+                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.MapToken.NAME_DELIMITER, '='),
                 )
             ),
             m.MapToken.NUMBER: (

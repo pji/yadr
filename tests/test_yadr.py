@@ -38,6 +38,31 @@ class ParseCliTestCase(ut.TestCase):
         act = mock_stdout.getvalue()
         self.assertEqual(exp, act)
 
+    @patch('sys.stdout', new_callable=StringIO)
+    @patch('random.randint')
+    def test_yadn_dice_maps(self, mock_randint, mock_stdout):
+        """The -m option followed by a file path should load in the
+        dice maps at the given location.
+        """
+        # Expected value.
+        exp = '["+", ""]\n'
+
+        # Test data and state.
+        sys.argv = [
+            'python -m yadr',
+            '2g3m"fudge"',
+            '-m',
+            'tests/data/__test_dice_map.txt'
+        ]
+        mock_randint.side_effect = (3, 2)
+
+        # Run test.
+        yadr.parse_cli()
+
+        # Extract actual result and determine success.
+        act = mock_stdout.getvalue()
+        self.assertEqual(exp, act)
+
 
 class RollTestCase(ut.TestCase):
     @patch('random.randint')

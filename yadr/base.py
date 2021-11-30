@@ -44,9 +44,17 @@ class BaseLexer:
         self.tokens: list[TokenInfo] = []
 
     # Public methods.
-    def lex(self, text: str) -> tuple[TokenInfo, ...]:
-        """Lex a dice notation string."""
-        for char in text:
+    def lex(self, yadn: str) -> tuple[TokenInfo, ...]:
+        """Lex a dice notation string.
+
+        :param yadn: A string of YADN representing a die roll. For
+            details on YADN, see here: YADN_
+        :return: A :class:tuple object.
+        :rtype: tuple
+
+        .. _YADN: https://github.com/pji/yadr/blob/main/docs/dice_notation.rst
+        """
+        for char in yadn:
             self.process(char)
         else:
             self._change_state(self.init_state, '')

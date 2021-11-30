@@ -70,9 +70,9 @@ roll:
 YADN Description
 ================
 The following provides a description of Yet Another Dice Notation (YADN)
-using Backus-Naur Form (BNF) notation (or something I hope is close to
-accomplishing that goal, since this is the first time I'm trying to write
-BNF)::
+using something like Backus-Naur Form (BNF) notation. (I'll probably
+eventually update it to ABNF, but I think this is close enough to
+understandable for now.)::
 
     DIGIT ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
     NEGATIVE_SIGN ::= -
@@ -115,7 +115,7 @@ BNF)::
                            | POOL_EXPRESSION POOL_DEGEN_OPERATOR EXPRESSION
 
     QUALIFIER_DELIMITER ::= "
-    LETTER ::= [A-Za-z]
+    LETTER ::= %x0020-%x0021 %x0022-%xffff
     SPACE = " "
     TEXT ::= LETTER
           | NUMBER
@@ -433,15 +433,6 @@ degeneration operator::
     n = true ? "success" : "failure"
     n = "success"
 
-.. note:
-    Qualifiers are currently limited to the alphabetical characters
-    permitted in 7-bit ASCII and digits. There is no reason this has
-    to be the case. Other than the quotation mark character, the full
-    unicode range should work, though it may make sense to limit it
-    to printable characters to avoid surprises. The limitation is
-    just because I'm not sure how to represent that many characters
-    in the notation while excluding one.
-
 
 Result Maps
 ===========
@@ -449,7 +440,7 @@ Maps are key-value pairs that can be used to substitute a mapped
 value onto a roll result. For example, a mapping of the "ability die"
 from *Star Wars: Edge of the Empire* would look like::
 
-    {"ability" = 1: "blank"",
+    {"ability" = 1: "blank",
                  2: "success",
                  3: "success",
                  4: "success success",
@@ -467,7 +458,10 @@ roll through a "mapping operator".
     Manually entering a result map for every roll expression is
     a tedious way to role dice. Interpretors implementing YADN
     may include pre-built maps for common dice systems for users
-    to reference.
+    to reference. The implementation details are left to the
+    developer. However, in multiuser systems be careful about
+    allowing user generated dice maps to persist after a roll as
+    it could allow users to overwrite dice maps used by other users.
 
 
 Mapping Operators
@@ -475,14 +469,21 @@ Mapping Operators
 Mapping operators map roll results onto result maps. They are defined
 as:
 
-R m= M:
-    For a given result R, return the value for key R from result
+x m M or P m M:
+    For a given number x, return the value for key x from result
     map M. For example::
     
-        n = {"fudge" = 1:-1,2:0,3:1}; S(2g3 m= "fudge")
-        n = {"fudge" = 1:-1,2:0,3:1}; S([2, 1] m= "fudge")
+        n = {"fudge" = 1:-1,2:0,3:1}; S(2g3 m "fudge")
+        n = {"fudge" = 1:-1,2:0,3:1}; S([2, 1] m "fudge")
         n = S[0, -1]
         n = -1
+
+    It can also work with pools. For a given pool P, return the value
+    for each member m as a key m from the result map M. For example::
+    
+        n = {"fudge" = 1:-1,2:0,3:1}; 2g3 m "fudge"
+        n = {"fudge" = 1:-1,2:0,3:1}; [2, 1] m "fudge"
+        n = [0, -1]
 
 
 Example Usage
@@ -544,32 +545,45 @@ hunger dice::
     n = [6, 10]; [3, 10, 1, 7, 7]
 
 .. note:
-    YADN cannot handle counting values across multiple pools or returning
-    anything other than a number, pool, or a combination of those. This
+    YADN cannot handle counting values across multiple pools. This
     means it can't currently handle V:tM5's critical systems. Until it
     is able to handle more complex results, it will have to fall back to
     generating the pools and letting the humans figure things out from
     there.
 
-*Fate:* A roll with a skill rated as "Good."::
+*Fate:* The ladder used to determine dice outcomes::
 
-    n = (2d3 - 4) + 3
-    n = (S[1, 3] - 4) + 3
-    n = (4 - 4) + 3
-    n = 0 + 3
-    n = 3
+    {"fateladder"=
+        8: "Legendary",
+        7: "Epic",
+        6: "Fantastic",
+        5: "Superb",
+        4: "Great",
+        3: "Good",
+        2: "Fair",
+        1: "Average",
+        0: "Mediocre",
+        -1: "Poor",
+        -2: "Terrible"
+    }
 
-.. note:
-    Result mapping now exists in YADN. This example needs to be
-    expanded to include it.
+*Fate:* A roll with a skill rated as "Good" with the Fate system's Ladder
+already stored as a dice map::
+
+    n = (2d3 - 4) + 3 m "fateladder"
+    n = (S[1, 3] - 4) + 3 m "fateladder"
+    n = (4 - 4) + 3 m "fateladder"
+    n = 0 + 3 m "fateladder"
+    n = 3 m "fateladder"
+    n = "Good"
 
 *Star Wars: Edge of the Empire:* Slicing with a Computers of three and
 Intellect of two while under heavy fire and having a broken wrist but
 having a fragment of the terminal's passcode algorithms::
 
-    n = 1p8; 2g12; 2g6; 1g6
-    n = [4]; [3, 9]; [6, 6]; [2]
-
-.. note:
-    Result mapping now exists in YADN. This example needs to be
-    expanded to include it.
+    n = 1p8m"ability"; 2g12m"proficiency"; 2g6m"setback"; 1g6m"boost"
+    n = [4]m"ability"; [3, 9]m"proficiency"; [6, 6]m"setback"; [2]m"boost"
+    n = ["success"];
+        ["success", "success advantage"];
+        ["threat", "threat"];
+        ["blank"]

@@ -44,6 +44,9 @@ class Lexer(BaseLexer):
             Token.EX_OPERATOR: self._ex_operator,
             Token.GROUP_OPEN: self._group_open,
             Token.GROUP_CLOSE: self._group_close,
+            Token.MAP: self._map,
+            Token.MAP_END: self._map_end,
+            Token.MAPPING_OPERATOR: self._mapping_operator,
             Token.MD_OPERATOR: self._md_operator,
             Token.NUMBER: self._number,
             Token.OPTIONS_OPERATOR: self._options_operator,
@@ -58,11 +61,6 @@ class Lexer(BaseLexer):
             Token.U_POOL_DEGEN_OPERATOR: self._u_pool_degen_operator,
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
-
-            # Mapping tokens.
-            Token.MAP: self._map,
-            Token.MAP_END: self._map_end,
-            Token.MAPPING_OPERATOR: self._mapping_operator,
         }
         symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {

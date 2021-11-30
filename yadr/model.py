@@ -165,7 +165,7 @@ class CompoundResult(Tuple):
 
 # Types.
 BaseToken = Union[Token, MapToken]
-Result = Union[int, bool, str, Tuple[int], dict, None]
+Result = Union[int, bool, str, Tuple[int], Tuple[str], dict, None]
 TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 
 
@@ -173,7 +173,7 @@ TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
 def split_symbols(d: dict, enum: EnumMeta) -> dict[BaseToken, list[str]]:
     """Split the symbol strings and add whitespace."""
     split_symbols = {k: v.split() for k, v in d.items()}
-    for member in enum:                                     # type: ignore
+    for member in enum:                                 # type: ignore
         if member.name == 'WHITESPACE':
             split_symbols[member] = [' ', '\t', '\n']
             break

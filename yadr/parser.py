@@ -26,9 +26,14 @@ dice_map: dict[str, dict] = {}
 
 
 # Parser specific operations.
-def map_result(result: int, key: str) -> str:
+def map_result(result: int | tuple[int, ...],
+               key: str) -> str | tuple[str, ...]:
     """Map a roll result to a dice map."""
-    return dice_map[key][result]
+    if isinstance(result, int):
+        return dice_map[key][result]
+    new_result = [map_result(n, key) for n in result]
+    str_result = tuple(str(item) for item in new_result)
+    return str_result
 
 
 # Utility classes and functions.
@@ -121,7 +126,9 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
         results = [result for result in results if result is not None]
     if len(results) > 1:
         return CompoundResult(results)
-    return results[0]
+    elif results:
+        return results[0]
+    return None
 
 
 def _parse_roll(tokens: Sequence[TokenInfo]) -> Result:

@@ -14,6 +14,7 @@ from yadr.model import BaseToken, MapToken, map_symbols, Result, TokenInfo
 class Lexer(BaseLexer):
     def __init__(self) -> None:
         bracket_states: dict[BaseToken, BaseToken] = {
+            MapToken.NEGATIVE_SIGN: MapToken.NUMBER,
             MapToken.QUALIFIER_DELIMITER: MapToken.QUALIFIER,
         }
         bracket_ends: dict[BaseToken, BaseToken] = {
@@ -26,6 +27,7 @@ class Lexer(BaseLexer):
             MapToken.MAP_CLOSE: self._map_close,
             MapToken.MAP_OPEN: self._map_open,
             MapToken.NAME_DELIMITER: self._name_delimiter,
+            MapToken.NEGATIVE_SIGN: self._negative_sign,
             MapToken.NUMBER: self._number,
             MapToken.PAIR_DELIMITER: self._pair_delimiter,
             MapToken.QUALIFIER: self._qualifier,
@@ -64,6 +66,8 @@ class Lexer(BaseLexer):
     def _kv_delimiter(self, char: str) -> None:
         """Lex a key-value delimiter symbol."""
         can_follow = [
+            MapToken.NEGATIVE_SIGN,
+            MapToken.NUMBER,
             MapToken.QUALIFIER_DELIMITER,
             MapToken.WHITESPACE,
         ]
@@ -86,6 +90,7 @@ class Lexer(BaseLexer):
     def _name_delimiter(self, char: str) -> None:
         """Lex a name delimiter symbol."""
         can_follow = [
+            MapToken.NEGATIVE_SIGN,
             MapToken.NUMBER,
             MapToken.QUALIFIER_DELIMITER,
             MapToken.WHITESPACE,
@@ -110,9 +115,17 @@ class Lexer(BaseLexer):
         else:
             self._check_char(char, can_follow)
 
+    def _negative_sign(self, char: str) -> None:
+        """Processing a number."""
+        can_follow = [
+            MapToken.NUMBER,
+        ]
+        self._check_char(char, can_follow)
+
     def _pair_delimiter(self, char: str) -> None:
         """Lex a pair delimiter symbol."""
         can_follow = [
+            MapToken.NEGATIVE_SIGN,
             MapToken.NUMBER,
             MapToken.WHITESPACE,
         ]
@@ -195,7 +208,8 @@ class Parser:
 
     def _value(self, token_info: tuple[BaseToken, Result]) -> None:
         token, value = token_info
-        if token == MapToken.QUALIFIER:
+        if (token == MapToken.QUALIFIER
+                or token == MapToken.NUMBER and isinstance(value, int)):
             key = self.buffer
             pair = (key, value)
             self.pairs.append(pair)
