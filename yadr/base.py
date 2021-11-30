@@ -71,44 +71,44 @@ class BaseLexer(ABC):
     convention, the names of these method starts with an
     underscore, which is followed by the name of the state in
     lowercase letters. So the processing method for the state::
-    
+
         Token.GROUP_OPEN
-    
+
     would be::
-    
+
         _group_open
-    
+
     The signature for processing methods are::
-    
+
         (self, char: str) -> None
-    
+
     where `char` is the character being processed.
-    
+
     While specific tokens may require different behavior, in general
     a processing method does two things:
-    
+
     *   Define a list of states that are allowed to follow the
         current state within the syntax being lexed.
     *   pass that list and the character to the internal `_check_char()`
         method that handles the actual processing.
-    
+
     The end result of calling a processing method is usually that
-    the characters in the string that make up the symbol for the 
+    the characters in the string that make up the symbol for the
     current state are stored in a "TokenInfo" tuple, which consists
     of the token representing the state and the characters of the
     symbol. These tokens will then be used by the parser to
     execute the command contained in the string.
-    
-    
+
+
     The State Map
     -------------
     Documentation to come.
-    
-    
+
+
     The Symbol Map
     -------------
-    
-    
+
+
     Bracketing
     ----------
     Instead of running each character through `_check_char()`, it is
@@ -116,7 +116,7 @@ class BaseLexer(ABC):
     until a specific character is reached. For example, characters
     after a quotation mark can be collected as a substring until
     the lexer hits another quotation mark.
-    
+
     Why do this? The main use for this is to turn the bracketed
     substring into a single token, rather than three tokens: the
     opening bracket/delimiter, the content of the bracket, and the
@@ -124,7 +124,7 @@ class BaseLexer(ABC):
 
     To expand on the quotation marks example above, let's characters
     surrounded by quotation marks to belong to a token called
-    "QUALIFIER". We have the following enumeration of states and 
+    "QUALIFIER". We have the following enumeration of states and
     a `symbol_map` that defines which characters belong to which
     states::
 
@@ -177,7 +177,7 @@ class BaseLexer(ABC):
     passed to the `bracket_states` parameter when initializing the
     BaseLexer. The `bracket_states` dictionary for the above example
     would look like this:
-    
+
         >>> bracket_state = {
         >>>     Token.DELIM: Token.QUALIFIER,
         >>> }
@@ -191,22 +191,22 @@ class BaseLexer(ABC):
     method. By convention the name of this method is an underscore
     followed by the name of the bracket state followed by an
     underscore and then the word "end". For our example it would be::
-    
+
         _qualifier_end
-    
+
     This state needs to have a state token assigned for it. In our
     example that is the `Token.QUALIFIER_END` token.
-    
+
     This end state then needs to be linked to the bracket state in
     a dictionary that is passed to the `bracket_ends` parameter
     when initializing the lexer. In the example, the `bracket_ends`
     dictionary would look like::
-    
+
         bracket_ends = {
             Token.QUALIFIER: Token.QUALIFIER_END,
         }
-    
-    
+
+
     Result Transformations and `result_map`
     ---------------------------------------
     Documentation to come.
