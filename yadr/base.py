@@ -4,6 +4,7 @@ base
 
 Base classes for the yadr package.
 """
+from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
 from yadr.model import BaseToken, CompoundResult, Result, Token, TokenInfo
@@ -20,20 +21,241 @@ def _mutable(value, type_=list):
 
 
 # Base classes.
-class BaseLexer:
+class BaseLexer(ABC):
+    """An abstract base class for building lexers.
+
+    :class:BaseLexer lexers are state machines used for translating
+    a text string into tokens for parsing. It accomplishes this by
+    processing the string one character at a time, allowing the
+    current state of the lexer to determine whether the character is
+    legal and what should be done with it.
+
+
+    State
+    -----
+    The current state of the lexer is determined by the value of
+    the `state` attribute of the lexer. Its value will be a member
+    of the enumeration used to define the tokens that exist within
+    the language. This state is used to define the rule used to
+    process the next character in the string.
+
+    Characters that do not cause the state of the lexer to change
+    should be appended to the end of the `buffer` attribute of
+    the lexer.
+
+
+    State Change
+    ------------
+    When the lexer encounters a character that represents the end of
+    the previous token and the start of a new token, the state of
+    the lexer changes. The specific details can vary based on the
+    current state of the lexer, but by default the following occurs
+    when the state is changed:
+
+    *   A new TokenInfo object is created that contains the current
+        state of the lexer and the current value of the `buffer`
+        attribute of the lexer.
+    *   That TokenInfo object is appended to the `tokens` attribute
+        of the lexer.
+    *   The `buffer` of the lexer is cleared.
+    *   The `state` of the lexer is changed to the new state.
+    *   The `process()` method is change to the process method for
+        the new state.
+
+
+    `BaseLexer.process()` and Processing Methods
+    --------------------------------------------
+    The `process()` method of a BaseLexer subclass should not be
+    defined. Instead the name should be assigned to a "processing"
+    method specific to the current state of the lexer. By
+    convention, the names of these method starts with an
+    underscore, which is followed by the name of the state in
+    lowercase letters. So the processing method for the state::
+    
+        Token.GROUP_OPEN
+    
+    would be::
+    
+        _group_open
+    
+    The signature for processing methods are::
+    
+        (self, char: str) -> None
+    
+    where `char` is the character being processed.
+    
+    While specific tokens may require different behavior, in general
+    a processing method does two things:
+    
+    *   Define a list of states that are allowed to follow the
+        current state within the syntax being lexed.
+    *   pass that list and the character to the internal `_check_char()`
+        method that handles the actual processing.
+    
+    The end result of calling a processing method is usually that
+    the characters in the string that make up the symbol for the 
+    current state are stored in a "TokenInfo" tuple, which consists
+    of the token representing the state and the characters of the
+    symbol. These tokens will then be used by the parser to
+    execute the command contained in the string.
+    
+    
+    The State Map
+    -------------
+    Documentation to come.
+    
+    
+    The Symbol Map
+    -------------
+    
+    
+    Bracketing
+    ----------
+    Instead of running each character through `_check_char()`, it is
+    possible for a processing method to instead "bracket" characters
+    until a specific character is reached. For example, characters
+    after a quotation mark can be collected as a substring until
+    the lexer hits another quotation mark.
+    
+    Why do this? The main use for this is to turn the bracketed
+    substring into a single token, rather than three tokens: the
+    opening bracket/delimiter, the content of the bracket, and the
+    closing brack/delimiter.
+
+    To expand on the quotation marks example above, let's characters
+    surrounded by quotation marks to belong to a token called
+    "QUALIFIER". We have the following enumeration of states and 
+    a `symbol_map` that defines which characters belong to which
+    states::
+
+        >>> from enum import auto, Enum
+        >>> class Token(Enum):
+        >>>     QUALIFIER = auto()
+        >>>     DELIM = auto()
+        >>>     QUALIFIER_END = auto()
+        >>>
+        >>> symbol_map = {
+        >>>     Token.QUALIFIER: '',
+        >>>     Token.DELIM: '"',
+        >>>     QUALIFIER_END: '',
+        >>> }
+
+    The string we want to lex is::
+
+        >>> text = '"spam"'
+
+    Without a bracket state, you'd end up with a token list that
+    would look like the following, assuming the logic for the
+    QUALIFIER state is written to accept alphabetical characters
+    as valid for qualifiers::
+
+        >>> (
+        >>>     (Token.DELIM, '"'),
+        >>>     (Token.QUALIFER, 'spam'),
+        >>>     (Token.DELIM, '"'),
+        >>> )
+
+    That's probably fine, but the delimiter tokens don't really
+    do anything at this point. They were just there to set out
+    the qualifier in the string. So, you can have them excluded
+    from the token list like the following by using bracketing::
+
+        >>> (
+        >>>     (Token.QUALIFER, 'spam'),
+        >>> )
+
+    The real power here comes from combining with a result map
+    to send the bracketed content of to a different lexer and
+    parser, which allows syntaxes to be nested within each other.
+
+
+    Bracket States
+    --------------
+    To have a processing method bracket, you need to associate
+    the state for the opening bracket or delimiter with a
+    processing method that handles the bracketing in a dictionary
+    passed to the `bracket_states` parameter when initializing the
+    BaseLexer. The `bracket_states` dictionary for the above example
+    would look like this:
+    
+        >>> bracket_state = {
+        >>>     Token.DELIM: Token.QUALIFIER,
+        >>> }
+
+
+    Bracket Ends
+    ------------
+    Because a bracket state hides the closing bracket or delimiter
+    from the lexer, you need a different way to handle the state
+    after a bracket state. This is handled by a standard processing
+    method. By convention the name of this method is an underscore
+    followed by the name of the bracket state followed by an
+    underscore and then the word "end". For our example it would be::
+    
+        _qualifier_end
+    
+    This state needs to have a state token assigned for it. In our
+    example that is the `Token.QUALIFIER_END` token.
+    
+    This end state then needs to be linked to the bracket state in
+    a dictionary that is passed to the `bracket_ends` parameter
+    when initializing the lexer. In the example, the `bracket_ends`
+    dictionary would look like::
+    
+        bracket_ends = {
+            Token.QUALIFIER: Token.QUALIFIER_END,
+        }
+    
+    
+    Result Transformations and `result_map`
+    ---------------------------------------
+    Documentation to come.
+    """
     def __init__(self,
+                 state_map: dict[BaseToken, Callable],
+                 symbol_map: dict[BaseToken, list[str]],
                  bracket_states: Optional[dict[BaseToken, BaseToken]] = None,
-                 state_map: Optional[dict[BaseToken, Callable]] = None,
-                 symbol_map: Optional[dict[BaseToken, list[str]]] = None,
+                 bracket_ends: Optional[dict[BaseToken, BaseToken]] = None,
                  result_map: Optional[dict[BaseToken, Callable]] = None,
                  no_store: Optional[list[BaseToken]] = None,
-                 init_state: BaseToken = Token.START,
-                 bracket_ends: Optional[dict[BaseToken, BaseToken]] = None
-                 ) -> None:
+                 init_state: BaseToken = Token.START) -> None:
+        """Initialize an instance of :class:Lexer.
+
+        :param state_map: A dictionary mapping the state of the lexer
+            to the processing method for that state.
+        :param symbol_map: A dictionary mapping states of the lexer to
+            characters that could occur within the text being lexed.
+        :param bracket_states: (Optional.) A dictionary mapping opening
+            or delimiting states to a state that collects characters
+            within the brackets or delimiters to send to a more
+            specific lexer.
+        :param bracket_ends: (Optional.) A dictionary mapping bracket
+            states to a state that processes characters after the end
+            of the bracket state.
+        :param result_map: (Optional.) A dictionary mapping states
+            to a result transformation method to transform the data
+            in the lexed string before storing it in as a token
+            value.
+        :param no_store: (Optional.) A list of states that should not
+            be stored as tokens.
+        :param init_state: (Optional.) The initial state of the lexer.
+            It defaults to :class:Token.START.
+        :return: None.
+        :rtype: NoneType
+
+        Bracket State
+        -------------
+        Bracket states bracket characters into a group so they can be
+        processed by a more specific lexer and/or parser before they
+        are tokenized. This is mainly done to collapse the bracketing
+        or delimiting systems and the content being bracketed or
+        delimited into a single token that just has the content.
+
+        """
+        self.state_map = state_map
+        self.symbol_map = symbol_map
         self.bracket_states = _mutable(bracket_states, dict)
         self.bracket_ends = _mutable(bracket_ends, dict)
-        self.state_map = _mutable(state_map, dict)
-        self.symbol_map = _mutable(symbol_map, dict)
         self.result_map = _mutable(result_map, dict)
         self.no_store = _mutable(no_store)
         self.init_state = init_state
@@ -144,8 +366,21 @@ class BaseLexer:
             self._change_state(new_state, char)
 
     # Lexing rules.
+    @abstractmethod
     def _start(self, char: str) -> None:
-        ...
+        """An abstract method for the processing method used for the
+        initial state of the lexer.
+
+        :param char: The character currently being lexed.
+        :return: None
+        :rtype: NoneType
+        """
+        # The tokens that are allowed to follow the current state.
+        can_follow: list[BaseToken] = []
+
+        # Check to see if the current character causes the lexer
+        # to change state.
+        self._check_char(char, can_follow)
 
     def _whitespace(self, char: str) -> None:
         """Lex white space."""

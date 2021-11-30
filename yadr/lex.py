@@ -23,17 +23,6 @@ from yadr.model import (
 class Lexer(BaseLexer):
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
-        bracket_states: dict[BaseToken, BaseToken] = {
-            Token.MAP_OPEN: Token.MAP,
-            Token.NEGATIVE_SIGN: Token.NUMBER,
-            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
-            Token.POOL_OPEN: Token.POOL,
-        }
-        bracket_ends: dict[BaseToken, BaseToken] = {
-            Token.MAP: Token.MAP_END,
-            Token.QUALIFIER: Token.QUALIFIER_END,
-            Token.POOL: Token.POOL_END,
-        }
         state_map: dict[BaseToken, Callable] = {
             Token.START: self._start,
             Token.AS_OPERATOR: self._as_operator,
@@ -62,6 +51,17 @@ class Lexer(BaseLexer):
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
         }
+        bracket_states: dict[BaseToken, BaseToken] = {
+            Token.MAP_OPEN: Token.MAP,
+            Token.NEGATIVE_SIGN: Token.NUMBER,
+            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
+            Token.POOL_OPEN: Token.POOL,
+        }
+        bracket_ends: dict[BaseToken, BaseToken] = {
+            Token.MAP: Token.MAP_END,
+            Token.QUALIFIER: Token.QUALIFIER_END,
+            Token.POOL: Token.POOL_END,
+        }
         symbol_map: dict[BaseToken, list[str]] = symbols
         result_map: dict[BaseToken, Callable] = {
             Token.BOOLEAN: self._tf_boolean,
@@ -78,13 +78,13 @@ class Lexer(BaseLexer):
             Token.QUALIFIER_END,
         ]
         super().__init__(
-            bracket_states,
             state_map,
             symbol_map,
+            bracket_states,
+            bracket_ends,
             result_map,
             no_store,
-            Token.START,
-            bracket_ends
+            Token.START
         )
         self.process = self._start
 
@@ -348,6 +348,7 @@ class Lexer(BaseLexer):
             Token.POOL_OPEN,
             Token.U_POOL_DEGEN_OPERATOR,
             Token.QUALIFIER_DELIMITER,
+            Token.QUALIFIER,
             Token.BOOLEAN,
             Token.WHITESPACE,
         ]
@@ -374,12 +375,6 @@ class Lexer(BaseLexer):
 
 class PoolLexer(BaseLexer):
     def __init__(self) -> None:
-        bracket_states: dict[BaseToken, BaseToken] = {
-            Token.NEGATIVE_SIGN: Token.NUMBER,
-            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
-            Token.POOL_OPEN: Token.POOL,
-        }
-        bracket_ends: dict[BaseToken, BaseToken] = {}
         state_map: dict[BaseToken, Callable] = {
             Token.NUMBER: self._number,
             Token.MEMBER_DELIMITER: self._member_delimiter,
@@ -390,6 +385,12 @@ class PoolLexer(BaseLexer):
             Token.END: self._start,
         }
         symbol_map: dict[BaseToken, list[str]] = symbols
+        bracket_states: dict[BaseToken, BaseToken] = {
+            Token.NEGATIVE_SIGN: Token.NUMBER,
+            Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
+            Token.POOL_OPEN: Token.POOL,
+        }
+        bracket_ends: dict[BaseToken, BaseToken] = {}
         result_map: dict[BaseToken, Callable] = {
             Token.NUMBER: self._tf_number,
         }
@@ -399,13 +400,13 @@ class PoolLexer(BaseLexer):
             Token.WHITESPACE,
         ]
         super().__init__(
-            bracket_states,
             state_map,
             symbol_map,
+            bracket_states,
+            bracket_ends,
             result_map,
             no_store,
-            Token.START,
-            bracket_ends
+            Token.START
         )
         self.process = self._start
 

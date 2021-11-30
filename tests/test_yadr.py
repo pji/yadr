@@ -4,11 +4,13 @@ test_yadr
 
 Unit tests for the yadr.yadr module.
 """
+from copy import deepcopy
 from io import StringIO
 import sys
 import unittest as ut
 from unittest.mock import patch
 
+from yadr import parser
 from yadr import yadr
 
 
@@ -17,8 +19,19 @@ class ParseCliTestCase(ut.TestCase):
     def setUp(self):
         self.argv_buffer = sys.argv
 
+        # Clear the dice_map before each test. This is needed because
+        # the dice_map is global. This, kids, is why you don't use
+        # globals.
+        self.dm_buffer = parser.dice_map
+        parser.dice_map = {}
+        yadr.dice_map = parser.dice_map
+
     def tearDown(self):
         sys.argv = self.argv_buffer
+
+        # Clean up and changes to the dice_map.
+        parser.dice_map = self.dm_buffer
+        yadr.dice_map = parser.dice_map
 
     @patch('sys.stdout', new_callable=StringIO)
     @patch('random.randint')
@@ -63,8 +76,51 @@ class ParseCliTestCase(ut.TestCase):
         act = mock_stdout.getvalue()
         self.assertEqual(exp, act)
 
+    @patch('sys.stdout', new_callable=StringIO)
+    @patch('random.randint')
+    def test_list_default_dice_maps(self, mock_randint, mock_stdout):
+        """The -l option will list the default dice maps."""
+        # Expected data and state.
+        with open(yadr.DICE_MAP_LOCATION) as fh:
+            lines = fh.readlines()
+        lines = [line for line in lines if '=' in line]
+        lines = [line.split('"')[1] for line in lines]
+
+        # Expected value.
+        exp = '\n'.join(lines) + '\n'
+
+        # Test data and state.
+        sys.argv = [
+            'python -m yadr',
+            '-l'
+        ]
+        mock_randint.side_effect = (3, 2)
+
+        # Run test.
+        yadr.parse_cli()
+
+        # Extract actual result and determine success.
+        act = mock_stdout.getvalue()
+        self.assertEqual(exp, act)
+
 
 class RollTestCase(ut.TestCase):
+    @patch('random.randint')
+    def test_roll_default_dice_maps(self, mock_randint):
+        """Execute a YADN string using a default dice map."""
+        # Expected value.
+        exp = '-'
+
+        # Test data and state.
+        mock_randint.side_effect = (1,)
+        yadn = '1d3m"fate"'
+
+        # Run test.
+        act = yadr.roll(yadn)
+
+        # Determine test results.
+        self.assertEqual(exp, act)
+
     @patch('random.randint')
     def test_roll(self, mock_randint):
         """Execute a YADN string."""

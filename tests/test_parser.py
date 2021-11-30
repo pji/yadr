@@ -14,6 +14,9 @@ from yadr import operator as yo
 
 # Test cases.
 class ParseTestCase(ut.TestCase):
+    def tearDown(self):
+        p.dice_map = {}
+
     def parser_test(self, exp, tokens):
         """The standard Parse test case."""
         act = p.parse(tokens)

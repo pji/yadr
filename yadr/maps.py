@@ -13,13 +13,6 @@ from yadr.model import BaseToken, MapToken, map_symbols, Result, TokenInfo
 # Lexing.
 class Lexer(BaseLexer):
     def __init__(self) -> None:
-        bracket_states: dict[BaseToken, BaseToken] = {
-            MapToken.NEGATIVE_SIGN: MapToken.NUMBER,
-            MapToken.QUALIFIER_DELIMITER: MapToken.QUALIFIER,
-        }
-        bracket_ends: dict[BaseToken, BaseToken] = {
-            MapToken.QUALIFIER: MapToken.QUALIFIER_END,
-        }
         state_map: dict[BaseToken, Callable] = {
             MapToken.START: self._start,
             MapToken.END: self._start,
@@ -35,6 +28,13 @@ class Lexer(BaseLexer):
             MapToken.WHITESPACE: self._whitespace,
         }
         symbol_map: dict[BaseToken, list[str]] = map_symbols
+        bracket_states: dict[BaseToken, BaseToken] = {
+            MapToken.NEGATIVE_SIGN: MapToken.NUMBER,
+            MapToken.QUALIFIER_DELIMITER: MapToken.QUALIFIER,
+        }
+        bracket_ends: dict[BaseToken, BaseToken] = {
+            MapToken.QUALIFIER: MapToken.QUALIFIER_END,
+        }
         result_map: dict[BaseToken, Callable] = {
             MapToken.NUMBER: self._tf_number,
             MapToken.QUALIFIER: self._tf_qualifier,
@@ -46,13 +46,13 @@ class Lexer(BaseLexer):
         ]
         init_state: BaseToken = MapToken.START
         super().__init__(
-            bracket_states,
             state_map,
             symbol_map,
+            bracket_states,
+            bracket_ends,
             result_map,
             no_store,
-            init_state,
-            bracket_ends
+            init_state
         )
 
     # Result transformation rules.

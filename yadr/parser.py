@@ -116,7 +116,8 @@ def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
     rolls = []
     while (Token.ROLL_DELIMITER, ';') in tokens:
         index = tokens.index((Token.ROLL_DELIMITER, ';'))
-        rolls.append(tokens[0:index])
+        roll = tokens[0:index]
+        rolls.append(roll)
         tokens = tokens[index + 1:]
     else:
         rolls.append(tokens)
