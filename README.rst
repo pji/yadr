@@ -31,7 +31,7 @@ For a description of YADN see: YADN_
 Do we need another Python dice rolling package?
 ===============================================
 No. Probably not. Unsurprisingly, there seems to be a lot of people who
-play TTRPGs and write Python packages. This is yet one.
+play TTRPGs and write Python packages. This is yet another one.
 
 Hence the name.
 
