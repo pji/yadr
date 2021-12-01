@@ -38,7 +38,7 @@ Hence the name.
 
 Does it support my game?
 ========================
-Check through the YADN doc and if the operations you need are described
+Check through the YADN doc to see if the operations you need are described
 there. If not, open an issue, and I'll see what I can do.
 
 
