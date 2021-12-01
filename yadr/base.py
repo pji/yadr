@@ -59,7 +59,7 @@ class BaseLexer(ABC):
         of the lexer.
     *   The `buffer` of the lexer is cleared.
     *   The `state` of the lexer is changed to the new state.
-    *   The `process()` method is change to the process method for
+    *   The `process()` method is changed to the process method for
         the new state.
 
 
@@ -102,11 +102,30 @@ class BaseLexer(ABC):
 
     The State Map
     -------------
-    Documentation to come.
+    To determine the correct processing method to use for a state, the
+    lexer needs to have a mapping that defines the method for the state.
+    This dictionary is the "state map." The tokens for the state are
+    the keys, and the processing method for that state is the value
+    for the key. This dictionary is passed into the BaseLexer as the
+    `state_map` parameter when the lexer is initialized.
 
 
     The Symbol Map
-    -------------
+    --------------
+    A BaseLexer uses a "symbol map" to associate characters in the
+    string to a state. The symbol map is a dictionary. The keys are
+    the tokens from the enumeration that defines state. The values
+    are a list of the strings that are allowed in that state. For
+    example, if you have a token named "MULDIV" that is the state for
+    multiplication and division operators, the symbol map might look
+    like::
+
+        >>> state_map = {
+        >>>     Token.MULDIV: ['*', '/'],
+        >>> }
+
+    The symbol map is passed to the `symbol_map` parameter when the
+    lexer is initialized.
 
 
     Bracketing
@@ -207,9 +226,63 @@ class BaseLexer(ABC):
         }
 
 
-    Result Transformations and `result_map`
-    ---------------------------------------
-    Documentation to come.
+    No Store
+    --------
+    Some states, like the initial state, bracket end states, and
+    white space, shouldn't be stored as tokens. These are defined
+    by the "no store" list, which is passed to the `no_store`
+    parameter when the lexer is initialized. For the example above,
+    the no store list could look like::
+
+        >>> no_store = [
+        >>>     Token.QUALIFIER_END,
+        >>> ]
+
+
+    Result Transformations
+    ----------------------
+    By default, a BaseLexer stores the symbols for the token as a
+    string in the TokenInfo. This behavior can be changed with a
+    "result transformation" method. By convention the name of a
+    result transformation starts with an underscore, the letters "tf",
+    an underscore, and the name of the state they affect in all lower
+    case. So the name of a result transformation method for the
+    `Token.NUMBER` state would be::
+
+        _tf_number
+
+    Result transformations have the following signature::
+
+        (self, value:str) -> <type_of_the_transformed_value>
+
+    .. warning:
+        The return type of the result transformation method needs
+        to be added to the types allowed for TokenInfo. This adds
+        complexity that has downstream affects on the parser.
+
+    In the case of something like `Token.NUMBER` the transformation
+    can be very simple, coercing a string to an integer. However,
+    more complex transformations are possible, such as sending
+    bracketed symbols to a different lexer and parser to allow syntax
+    nesting.
+
+
+    Result Map
+    ----------
+    In order to link the result transformation methods to a state,
+    a BaseLexer needs a "result map". The result map is a dictionary.
+    The keys are the states where the transforms are used. The values
+    are the result transformation methods to use for that state. For
+    example, the result map for a lexer that transforms numbers and
+    qualifiers might look like::
+
+        >>> result_map = {
+        >>>     Token.NUMBER: _tf_number,
+        >>>     Token.QUALIFIER: _qualifier,
+        >>> }
+
+    The result map is passed to the `result_map` parameter when the
+    BaseLexer is initialized.
     """
     def __init__(self,
                  state_map: dict[BaseToken, Callable],
@@ -242,15 +315,6 @@ class BaseLexer(ABC):
             It defaults to :class:Token.START.
         :return: None.
         :rtype: NoneType
-
-        Bracket State
-        -------------
-        Bracket states bracket characters into a group so they can be
-        processed by a more specific lexer and/or parser before they
-        are tokenized. This is mainly done to collapse the bracketing
-        or delimiting systems and the content being bracketed or
-        delimited into a single token that just has the content.
-
         """
         self.state_map = state_map
         self.symbol_map = symbol_map
