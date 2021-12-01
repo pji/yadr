@@ -5,6 +5,9 @@
 # Ignore virtual environment.
 .venv
 
+# MacOS files.
+.DS_Store
+
 # Build files.
 *dist
 *yadr.egg-info
