@@ -385,7 +385,7 @@ class BaseLexer(ABC):
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
         if self.state not in self.no_store:
-            value: Result | CompoundResult = self.buffer
+            value: Result = self.buffer
             if self.state in self.result_map:
                 transform = self.result_map[self.state]
                 value = transform(value)

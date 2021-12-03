@@ -13,18 +13,55 @@ from yadr import operator as yo
 
 
 # Test cases.
-class ParseTestCase(ut.TestCase):
+class ParserTestCase(ut.TestCase):
+    def setUp(self):
+        self.parser = p.Parser()
+
     def tearDown(self):
-        p.dice_map = {}
+        self.parser = None
 
     def parser_test(self, exp, tokens):
-        """The standard Parse test case."""
-        act = p.parse(tokens)
+        """Return the expected result for the given tokens."""
+        act = self.parser.parse(tokens)
         self.assertEqual(exp, act)
 
-    # Test basic operations.
+    # Tests.
+    # Identities
+    def test_boolean(self):
+        """Parse a boolean."""
+        exp = True
+        tokens = (
+            (Token.BOOLEAN, True),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_number(self):
+        "Parse a number."
+        exp = 5
+        tokens = (
+            (Token.NUMBER, 5),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_pool(self):
+        "Parse a pool."
+        exp = (3, 3, 4)
+        tokens = (
+            (Token.POOL, (3, 3, 4)),
+        )
+        self.parser_test(exp, tokens)
+
+    def test_quantifier(self):
+        """Parse a qualifier."""
+        exp = 'spam'
+        tokens = (
+            (Token.QUALIFIER, 'spam'),
+        )
+        self.parser_test(exp, tokens)
+
+    # Basic arithmetic.
     def test_addition(self):
-        "Perform basic addition."
+        """Parse basic addition."""
         exp = 5
         tokens = (
             (Token.NUMBER, 3),
@@ -93,16 +130,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test booleans.
-    def test_boolean(self):
-        """Parse a boolean."""
-        exp = True
-        tokens = (
-            (Token.BOOLEAN, True),
-        )
-        self.parser_test(exp, tokens)
-
-    # Test choice operator.
+    # Choice and related operators.
     def test_choice(self):
         """Perform choice operation."""
         exp = 'eggs'
@@ -115,7 +143,6 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test comparison operators.
     def test_greater_than(self):
         """Perform greater than comparison."""
         exp = True
@@ -176,7 +203,17 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test dice operators.
+    def test_options_operator(self):
+        """Create a choice options."""
+        exp = ('spam', 'eggs')
+        tokens = (
+            (Token.QUALIFIER, 'spam'),
+            (Token.OPTIONS_OPERATOR, ':'),
+            (Token.QUALIFIER, 'eggs'),
+        )
+        self.parser_test(exp, tokens)
+
+    # Dice operators.
     @patch('random.randint')
     def test_concat(self, mock_randint):
         """Concatenate dice rolls."""
@@ -189,9 +226,10 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    def test_die(self):
+    @patch('random.randint')
+    def test_die(self, mock_randint):
         """Roll a die."""
-        yo._seed('spam')
+        mock_randint.side_effect = [1, 2, 2]
         exp = 5
         tokens = (
             (Token.NUMBER, 3),
@@ -200,12 +238,13 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    def test_exploding_die(self):
+    @patch('random.randint')
+    def test_exploding_die(self, mock_randint):
         """Roll an exploding die."""
-        yo._seed('spam')
-        exp = 5
+        mock_randint.side_effect = [1, 2, 4, 2, 2]
+        exp = 11
         tokens = (
-            (Token.NUMBER, 3),
+            (Token.NUMBER, 4),
             (Token.DICE_OPERATOR, 'd!'),
             (Token.NUMBER, 4),
         )
@@ -247,7 +286,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test pool generation operators.
+    # Pool generation operators.
     @patch('random.randint')
     def test_dice_pool(self, mock_randint):
         """Roll dice and keep the highest."""
@@ -272,7 +311,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test unary pool degeneration operators.
+    # Unary pool degeneration operators.
     @patch('random.randint')
     def test_pool_concatenate(self, mock_randint):
         """Concatenate the dice in a pool."""
@@ -306,18 +345,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test options operators.
-    def test_options_operator(self):
-        """Create a choice options."""
-        exp = ('spam', 'eggs')
-        tokens = (
-            (Token.QUALIFIER, 'spam'),
-            (Token.OPTIONS_OPERATOR, ':'),
-            (Token.QUALIFIER, 'eggs'),
-        )
-        self.parser_test(exp, tokens)
-
-    # Test pool degeneration operators.
+    # Pool degeneration operators.
     def test_count_successes(self):
         """Keep a values that aren't a given number in the pool."""
         exp = 2
@@ -338,7 +366,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test pool operators.
+    # Pool operators.
     def test_pool_keep_above(self):
         """Keep a values above a given number in the pool."""
         exp = (8, 9)
@@ -419,16 +447,7 @@ class ParseTestCase(ut.TestCase):
         )
         self.parser_test(exp, tokens)
 
-    # Test qualifiers.
-    def test_qualifier(self):
-        """Return a qualifier."""
-        exp = 'spam'
-        tokens = (
-            (Token.QUALIFIER, 'spam'),
-        )
-        self.parser_test(exp, tokens)
-
-    # Test dice mapping.
+    # Dice mapping.
     def test_map(self):
         """Parse and store a dice map."""
         # Expected value.
@@ -438,14 +457,15 @@ class ParseTestCase(ut.TestCase):
         tokens = (
             (Token.MAP, ('spam', {1: 'none', 2: 'success'})),
         )
-        _ = p.parse(tokens)
+        _ = self.parser.parse(tokens)
 
         # Run test.
-        act = p.dice_map['spam'][2]
+        act = self.parser.dice_map['spam'][2]
 
         # Determine test result.
         self.assertEqual(exp, act)
 
+    # Mapping operators.
     @patch('random.randint')
     def test_map_result(self, mock_randint):
         """Given a map and a roll with a dice map operator, return the
@@ -455,8 +475,9 @@ class ParseTestCase(ut.TestCase):
         exp = 'success'
 
         # Test data and state.
+        parser = p.Parser()
         mock_randint.side_effect = (3, )
-        p.dice_map['_test_map_result'] = {
+        parser.dice_map['_test_map_result'] = {
             1: 'none',
             2: 'success',
             3: 'success',
@@ -471,7 +492,7 @@ class ParseTestCase(ut.TestCase):
         )
 
         # Run test.
-        act = p.parse(tokens)
+        act = parser.parse(tokens)
 
         # Determine test result.
         self.assertEqual(exp, act)
@@ -486,7 +507,7 @@ class ParseTestCase(ut.TestCase):
 
         # Test data and state.
         mock_randint.side_effect = (3, 1, )
-        p.dice_map['_test_map_result'] = {
+        self.parser.dice_map['_test_map_result'] = {
             1: 'none',
             2: 'success',
             3: 'success',
@@ -501,7 +522,7 @@ class ParseTestCase(ut.TestCase):
         )
 
         # Run test.
-        act = p.parse(tokens)
+        act = self.parser.parse(tokens)
 
         # Determine test result.
         self.assertEqual(exp, act)
@@ -614,7 +635,7 @@ class ParseTestCase(ut.TestCase):
         )
 
         # Run test.
-        act = p.parse(tokens)
+        act = self.parser.parse(tokens)
 
         # Determine test result.
         self.assertEqual(exp, act)
@@ -640,7 +661,7 @@ class ParseTestCase(ut.TestCase):
         )
 
         # Run test.
-        act = p.parse(tokens)
+        act = self.parser.parse(tokens)
 
         # Determine test result.
         self.assertEqual(exp, act)
@@ -662,7 +683,7 @@ class ParseTestCase(ut.TestCase):
         )
 
         # Run test.
-        act = p.parse(tokens)
+        act = self.parser.parse(tokens)
 
         # Determine test result.
         self.assertEqual(exp, act)

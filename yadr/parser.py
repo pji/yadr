@@ -10,6 +10,7 @@ from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
 from yadr.model import (
+    BaseToken,
     CompoundResult,
     Result,
     Token,
@@ -40,14 +41,18 @@ def map_result(result: int | tuple[int, ...],
 class Tree:
     """A binary tree."""
     def __init__(self,
-                 kind: Token,
-                 value: int | str,
+                 kind: BaseToken,
+                 value: Result,
                  left: Optional['Tree'] = None,
-                 right: Optional['Tree'] = None) -> None:
+                 right: Optional['Tree'] = None,
+                 dice_map: Optional[dict[str, dict]] = None) -> None:
         self.kind = kind
         self.value = value
         self.left = left
         self.right = right
+        if dice_map is None:
+            dice_map = {}
+        self.dice_map = dice_map
 
     def __repr__(self):
         name = self.__class__.__name__
@@ -60,19 +65,28 @@ class Tree:
         right = self.right.compute()
         if self.kind in op_tokens:
             ops_by_symbol = yo.ops_by_symbol
-            ops_by_symbol['m'] = map_result
+            ops_by_symbol['m'] = self._map_result
             op = ops_by_symbol[self.value]
         else:
             msg = f'Unknown token {self.kind}'
             raise TypeError(msg)
         return op(left, right)
 
+    def _map_result(self, result: int | tuple[int, ...],
+                    key: str) -> str | tuple[str, ...]:
+        """Map a roll result to a dice map."""
+        if isinstance(result, int):
+            return self.dice_map[key][result]
+        new_result = [self._map_result(n, key) for n in result]
+        str_result = tuple(str(item) for item in new_result)
+        return str_result
+
 
 class Unary(Tree):
     """A unary tree."""
     def __init__(self,
-                 kind: Token,
-                 value: int | str,
+                 kind: BaseToken,
+                 value: Result,
                  child: Optional['Tree'] = None) -> None:
         self.kind = kind
         self.value = value
@@ -87,174 +101,176 @@ class Unary(Tree):
         return op(child)
 
 
-def next_rule(next_rule: Callable) -> Callable:
-    """A decorator for simplifying parsing rules."""
-    def outer_wrapper(fn: Callable) -> Callable:
-        @wraps(fn)
-        def inner_wrapper(*args, **kwargs) -> Callable:
-            return fn(next_rule, *args, **kwargs)
-        return inner_wrapper
-    return outer_wrapper
+# Parser class.
+class Parser:
+    def __init__(self) -> None:
+        self.dice_map: dict[str, dict] = dict()
+        self.top_rule = self._map_operator
 
+    # Public method.
+    def parse(self, tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
+        if (Token.ROLL_DELIMITER, ';') not in tokens:
+            return self._parse_roll(tokens)        # type: ignore
 
-def u_next_rule(next_rule: Callable) -> Callable:
-    """A decorator for simplifying parsing rules."""
-    def outer_wrapper(fn: Callable) -> Callable:
-        @wraps(fn)
-        def inner_wrapper(*args, **kwargs) -> Callable:
-            return fn(next_rule, *args, **kwargs)
-        return inner_wrapper
-    return outer_wrapper
-
-
-# Parsing initiation.
-def parse(tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
-    """Parse dice notation tokens."""
-    if (Token.ROLL_DELIMITER, ';') not in tokens:
-        return _parse_roll(tokens)              # type: ignore
-
-    rolls = []
-    while (Token.ROLL_DELIMITER, ';') in tokens:
-        index = tokens.index((Token.ROLL_DELIMITER, ';'))
-        roll = tokens[0:index]
-        rolls.append(roll)
-        tokens = tokens[index + 1:]
-    else:
-        rolls.append(tokens)
-    results: Sequence[Result] = []
-    for roll in rolls:
-        results.append(parse(roll))             # type: ignore
-        results = [result for result in results if result is not None]
-    if len(results) > 1:
-        return CompoundResult(results)
-    elif results:
-        return results[0]
-    return None
-
-
-def _parse_roll(tokens: Sequence[TokenInfo]) -> Result:
-    trees = [Tree(*token) for token in tokens]      # type: ignore
-    trees = trees[::-1]
-    parsed = last_rule(trees)
-    if parsed:
-        return parsed.compute()
-    return None
-
-
-# Rule templates.
-def _binary_rule(token: Token,
-                 next_rule: Callable,
-                 trees: list[Tree]) -> Tree:
-    """A binary parsing rule."""
-    left = next_rule(trees)
-    while (trees and trees[-1].kind == token):
-        tree = trees.pop()
-        tree.left = left
-        tree.right = next_rule(trees)
-        left = tree
-    return left
-
-
-# Parsing rules.
-def groups_and_identity(trees: list[Tree]) -> Tree:
-    """Final rule, covering identities, groups, and maps."""
-    kind = trees[-1].kind
-    value = trees[-1].value
-    if kind in id_tokens:
-        return trees.pop()
-    elif kind == Token.MAP and isinstance(value, tuple):
-        name, map_ = value
-        global dice_map
-        dice_map[name] = map_
+        rolls = []
+        while (Token.ROLL_DELIMITER, ';') in tokens:
+            index = tokens.index((Token.ROLL_DELIMITER, ';'))
+            roll = tokens[0:index]
+            rolls.append(roll)
+            tokens = tokens[index + 1:]
+        else:
+            rolls.append(tokens)
+        results: Sequence[Result] = []
+        for roll in rolls:
+            results.append(self.parse(roll))       # type: ignore
+            results = [result for result in results if result is not None]
+        if len(results) > 1:
+            return CompoundResult(results)
+        elif results:
+            return results[0]
         return None
-    elif kind == Token.GROUP_OPEN:
-        _ = trees.pop()
-    else:
-        msg = f'Unrecognized token {kind}'
-        raise TypeError(msg)
-    expression = last_rule(trees)
-    if trees[-1].kind == Token.GROUP_CLOSE:
-        _ = trees.pop()
-    return expression
 
+    def _parse_roll(self, tokens: Sequence[TokenInfo]) -> Result:
+        """Parse a sequence of YADN tokens."""
+        def make_tree(kind, value):
+            return Tree(kind, value, dice_map=self.dice_map)
 
-@next_rule(groups_and_identity)
-def pool_gen_operators(next_rule: Callable, trees: list[Tree]):
-    """Parse dice operations."""
-    return _binary_rule(Token.POOL_GEN_OPERATOR, next_rule, trees)
+        trees = [make_tree(kind, value) for kind, value in tokens]
+        trees = trees[::-1]
+        parsed = self.top_rule(trees)
+        if parsed:
+            return parsed.compute()
+        return None
 
-
-@next_rule(pool_gen_operators)
-def pool_operators(next_rule: Callable, trees: list[Tree]):
-    """Parse dice operations."""
-    return _binary_rule(Token.POOL_OPERATOR, next_rule, trees)
-
-
-@u_next_rule(pool_operators)
-def u_pool_degen_operators(next_rule: Callable, trees: list[Tree]):
-    """Parse dice operations."""
-    if trees[-1].kind == Token.U_POOL_DEGEN_OPERATOR:
+    # Parsing rules.
+    def _identity(self, trees: list[Tree]) -> Tree | None:
+        """Parse an identity."""
+        identity_tokens = [
+            Token.BOOLEAN,
+            Token.NUMBER,
+            Token.POOL,
+            Token.QUALIFIER,
+        ]
         tree = trees.pop()
-        unary = Unary(tree.kind, tree.value)
-        unary.child = next_rule(trees)
-        return unary
-    return next_rule(trees)
+        if tree.kind in identity_tokens:
+            return tree
+        elif tree.kind == Token.MAP:
+            name, map_ = tree.value                          # type: ignore
+            self.dice_map[name] = map_
+            return None
+        elif tree.kind == Token.GROUP_OPEN:
+            expression = self.top_rule(trees)
+            if trees[-1].kind == Token.GROUP_CLOSE:
+                _ = trees.pop()
+            return expression
+        else:
+            msg = f'Unrecognized token {tree.kind}'
+            raise TypeError(msg)
 
+    def _pool_gen_operator(self, trees: list[Tree]) -> Tree:
+        """Parse pool generation operator."""
+        rule = self._binary_operator
+        rule_affects = Token.POOL_GEN_OPERATOR
+        next_rule = self._identity
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(u_pool_degen_operators)
-def pool_degen_operators(next_rule: Callable, trees: list[Tree]):
-    """Parse dice operations."""
-    return _binary_rule(Token.POOL_DEGEN_OPERATOR, next_rule, trees)
+    def _pool_operator(self, trees: list[Tree]) -> Tree:
+        """Parse pool operator."""
+        rule = self._binary_operator
+        rule_affects = Token.POOL_OPERATOR
+        next_rule = self._pool_gen_operator
+        return rule(rule_affects, next_rule, trees)
 
+    def _u_pool_degen_operator(self, trees: list[Tree]) -> Tree:
+        """Parse unary pool degeneration."""
+        rule = self._unary_operator
+        rule_affects = Token.U_POOL_DEGEN_OPERATOR
+        next_rule = self._pool_operator
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(pool_degen_operators)
-def dice_operators(next_rule: Callable, trees: list[Tree]):
-    """Parse dice operations."""
-    return _binary_rule(Token.DICE_OPERATOR, next_rule, trees)
+    def _pool_degen_operator(self, trees: list[Tree]) -> Tree:
+        """Parse unary pool degeneration."""
+        rule = self._binary_operator
+        rule_affects = Token.POOL_DEGEN_OPERATOR
+        next_rule = self._u_pool_degen_operator
+        return rule(rule_affects, next_rule, trees)
 
+    def _dice_operator(self, trees: list[Tree]) -> Tree:
+        """Parse dice operators."""
+        rule = self._binary_operator
+        rule_affects = Token.DICE_OPERATOR
+        next_rule = self._pool_degen_operator
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(dice_operators)
-def exponents(next_rule: Callable, trees: list[Tree]):
-    """Parse exponents."""
-    return _binary_rule(Token.EX_OPERATOR, next_rule, trees)
+    def _ex_operator(self, trees: list[Tree]) -> Tree:
+        """Parse exponentiation."""
+        rule = self._binary_operator
+        rule_affects = Token.EX_OPERATOR
+        next_rule = self._dice_operator
+        return rule(rule_affects, next_rule, trees)
 
+    def _md_operator(self, trees: list[Tree]) -> Tree:
+        """Parse addition and subtraction."""
+        rule = self._binary_operator
+        rule_affects = Token.MD_OPERATOR
+        next_rule = self._ex_operator
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(exponents)
-def mul_div(next_rule: Callable, trees: list[Tree]):
-    """Parse multiplication and division."""
-    return _binary_rule(Token.MD_OPERATOR, next_rule, trees)
+    def _as_operator(self, trees: list[Tree]) -> Tree:
+        """Parse addition and subtraction."""
+        rule = self._binary_operator
+        rule_affects = Token.AS_OPERATOR
+        next_rule = self._md_operator
+        return rule(rule_affects, next_rule, trees)
 
+    def _comparison_operator(self, trees: list[Tree]) -> Tree:
+        """Parse comparisons."""
+        rule = self._binary_operator
+        rule_affects = Token.COMPARISON_OPERATOR
+        next_rule = self._as_operator
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(mul_div)
-def add_sub(next_rule: Callable, trees: list[Tree]):
-    """Parse addition and subtraction."""
-    return _binary_rule(Token.AS_OPERATOR, next_rule, trees)
+    def _options_operator(self, trees: list[Tree]) -> Tree:
+        """Parse comparisons."""
+        rule = self._binary_operator
+        rule_affects = Token.OPTIONS_OPERATOR
+        next_rule = self._comparison_operator
+        return rule(rule_affects, next_rule, trees)
 
+    def _choice_operator(self, trees: list[Tree]) -> Tree:
+        """Parse chocies."""
+        rule = self._binary_operator
+        rule_affects = Token.CHOICE_OPERATOR
+        next_rule = self._options_operator
+        return rule(rule_affects, next_rule, trees)
 
-@next_rule(add_sub)
-def comparison_op(next_rule: Callable, trees: list[Tree]):
-    """Parse comparison operator."""
-    return _binary_rule(Token.COMPARISON_OPERATOR, next_rule, trees)
+    def _map_operator(self, trees: list[Tree]) -> Tree:
+        """Parse dice mapping operators."""
+        rule = self._binary_operator
+        rule_affects = Token.MAPPING_OPERATOR
+        next_rule = self._choice_operator
+        return rule(rule_affects, next_rule, trees)
 
+    # Base rules.
+    def _binary_operator(self, rule_affects: BaseToken,
+                         next_rule: Callable,
+                         trees: list[Tree]) -> Tree:
+        """Parse a binary operator."""
+        left = next_rule(trees)
+        while trees and trees[-1].kind == rule_affects:
+            tree = trees.pop()
+            tree.left = left
+            tree.right = next_rule(trees)
+            left = tree
+        return left
 
-@next_rule(comparison_op)
-def options_op(next_rule: Callable, trees: list[Tree]):
-    """Parse options operator."""
-    return _binary_rule(Token.OPTIONS_OPERATOR, next_rule, trees)
-
-
-@next_rule(options_op)
-def choice_op(next_rule: Callable, trees: list[Tree]):
-    """Parse options operator."""
-    return _binary_rule(Token.CHOICE_OPERATOR, next_rule, trees)
-
-
-@next_rule(choice_op)
-def map_op(next_rule: Callable, trees: list[Tree]):
-    """Parse options operator."""
-    return _binary_rule(Token.MAPPING_OPERATOR, next_rule, trees)
-
-
-# Set the last rule in order of operations to make it a little easier
-# to update as new operations are added.
-last_rule = map_op
+    def _unary_operator(self, rule_affects: BaseToken,
+                        next_rule: Callable,
+                        trees: list[Tree]) -> Tree:
+        """Parse an unary operator."""
+        if trees[-1].kind == rule_affects:
+            tree = trees.pop()
+            unary = Unary(tree.kind, tree.value)
+            unary.child = next_rule(trees)
+            return unary
+        return next_rule(trees)

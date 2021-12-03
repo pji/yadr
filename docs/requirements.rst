@@ -113,3 +113,34 @@ problem. If I ignore that, I could probably collapse all the Char.is_*
 methods into one that returns a token. Maybe that's still the way to
 go. I'd just need a special case to handle the ambiguity of the
 hyphen character.
+
+
+Removing Global Dice Maps
+-------------------------
+The key problem to solve is how the dice mapping operator can have
+access to preloaded dice maps without those dice maps being global
+variables. It seems messy.
+
+*   There are three phases of interpreting YADN:
+    *   Lexing,
+    *   Parsing,
+    *   Executing.
+*   Operators act during the execution phase.
+*   That suggests that storing the dice map in either the lexer or
+    the parser won't help.
+*   Execution is done by Tree objects.
+*   Tree objects are:
+    *   Created by the parser,
+    *   Executed by the parser.
+*   So, in theory, the parser could store the dice_map and pass it to
+    the tree as part of the call to execute.
+*   This would require dice mappings to be stored in the parser
+    during parsing.
+*   This requires either:
+    *   The parsing rules are methods of the parser,
+    *   The parser object is passed to the pasring rules.
+
+So, that means the issue becomes how to make parsing rules be methods
+of the parser. I could probably find a way to do it with a decorator
+again, but it's probably just easier to set the next rule within
+the method.

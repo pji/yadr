@@ -133,6 +133,7 @@ class MapToken(Enum):
     QUALIFIER = auto()
     QUALIFIER_DELIMITER = auto()
     QUALIFIER_END = auto()
+    ROLL_DELIMITER = auto()
     VALUE = auto()
     WHITESPACE = auto()
 
@@ -153,6 +154,7 @@ map_symbols_raw = {
     MapToken.QUALIFIER: '',
     MapToken.QUALIFIER_DELIMITER: '"',
     MapToken.QUALIFIER_END: '',
+    MapToken.ROLL_DELIMITER: ';',
     MapToken.VALUE: '',
     MapToken.WHITESPACE: '',
 }
@@ -165,8 +167,8 @@ class CompoundResult(Tuple):
 
 # Types.
 BaseToken = Union[Token, MapToken]
-Result = Union[int, bool, str, Tuple[int], Tuple[str], dict, None]
-TokenInfo = tuple[BaseToken, Union[Result, CompoundResult]]
+Result = Union[int, bool, str, Tuple[int], Tuple[str], Tuple[str, dict], None]
+TokenInfo = tuple[BaseToken, Result]
 
 
 # Symbols by token.

@@ -10,7 +10,6 @@ import sys
 import unittest as ut
 from unittest.mock import patch
 
-from yadr import parser
 from yadr import yadr
 
 
@@ -19,19 +18,8 @@ class ParseCliTestCase(ut.TestCase):
     def setUp(self):
         self.argv_buffer = sys.argv
 
-        # Clear the dice_map before each test. This is needed because
-        # the dice_map is global. This, kids, is why you don't use
-        # globals.
-        self.dm_buffer = parser.dice_map
-        parser.dice_map = {}
-        yadr.dice_map = parser.dice_map
-
     def tearDown(self):
         sys.argv = self.argv_buffer
-
-        # Clean up and changes to the dice_map.
-        parser.dice_map = self.dm_buffer
-        yadr.dice_map = parser.dice_map
 
     @patch('sys.stdout', new_callable=StringIO)
     @patch('random.randint')
