@@ -7,12 +7,12 @@ A module for handling YADN pools.
 from typing import Callable, Sequence
 
 from yadr.base import BaseLexer
-from yadr.model import BaseToken, symbols, Token, TokenInfo
+from yadr.model import symbols, Token, TokenInfo
 
 
 class Lexer(BaseLexer):
     def __init__(self) -> None:
-        state_map: dict[BaseToken, Callable] = {
+        state_map: dict[Token, Callable] = {
             Token.NUMBER: self._number,
             Token.MEMBER_DELIMITER: self._member_delimiter,
             Token.POOL: self._pool,
@@ -21,17 +21,17 @@ class Lexer(BaseLexer):
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
         }
-        symbol_map: dict[BaseToken, list[str]] = symbols
-        bracket_states: dict[BaseToken, BaseToken] = {
+        symbol_map: dict[Token, list[str]] = symbols
+        bracket_states: dict[Token, Token] = {
             Token.NEGATIVE_SIGN: Token.NUMBER,
             Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
             Token.POOL_OPEN: Token.POOL,
         }
-        bracket_ends: dict[BaseToken, BaseToken] = {}
-        result_map: dict[BaseToken, Callable] = {
+        bracket_ends: dict[Token, Token] = {}
+        result_map: dict[Token, Callable] = {
             Token.NUMBER: self._tf_number,
         }
-        no_store: list[BaseToken] = [
+        no_store: list[Token] = [
             Token.POOL_OPEN,
             Token.POOL_CLOSE,
             Token.WHITESPACE,

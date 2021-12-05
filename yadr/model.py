@@ -22,6 +22,8 @@ class Token(Enum):
     EX_OPERATOR = auto()
     GROUP_OPEN = auto()
     GROUP_CLOSE = auto()
+    KEY = auto()
+    KV_DELIMITER = auto()
     MAP = auto()
     MAP_CLOSE = auto()
     MAP_END = auto()
@@ -30,10 +32,13 @@ class Token(Enum):
     MD_OPERATOR = auto()
     MEMBER = auto()
     MEMBER_DELIMITER = auto()
+    NAME = auto()
+    NAME_DELIMITER = auto()
     NEGATIVE_SIGN = auto()
     NUMBER = auto()
     OPERATOR = auto()
     OPTIONS_OPERATOR = auto()
+    PAIR_DELIMITER = auto()
     POOL = auto()
     POOL_CLOSE = auto()
     POOL_DEGEN_OPERATOR = auto()
@@ -46,9 +51,11 @@ class Token(Enum):
     QUALIFIER_DELIMITER = auto()
     ROLL_DELIMITER = auto()
     U_POOL_DEGEN_OPERATOR = auto()
+    VALUE = auto()
     WHITESPACE = auto()
 
 
+# Token categories.
 op_tokens = (
     Token.CHOICE_OPERATOR,
     Token.COMPARISON_OPERATOR,
@@ -64,7 +71,6 @@ op_tokens = (
     Token.EX_OPERATOR,
     Token.MAPPING_OPERATOR,
 )
-
 id_tokens = (
     Token.BOOLEAN,
     Token.NUMBER,
@@ -88,6 +94,8 @@ yadn_symbols_raw = {
     Token.EX_OPERATOR: '^',
     Token.GROUP_OPEN: '(',
     Token.GROUP_CLOSE: ')',
+    Token.KEY: '',
+    Token.KV_DELIMITER: ':',
     Token.MAP: '',
     Token.MAP_CLOSE: '}',
     Token.MAP_END: '',
@@ -96,8 +104,11 @@ yadn_symbols_raw = {
     Token.MD_OPERATOR: '* / %',
     Token.MEMBER_DELIMITER: ',',
     Token.NEGATIVE_SIGN: '-',
+    Token.NAME: '',
+    Token.NAME_DELIMITER: '=',
     Token.NUMBER: '0 1 2 3 4 5 6 7 8 9',
     Token.OPTIONS_OPERATOR: ':',
+    Token.PAIR_DELIMITER: ',',
     Token.POOL_CLOSE: ']',
     Token.POOL: '',
     Token.POOL_END: '',
@@ -110,53 +121,8 @@ yadn_symbols_raw = {
     Token.QUALIFIER_END: '',
     Token.ROLL_DELIMITER: ';',
     Token.U_POOL_DEGEN_OPERATOR: 'C N S',
+    Token.VALUE: '',
     Token.WHITESPACE: '',
-}
-
-
-# YADN dice mapping tokens.
-# These are the YADN tokens that are specific to dice maps. These are
-# split out so they won't confuse the main YADN lexer. Dice maps are
-# parsed by their own lexer.
-class MapToken(Enum):
-    START = auto()
-    END = auto()
-    KEY = auto()
-    KV_DELIMITER = auto()
-    MAP_CLOSE = auto()
-    MAP_OPEN = auto()
-    NAME = auto()
-    NAME_DELIMITER = auto()
-    NEGATIVE_SIGN = auto()
-    NUMBER = auto()
-    PAIR_DELIMITER = auto()
-    QUALIFIER = auto()
-    QUALIFIER_DELIMITER = auto()
-    QUALIFIER_END = auto()
-    ROLL_DELIMITER = auto()
-    VALUE = auto()
-    WHITESPACE = auto()
-
-
-# Symbols for YADN dice mapping tokens.
-map_symbols_raw = {
-    MapToken.START: '',
-    MapToken.END: '',
-    MapToken.KEY: '',
-    MapToken.KV_DELIMITER: ':',
-    MapToken.MAP_CLOSE: '}',
-    MapToken.MAP_OPEN: '{',
-    MapToken.NAME: '',
-    MapToken.NAME_DELIMITER: '=',
-    MapToken.NEGATIVE_SIGN: '-',
-    MapToken.NUMBER: '0 1 2 3 4 5 6 7 8 9',
-    MapToken.PAIR_DELIMITER: ',',
-    MapToken.QUALIFIER: '',
-    MapToken.QUALIFIER_DELIMITER: '"',
-    MapToken.QUALIFIER_END: '',
-    MapToken.ROLL_DELIMITER: ';',
-    MapToken.VALUE: '',
-    MapToken.WHITESPACE: '',
 }
 
 
@@ -166,21 +132,20 @@ class CompoundResult(Tuple):
 
 
 # Types.
-BaseToken = Union[Token, MapToken]
-Result = Union[int, bool, str, Tuple[int], Tuple[str], Tuple[str, dict], None]
-TokenInfo = tuple[BaseToken, Result]
+DiceMapping = dict[int, Union[int, str]]
+NamedMap = Tuple[str, DiceMapping]
+Pool = Tuple[int]
+Result = Union[
+    int,
+    bool,
+    str,
+    Pool,
+    NamedMap,
+    None
+]
+TokenInfo = tuple[Token, Result]
 
 
 # Symbols by token.
-def split_symbols(d: dict, enum: EnumMeta) -> dict[BaseToken, list[str]]:
-    """Split the symbol strings and add whitespace."""
-    split_symbols = {k: v.split() for k, v in d.items()}
-    for member in enum:                                 # type: ignore
-        if member.name == 'WHITESPACE':
-            split_symbols[member] = [' ', '\t', '\n']
-            break
-    return split_symbols
-
-
-symbols = split_symbols(yadn_symbols_raw, Token)
-map_symbols = split_symbols(map_symbols_raw, MapToken)
+symbols = {k: v.split() for k, v in yadn_symbols_raw.items()}
+symbols[Token.WHITESPACE] = [' ', '\t', '\n']

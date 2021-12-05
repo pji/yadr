@@ -10,7 +10,6 @@ from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from yadr import operator as yo
 from yadr.model import (
-    BaseToken,
     CompoundResult,
     Result,
     Token,
@@ -41,7 +40,7 @@ def map_result(result: int | tuple[int, ...],
 class Tree:
     """A binary tree."""
     def __init__(self,
-                 kind: BaseToken,
+                 kind: Token,
                  value: Result,
                  left: Optional['Tree'] = None,
                  right: Optional['Tree'] = None,
@@ -85,7 +84,7 @@ class Tree:
 class Unary(Tree):
     """A unary tree."""
     def __init__(self,
-                 kind: BaseToken,
+                 kind: Token,
                  value: Result,
                  child: Optional['Tree'] = None) -> None:
         self.kind = kind
@@ -252,7 +251,7 @@ class Parser:
         return rule(rule_affects, next_rule, trees)
 
     # Base rules.
-    def _binary_operator(self, rule_affects: BaseToken,
+    def _binary_operator(self, rule_affects: Token,
                          next_rule: Callable,
                          trees: list[Tree]) -> Tree:
         """Parse a binary operator."""
@@ -264,7 +263,7 @@ class Parser:
             left = tree
         return left
 
-    def _unary_operator(self, rule_affects: BaseToken,
+    def _unary_operator(self, rule_affects: Token,
                         next_rule: Callable,
                         trees: list[Tree]) -> Tree:
         """Parse an unary operator."""

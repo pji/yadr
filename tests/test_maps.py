@@ -8,52 +8,54 @@ import unittest as ut
 
 from tests.common import BaseTests
 from yadr import maps
-from yadr.model import MapToken
+from yadr.model import Token
 
 
 # Lexing test cases.
 class KVDelimiterTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.KV_DELIMITER
+    token = Token.KV_DELIMITER
     allowed = [
-        MapToken.NUMBER,
-        MapToken.QUALIFIER_DELIMITER,
-        MapToken.WHITESPACE,
+        Token.NEGATIVE_SIGN,
+        Token.NUMBER,
+        Token.QUALIFIER,
+        Token.QUALIFIER_DELIMITER,
+        Token.WHITESPACE,
     ]
 
     def test_kv_delimiter(self):
         """Given a key-value delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.QUALIFIER, 'key'),
-            (MapToken.KV_DELIMITER, ':'),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
         )
-        yadn = '{"spam"="key":'
+        yadn = '{"spam"=1:'
         self.lex_test(exp, yadn)
 
     def test_kv_delimiter_whitespace(self):
         """Given a key-value delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.QUALIFIER, 'key'),
-            (MapToken.KV_DELIMITER, ':'),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
         )
-        yadn = '{"spam"="key" :'
+        yadn = '{"spam"=1 :'
         self.lex_test(exp, yadn)
 
 
 class MapCloseTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.MAP_CLOSE
+    token = Token.MAP_CLOSE
     allowed = []
 
     def test_map_close(self):
         """Given a map close character, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.MAP_CLOSE, '}'),
+            (Token.MAP_OPEN, '{'),
+            (Token.MAP_CLOSE, '}'),
         )
         yadn = '{}'
         self.lex_test(exp, yadn)
@@ -61,43 +63,45 @@ class MapCloseTestCase(BaseTests.MapLexTokenTestCase):
     def test_map_close_whitespace(self):
         """Given a map close character, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.MAP_CLOSE, '}'),
+            (Token.MAP_OPEN, '{'),
+            (Token.MAP_CLOSE, '}'),
         )
         yadn = '{ }'
         self.lex_test(exp, yadn)
 
 
 class MapOpenTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.MAP_OPEN
+    token = Token.MAP_OPEN
     allowed = [
-        MapToken.MAP_CLOSE,
-        MapToken.QUALIFIER_DELIMITER,
-        MapToken.WHITESPACE,
+        Token.MAP_CLOSE,
+        Token.QUALIFIER,
+        Token.QUALIFIER_DELIMITER,
+        Token.WHITESPACE,
     ]
 
     def test_map_open(self):
         """Given a map open character, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
+            (Token.MAP_OPEN, '{'),
         )
         yadn = '{'
         self.lex_test(exp, yadn)
 
 
 class NameDelimiterTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.NAME_DELIMITER
+    token = Token.NAME_DELIMITER
     allowed = [
-        MapToken.NUMBER,
-        MapToken.WHITESPACE,
+        Token.NEGATIVE_SIGN,
+        Token.NUMBER,
+        Token.WHITESPACE,
     ]
 
     def test_name_delimiter(self):
         """Given a name delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '=')
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '=')
         )
         yadn = '{"spam"='
         self.lex_test(exp, yadn)
@@ -105,47 +109,47 @@ class NameDelimiterTestCase(BaseTests.MapLexTokenTestCase):
     def test_name_delimiter_whitespace(self):
         """Given a name delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '=')
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '=')
         )
         yadn = '{"spam" ='
         self.lex_test(exp, yadn)
 
 
 class NegativeSignTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.NEGATIVE_SIGN
+    token = Token.NEGATIVE_SIGN
     allowed = [
-        MapToken.NUMBER,
+        Token.NUMBER,
     ]
 
     def test_negative_sign(self):
         """Given a negative sign, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.NUMBER, -1),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, -1),
         )
         yadn = '{"spam"=-1'
         self.lex_test(exp, yadn)
 
 
 class NumberTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.NUMBER
+    token = Token.NUMBER
     allowed = [
-        MapToken.KV_DELIMITER,
-        MapToken.MAP_CLOSE,
-        MapToken.PAIR_DELIMITER,
+        Token.KV_DELIMITER,
+        Token.MAP_CLOSE,
+        Token.PAIR_DELIMITER,
     ]
 
     def test_number(self):
         """Given a number, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.NUMBER, 1),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
         )
         yadn = '{"spam"=1'
         self.lex_test(exp, yadn)
@@ -153,65 +157,66 @@ class NumberTestCase(BaseTests.MapLexTokenTestCase):
     def test_number_whitespace(self):
         """Given a number, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.NUMBER, 1),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
         )
         yadn = '{"spam"= 1'
         self.lex_test(exp, yadn)
 
 
 class PairDelimiterTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.NAME_DELIMITER
+    token = Token.PAIR_DELIMITER
     allowed = [
-        MapToken.NUMBER,
-        MapToken.WHITESPACE,
+        Token.NEGATIVE_SIGN,
+        Token.NUMBER,
+        Token.WHITESPACE,
     ]
 
-    def test_kv_delimiter(self):
+    def test_pair_delimiter(self):
         """Given a pair delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.QUALIFIER, 'key'),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'value'),
-            (MapToken.PAIR_DELIMITER, ','),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'value'),
+            (Token.PAIR_DELIMITER, ','),
         )
-        yadn = '{"spam"="key":"value",'
+        yadn = '{"spam"=1:"value",'
         self.lex_test(exp, yadn)
 
-    def test_kv_delimiter_whitespace(self):
+    def test_pair_delimiter_whitespace(self):
         """Given a pair delimiter, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.QUALIFIER, 'key'),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'value'),
-            (MapToken.PAIR_DELIMITER, ','),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'value'),
+            (Token.PAIR_DELIMITER, ','),
         )
-        yadn = '{"spam"="key":"value" ,'
+        yadn = '{"spam"=1:"value" ,'
         self.lex_test(exp, yadn)
 
 
 class QualifierTestCase(BaseTests.MapLexTokenTestCase):
-    token = MapToken.QUALIFIER
+    token = Token.QUALIFIER
     allowed = [
-        MapToken.MAP_CLOSE,
-        MapToken.NAME_DELIMITER,
-        MapToken.PAIR_DELIMITER,
-        MapToken.WHITESPACE,
+        Token.MAP_CLOSE,
+        Token.NAME_DELIMITER,
+        Token.PAIR_DELIMITER,
+        Token.WHITESPACE,
     ]
 
     def test_qualifier(self):
         """Given a qualifier, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam')
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam')
         )
         yadn = '{"spam"'
         self.lex_test(exp, yadn)
@@ -219,8 +224,8 @@ class QualifierTestCase(BaseTests.MapLexTokenTestCase):
     def test_qualifier_whitespace(self):
         """Given a qualifier, return the proper tokens."""
         exp = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'spam')
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'spam')
         )
         yadn = '{ "spam"'
         self.lex_test(exp, yadn)
@@ -251,26 +256,26 @@ class ParseTestCase(ut.TestCase):
             }
         )
         tokens = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'name'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.NUMBER, 1),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'none'),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.NUMBER, 2),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'success'),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.NUMBER, 3),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'success'),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.NUMBER, 4),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.QUALIFIER, 'success success'),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.MAP_CLOSE, '}'),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'name'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'none'),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.NUMBER, 2),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'success'),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.NUMBER, 3),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'success'),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.NUMBER, 4),
+            (Token.KV_DELIMITER, ':'),
+            (Token.QUALIFIER, 'success success'),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.MAP_CLOSE, '}'),
         )
         self.parser_test(exp, tokens)
 
@@ -285,20 +290,20 @@ class ParseTestCase(ut.TestCase):
             }
         )
         tokens = (
-            (MapToken.MAP_OPEN, '{'),
-            (MapToken.QUALIFIER, 'name'),
-            (MapToken.NAME_DELIMITER, '='),
-            (MapToken.NUMBER, 1),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.NUMBER, -1),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.NUMBER, 2),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.NUMBER, 0),
-            (MapToken.PAIR_DELIMITER, ','),
-            (MapToken.NUMBER, 3),
-            (MapToken.KV_DELIMITER, ':'),
-            (MapToken.NUMBER, 1),
-            (MapToken.MAP_CLOSE, '}'),
+            (Token.MAP_OPEN, '{'),
+            (Token.QUALIFIER, 'name'),
+            (Token.NAME_DELIMITER, '='),
+            (Token.NUMBER, 1),
+            (Token.KV_DELIMITER, ':'),
+            (Token.NUMBER, -1),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.NUMBER, 2),
+            (Token.KV_DELIMITER, ':'),
+            (Token.NUMBER, 0),
+            (Token.PAIR_DELIMITER, ','),
+            (Token.NUMBER, 3),
+            (Token.KV_DELIMITER, ':'),
+            (Token.NUMBER, 1),
+            (Token.MAP_CLOSE, '}'),
         )
         self.parser_test(exp, tokens)

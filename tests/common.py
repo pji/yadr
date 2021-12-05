@@ -28,7 +28,39 @@ class BaseTests:
     class LexTokenTestCase(ut.TestCase):
         token = m.Token.START
         allowed = []
-        tokens = m.Token
+        tokens = [
+            m.Token.AS_OPERATOR,
+            m.Token.BOOLEAN,
+            m.Token.CHOICE_OPERATOR,
+            m.Token.CHOICE_OPTIONS,
+            m.Token.COMPARISON_OPERATOR,
+            m.Token.DICE_OPERATOR,
+            m.Token.EX_OPERATOR,
+            m.Token.GROUP_OPEN,
+            m.Token.GROUP_CLOSE,
+            m.Token.MAP,
+            m.Token.MAP_END,
+            m.Token.MAPPING_OPERATOR,
+            m.Token.MD_OPERATOR,
+            m.Token.MEMBER,
+            m.Token.MEMBER_DELIMITER,
+            m.Token.NEGATIVE_SIGN,
+            m.Token.NUMBER,
+            m.Token.OPERATOR,
+            m.Token.OPTIONS_OPERATOR,
+            m.Token.POOL,
+            m.Token.POOL_CLOSE,
+            m.Token.POOL_DEGEN_OPERATOR,
+            m.Token.POOL_END,
+            m.Token.POOL_GEN_OPERATOR,
+            m.Token.POOL_OPEN,
+            m.Token.POOL_OPERATOR,
+            m.Token.QUALIFIER,
+            m.Token.QUALIFIER_END,
+            m.Token.QUALIFIER_DELIMITER,
+            m.Token.ROLL_DELIMITER,
+            m.Token.U_POOL_DEGEN_OPERATOR,
+        ]
         symbols_raw = m.yadn_symbols_raw
 
         # To test for what is allowed, the YADN sent must be legal. Some
@@ -355,120 +387,138 @@ class BaseTests:
             self.assertTupleEqual(exp, act)
 
     class MapLexTokenTestCase(LexTokenTestCase):
-        token = m.MapToken.START
+        token = m.Token.START
         allowed = []
-        tokens = m.MapToken
-        symbols_raw = m.map_symbols_raw
+        tokens = (
+            m.Token.KV_DELIMITER,
+            m.Token.MAP_CLOSE,
+            m.Token.MAP_OPEN,
+            m.Token.NAME_DELIMITER,
+            m.Token.NEGATIVE_SIGN,
+            m.Token.NUMBER,
+            m.Token.PAIR_DELIMITER,
+            m.Token.QUALIFIER,
+            m.Token.QUALIFIER_DELIMITER,
+        )
+        symbols_raw = m.yadn_symbols_raw
 
         # Details for the allowed and unallowed tests. See
         # LexTokenTestCase above for more explanation.
         example_after = {
-            m.MapToken.KV_DELIMITER: (
+            m.Token.KV_DELIMITER: (
                 '"spam"}',
                 (
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.MAP_CLOSE, '}'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.MAP_CLOSE, '}'),
                 )
             ),
-            m.MapToken.MAP_CLOSE: ('', ()),
-            m.MapToken.MAP_OPEN: ('}', ((m.MapToken.MAP_CLOSE, '}'),)),
-            m.MapToken.NEGATIVE_SIGN: (
+            m.Token.MAP_CLOSE: ('', ()),
+            m.Token.MAP_OPEN: ('}', ((m.Token.MAP_CLOSE, '}'),)),
+            m.Token.NEGATIVE_SIGN: (
                 '1:"spam"}',
                 (
-                    (m.MapToken.NUMBER, 1),
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.MAP_CLOSE, '}'),
+                    (m.Token.NUMBER, -1),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.MAP_CLOSE, '}'),
                 )
             ),
-            m.MapToken.NAME_DELIMITER: (
+            m.Token.NAME_DELIMITER: (
                 '1:"spam"}',
                 (
-                    (m.MapToken.NUMBER, 1),
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.MAP_CLOSE, '}'),
+                    (m.Token.NUMBER, 1),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.MAP_CLOSE, '}'),
                 )
             ),
-            m.MapToken.NUMBER: (
+            m.Token.NUMBER: (
                 ':"eggs"}',
                 (
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'eggs'),
-                    (m.MapToken.MAP_CLOSE, '}'),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'eggs'),
+                    (m.Token.MAP_CLOSE, '}'),
                 )
             ),
-            m.MapToken.PAIR_DELIMITER: (
+            m.Token.PAIR_DELIMITER: (
                 '2:"spam"}',
                 (
-                    (m.MapToken.NUMBER, 2),
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.MAP_CLOSE, '}'),
+                    (m.Token.NUMBER, 2),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.MAP_CLOSE, '}'),
                 )
             ),
-            m.MapToken.QUALIFIER_DELIMITER: (
+            m.Token.QUALIFIER_DELIMITER: (
                 'spam"}',
-                ((m.MapToken.MAP_CLOSE, '}'),)
+                (
+                    (m.Token.MAP_CLOSE, '}'),
+                )
+            ),
+            m.Token.QUALIFIER: (
+                '}',
+                (
+                    (m.Token.MAP_CLOSE, '}'),
+                )
             ),
         }
         example_before = {
-            m.MapToken.KV_DELIMITER: (
+            m.Token.KV_DELIMITER: (
                 '{"spam"=1',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.NAME_DELIMITER, '='),
-                    (m.MapToken.NUMBER, 1),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.NAME_DELIMITER, '='),
+                    (m.Token.NUMBER, 1),
                 )
             ),
-            m.MapToken.MAP_CLOSE: (
+            m.Token.MAP_CLOSE: (
                 '{"spam"=1:"eggs"',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.NAME_DELIMITER, '='),
-                    (m.MapToken.NUMBER, 1),
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'eggs'),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.NAME_DELIMITER, '='),
+                    (m.Token.NUMBER, 1),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'eggs'),
                 )
             ),
-            m.MapToken.MAP_OPEN: ('', ()),
-            m.MapToken.NAME_DELIMITER: (
+            m.Token.MAP_OPEN: ('', ()),
+            m.Token.NAME_DELIMITER: (
                 '{"spam"',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
                 )
             ),
-            m.MapToken.NEGATIVE_SIGN: (
+            m.Token.NEGATIVE_SIGN: (
                 '{"spam"=',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.NAME_DELIMITER, '='),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.NAME_DELIMITER, '='),
                 )
             ),
-            m.MapToken.NUMBER: (
+            m.Token.NUMBER: (
                 '{"spam"=',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.NAME_DELIMITER, '='),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.NAME_DELIMITER, '='),
                 )
             ),
-            m.MapToken.PAIR_DELIMITER: (
+            m.Token.PAIR_DELIMITER: (
                 '{"spam"=1:"eggs"',
                 (
-                    (m.MapToken.MAP_OPEN, '{'),
-                    (m.MapToken.QUALIFIER, 'spam'),
-                    (m.MapToken.NAME_DELIMITER, '='),
-                    (m.MapToken.NUMBER, 1),
-                    (m.MapToken.KV_DELIMITER, ':'),
-                    (m.MapToken.QUALIFIER, 'eggs'),
+                    (m.Token.MAP_OPEN, '{'),
+                    (m.Token.QUALIFIER, 'spam'),
+                    (m.Token.NAME_DELIMITER, '='),
+                    (m.Token.NUMBER, 1),
+                    (m.Token.KV_DELIMITER, ':'),
+                    (m.Token.QUALIFIER, 'eggs'),
                 )
             ),
-            m.MapToken.QUALIFIER: ('{', ((m.MapToken.MAP_OPEN, '{'),))
+            m.Token.QUALIFIER: ('{', ((m.Token.MAP_OPEN, '{'),))
         }
 
         def setUp(self):

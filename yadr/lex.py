@@ -11,7 +11,6 @@ from yadr import maps
 from yadr import pools
 from yadr.base import BaseLexer
 from yadr.model import (
-    BaseToken,
     CompoundResult,
     Result,
     Token,
@@ -24,7 +23,7 @@ from yadr.model import (
 class Lexer(BaseLexer):
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
-        state_map: dict[BaseToken, Callable] = {
+        state_map: dict[Token, Callable] = {
             Token.START: self._start,
             Token.AS_OPERATOR: self._as_operator,
             Token.BOOLEAN: self._boolean,
@@ -52,26 +51,26 @@ class Lexer(BaseLexer):
             Token.WHITESPACE: self._whitespace,
             Token.END: self._start,
         }
-        bracket_states: dict[BaseToken, BaseToken] = {
+        bracket_states: dict[Token, Token] = {
             Token.MAP_OPEN: Token.MAP,
             Token.NEGATIVE_SIGN: Token.NUMBER,
             Token.QUALIFIER_DELIMITER: Token.QUALIFIER,
             Token.POOL_OPEN: Token.POOL,
         }
-        bracket_ends: dict[BaseToken, BaseToken] = {
+        bracket_ends: dict[Token, Token] = {
             Token.MAP: Token.MAP_END,
             Token.QUALIFIER: Token.QUALIFIER_END,
             Token.POOL: Token.POOL_END,
         }
-        symbol_map: dict[BaseToken, list[str]] = symbols
-        result_map: dict[BaseToken, Callable] = {
+        symbol_map: dict[Token, list[str]] = symbols
+        result_map: dict[Token, Callable] = {
             Token.BOOLEAN: self._tf_boolean,
             Token.MAP: self._tf_maps,
             Token.NUMBER: self._tf_number,
             Token.POOL: self._tf_pool,
             Token.QUALIFIER: self._tf_qualifier,
         }
-        no_store: list[BaseToken] = [
+        no_store: list[Token] = [
             Token.WHITESPACE,
             Token.START,
             Token.MAP_END,

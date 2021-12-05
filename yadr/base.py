@@ -7,7 +7,7 @@ Base classes for the yadr package.
 from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
-from yadr.model import BaseToken, CompoundResult, Result, Token, TokenInfo
+from yadr.model import CompoundResult, Result, Token, TokenInfo
 
 
 # Utility functions.
@@ -285,13 +285,13 @@ class BaseLexer(ABC):
     BaseLexer is initialized.
     """
     def __init__(self,
-                 state_map: dict[BaseToken, Callable],
-                 symbol_map: dict[BaseToken, list[str]],
-                 bracket_states: Optional[dict[BaseToken, BaseToken]] = None,
-                 bracket_ends: Optional[dict[BaseToken, BaseToken]] = None,
-                 result_map: Optional[dict[BaseToken, Callable]] = None,
-                 no_store: Optional[list[BaseToken]] = None,
-                 init_state: BaseToken = Token.START) -> None:
+                 state_map: dict[Token, Callable],
+                 symbol_map: dict[Token, list[str]],
+                 bracket_states: Optional[dict[Token, Token]] = None,
+                 bracket_ends: Optional[dict[Token, Token]] = None,
+                 result_map: Optional[dict[Token, Callable]] = None,
+                 no_store: Optional[list[Token]] = None,
+                 init_state: Token = Token.START) -> None:
         """Initialize an instance of :class:Lexer.
 
         :param state_map: A dictionary mapping the state of the lexer
@@ -347,7 +347,7 @@ class BaseLexer(ABC):
         return tuple(self.tokens)
 
     # Private operation method.
-    def _is_token_start(self, token: BaseToken, char: str) -> bool:
+    def _is_token_start(self, token: Token, char: str) -> bool:
         """Is the given character the start of a new token."""
         valid = {s[0] for s in self.symbol_map[token]}
         return char in valid
@@ -370,6 +370,8 @@ class BaseLexer(ABC):
             state = 'START'
         if state == 'QUALIFIER_END':
             state = 'QUALIFIER'
+        if state == 'NUMBER' and self.buffer == '-':
+            state = 'NEGATIVE_SIGN'
 
         if state == 'START':
             msg = f'Cannot start with {char}.'
@@ -381,7 +383,7 @@ class BaseLexer(ABC):
 
         raise ValueError(msg)
 
-    def _change_state(self, new_state: BaseToken, char: str) -> None:
+    def _change_state(self, new_state: Token, char: str) -> None:
         """Terminate the previous token and start a new one."""
         # Terminate and store the old token.
         if self.state not in self.no_store:
@@ -399,7 +401,7 @@ class BaseLexer(ABC):
 
     def _check_char(self, char: str, can_follow: list) -> None:
         """Determine how to process a character."""
-        new_state: Optional[BaseToken] = None
+        new_state: Optional[Token] = None
 
         # If the character doesn't change the state, add it to the
         # buffer and stop processing.
@@ -425,6 +427,11 @@ class BaseLexer(ABC):
         if new_state in self.bracket_states:
             new_state = self.bracket_states[new_state]
 
+        # Catch an attempt to end a number when the only character is
+        # negative sign.
+        if new_state and self.state == Token.NUMBER and self.buffer == '-':
+            self._cannot_follow(char)
+
         # If the state changed, change the state.
         if new_state:
             self._change_state(new_state, char)
@@ -440,7 +447,7 @@ class BaseLexer(ABC):
         :rtype: NoneType
         """
         # The tokens that are allowed to follow the current state.
-        can_follow: list[BaseToken] = []
+        can_follow: list[Token] = []
 
         # Check to see if the current character causes the lexer
         # to change state.
