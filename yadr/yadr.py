@@ -5,6 +5,7 @@ yadr
 The core of the yadn package.
 """
 from argparse import ArgumentParser
+from importlib.resources import open_text
 from pathlib import Path
 from typing import Optional
 
@@ -13,10 +14,6 @@ from yadr.encode import Encoder
 from yadr.lex import Lexer
 from yadr.model import CompoundResult, Result, TokenInfo
 from yadr.parser import dice_map, Parser
-
-
-# Default dice mappings.
-DICE_MAP_LOCATION = 'yadr/data/dice_maps.yadn'
 
 
 # Execute YADN.
@@ -64,8 +61,7 @@ def roll(yadn: str,
 
     if not dice_map:
         dice_map = {}
-    default_maps_yadn = read_file(DICE_MAP_LOCATION)
-    default_maps = parse_map(default_maps_yadn)
+    default_maps = get_default_maps()
     default_maps.update(dice_map)
     return roll_dice(yadn, default_maps, yadn_out)
 
@@ -113,13 +109,21 @@ def add_dice_map(loc: str) -> dict[str, dict]:
     return parse_map(yadn)
 
 
+def get_default_maps() -> dict[str, dict]:
+    """Get the default dice maps."""
+    default_file = open_text('yadr.data', 'dice_maps.yadn')
+    default_maps_yadn = default_file.read()
+    default_file.close()
+    return parse_map(default_maps_yadn)
+
+
 def list_dice_maps() -> str:
     """Get the list of the currently loaded dice maps.
 
     :return: A :class:str object.
     :rtype: str
     """
-    dice_map = add_dice_map(DICE_MAP_LOCATION)
+    dice_map = get_default_maps()
     maps_ = '\n'.join(dice_map)
     return maps_
 

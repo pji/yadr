@@ -69,7 +69,8 @@ class ParseCliTestCase(ut.TestCase):
     def test_list_default_dice_maps(self, mock_randint, mock_stdout):
         """The -l option will list the default dice maps."""
         # Expected data and state.
-        with open(yadr.DICE_MAP_LOCATION) as fh:
+        default_map_loc = 'yadr/data/dice_maps.yadn'
+        with open(default_map_loc) as fh:
             lines = fh.readlines()
         lines = [line for line in lines if '=' in line]
         lines = [line.split('"')[1] for line in lines]
