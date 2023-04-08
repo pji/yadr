@@ -6,7 +6,7 @@ Common data elements for the yadr package.
 """
 from collections import UserString
 from enum import Enum, EnumMeta, auto
-from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
+from typing import Generic, NamedTuple, Sequence, Union, Tuple
 
 
 # YADN Tokens.

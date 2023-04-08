@@ -4,9 +4,10 @@ parse
 
 Parse dice notation.
 """
+from collections.abc import Callable, Sequence
 from functools import wraps
 import operator
-from typing import Callable, Generic, Optional, Sequence, TypeVar
+from typing import Optional
 
 from yadr import operator as yo
 from yadr.model import (
@@ -26,8 +27,10 @@ dice_map: dict[str, dict] = {}
 
 
 # Parser specific operations.
-def map_result(result: int | tuple[int, ...],
-               key: str) -> str | tuple[str, ...]:
+def map_result(
+    result: int | tuple[int, ...],
+    key: str
+) -> str | tuple[str, ...]:
     """Map a roll result to a dice map."""
     if isinstance(result, int):
         return dice_map[key][result]
@@ -36,15 +39,24 @@ def map_result(result: int | tuple[int, ...],
     return str_result
 
 
+# Exceptons
+class IsMap(Exception):
+    """Raised to tell the parser not to expect results from the
+    current roll because the roll is a dice mapping.
+    """
+
+
 # Utility classes and functions.
 class Tree:
     """A binary tree."""
-    def __init__(self,
-                 kind: Token,
-                 value: Result,
-                 left: Optional['Tree'] = None,
-                 right: Optional['Tree'] = None,
-                 dice_map: Optional[dict[str, dict]] = None) -> None:
+    def __init__(
+        self,
+        kind: Token,
+        value: Result,
+        left: Optional['Tree'] = None,
+        right: Optional['Tree'] = None,
+        dice_map: Optional[dict[str, dict]] = None
+    ) -> None:
         self.kind = kind
         self.value = value
         self.left = left
@@ -108,9 +120,8 @@ class Parser:
 
     # Public method.
     def parse(self, tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
-        if (Token.ROLL_DELIMITER, ';') not in tokens:
-            return self._parse_roll(tokens)        # type: ignore
-
+        """Parse one or more die rolls."""
+        # Split tokens into rolls for parsing.
         rolls = []
         while (Token.ROLL_DELIMITER, ';') in tokens:
             index = tokens.index((Token.ROLL_DELIMITER, ';'))
@@ -119,10 +130,17 @@ class Parser:
             tokens = tokens[index + 1:]
         else:
             rolls.append(tokens)
-        results: Sequence[Result] = []
+
+        # Parse each roll.
+        results: list[Result] = []
         for roll in rolls:
-            results.append(self.parse(roll))       # type: ignore
-            results = [result for result in results if result is not None]
+            try:
+                results.append(self._parse_roll(roll))
+            except IsMap:
+                continue
+
+        # Return the results of the rolls.
+        results = [result for result in results if result is not None]
         if len(results) > 1:
             return CompoundResult(results)
         elif results:
@@ -142,7 +160,7 @@ class Parser:
         return None
 
     # Parsing rules.
-    def _identity(self, trees: list[Tree]) -> Tree | None:
+    def _identity(self, trees: list[Tree]) -> Tree:
         """Parse an identity."""
         identity_tokens = [
             Token.BOOLEAN,
@@ -156,7 +174,7 @@ class Parser:
         elif tree.kind == Token.MAP:
             name, map_ = tree.value                          # type: ignore
             self.dice_map[name] = map_
-            return None
+            raise IsMap('Roll is a map.')
         elif tree.kind == Token.GROUP_OPEN:
             expression = self.top_rule(trees)
             if trees[-1].kind == Token.GROUP_CLOSE:
@@ -251,9 +269,11 @@ class Parser:
         return rule(rule_affects, next_rule, trees)
 
     # Base rules.
-    def _binary_operator(self, rule_affects: Token,
-                         next_rule: Callable,
-                         trees: list[Tree]) -> Tree:
+    def _binary_operator(
+        self, rule_affects: Token,
+        next_rule: Callable[[list[Tree]], Tree],
+        trees: list[Tree]
+    ) -> Tree:
         """Parse a binary operator."""
         left = next_rule(trees)
         while trees and trees[-1].kind == rule_affects:
@@ -263,9 +283,11 @@ class Parser:
             left = tree
         return left
 
-    def _unary_operator(self, rule_affects: Token,
-                        next_rule: Callable,
-                        trees: list[Tree]) -> Tree:
+    def _unary_operator(
+        self, rule_affects: Token,
+        next_rule: Callable[[list[Tree]], Tree],
+        trees: list[Tree]
+    ) -> Tree:
         """Parse an unary operator."""
         if trees[-1].kind == rule_affects:
             tree = trees.pop()
