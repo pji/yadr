@@ -86,7 +86,7 @@ def parse_map(yadn: str) -> dict[str, dict]:
         yadn_parts = yadn.split(';')
         dice_map = {}
         for part in yadn_parts:
-            assert(';' not in part)
+            assert ';' not in part
             dice_map.update(parse_map(part))
         return dice_map
 

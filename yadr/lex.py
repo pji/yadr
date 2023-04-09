@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 from yadr import maps
 from yadr import pools
-from yadr.base import BaseLexer
+from yadr.base import BaseLexer, ResultMethod
 from yadr.model import (
     CompoundResult,
     Result,
@@ -63,7 +63,7 @@ class Lexer(BaseLexer):
             Token.POOL: Token.POOL_END,
         }
         symbol_map: dict[Token, list[str]] = symbols
-        result_map: dict[Token, Callable] = {
+        result_map: dict[Token, ResultMethod] = {
             Token.BOOLEAN: self._tf_boolean,
             Token.MAP: self._tf_maps,
             Token.NUMBER: self._tf_number,

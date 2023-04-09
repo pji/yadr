@@ -12,6 +12,7 @@ from typing import Optional
 from yadr import operator as yo
 from yadr.model import (
     CompoundResult,
+    DiceMapping,
     Result,
     Token,
     TokenInfo,
@@ -23,14 +24,14 @@ from yadr.model import (
 # The dice map.
 # This needs to not be a global value, but it will require a very large
 # change to this module to get that to work. This will work for now.
-dice_map: dict[str, dict] = {}
+dice_map: dict[str, DiceMapping] = {}
 
 
 # Parser specific operations.
 def map_result(
     result: int | tuple[int, ...],
     key: str
-) -> str | tuple[str, ...]:
+) -> str | int | tuple[str, ...]:
     """Map a roll result to a dice map."""
     if isinstance(result, int):
         return dice_map[key][result]
@@ -55,7 +56,7 @@ class Tree:
         value: Result,
         left: Optional['Tree'] = None,
         right: Optional['Tree'] = None,
-        dice_map: Optional[dict[str, dict]] = None
+        dice_map: Optional[dict[str, DiceMapping]] = None
     ) -> None:
         self.kind = kind
         self.value = value
@@ -83,8 +84,10 @@ class Tree:
             raise TypeError(msg)
         return op(left, right)
 
-    def _map_result(self, result: int | tuple[int, ...],
-                    key: str) -> str | tuple[str, ...]:
+    def _map_result(
+        self, result: int | tuple[int, ...],
+        key: str
+    ) -> str | int | tuple[str, ...]:
         """Map a roll result to a dice map."""
         if isinstance(result, int):
             return self.dice_map[key][result]
@@ -95,10 +98,12 @@ class Tree:
 
 class Unary(Tree):
     """A unary tree."""
-    def __init__(self,
-                 kind: Token,
-                 value: Result,
-                 child: Optional['Tree'] = None) -> None:
+    def __init__(
+        self,
+        kind: Token,
+        value: Result,
+        child: Optional['Tree'] = None
+    ) -> None:
         self.kind = kind
         self.value = value
         self.child = child
@@ -115,7 +120,7 @@ class Unary(Tree):
 # Parser class.
 class Parser:
     def __init__(self) -> None:
-        self.dice_map: dict[str, dict] = dict()
+        self.dice_map: dict[str, DiceMapping] = dict()
         self.top_rule = self._map_operator
 
     # Public method.
@@ -169,17 +174,32 @@ class Parser:
             Token.QUALIFIER,
         ]
         tree = trees.pop()
+
+        # If the tree is an identity, return it.
         if tree.kind in identity_tokens:
             return tree
+
+        # If the tree is a dice map, add it to the dice map and raise
+        # IsMap to prevent the parse from trying to return it as a
+        # result. The asserts in here are to keep mypy happy. They
+        # probably mean I need to rework how dice maps are handled to
+        # keep them out of this parser.
         elif tree.kind == Token.MAP:
-            name, map_ = tree.value                          # type: ignore
+            assert isinstance(tree.value, tuple)
+            name, map_ = tree.value
+            assert isinstance(name, str)
+            assert isinstance(map_, dict)
             self.dice_map[name] = map_
             raise IsMap('Roll is a map.')
+
+        # If the tree is starting a group, parse through that group.
         elif tree.kind == Token.GROUP_OPEN:
             expression = self.top_rule(trees)
             if trees[-1].kind == Token.GROUP_CLOSE:
                 _ = trees.pop()
             return expression
+
+        # Handle anything unexpected that got here.
         else:
             msg = f'Unrecognized token {tree.kind}'
             raise TypeError(msg)

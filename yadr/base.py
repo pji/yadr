@@ -5,9 +5,15 @@ base
 Base classes for the yadr package.
 """
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Optional
 
 from yadr.model import CompoundResult, Result, Token, TokenInfo
+
+
+# Types
+ResultMethod = Callable[[str], Result]
+StateMethod = Callable[[str], None]
 
 
 # Utility functions.
@@ -285,11 +291,11 @@ class BaseLexer(ABC):
     BaseLexer is initialized.
     """
     def __init__(self,
-                 state_map: dict[Token, Callable],
+                 state_map: dict[Token, StateMethod],
                  symbol_map: dict[Token, list[str]],
                  bracket_states: Optional[dict[Token, Token]] = None,
                  bracket_ends: Optional[dict[Token, Token]] = None,
-                 result_map: Optional[dict[Token, Callable]] = None,
+                 result_map: Optional[dict[Token, ResultMethod]] = None,
                  no_store: Optional[list[Token]] = None,
                  init_state: Token = Token.START) -> None:
         """Initialize an instance of :class:Lexer.
@@ -325,7 +331,7 @@ class BaseLexer(ABC):
         self.init_state = init_state
         self.state = init_state
 
-        self.process = self._start
+        self.process: StateMethod = self._start
         self.buffer = ''
         self.tokens: list[TokenInfo] = []
 
