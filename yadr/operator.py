@@ -4,9 +4,9 @@ operator
 
 Operators for handling the dice part of dice notation.
 """
+from collections.abc import Sequence
 import random
 import operator
-from typing import Sequence
 
 
 # Choice operators.

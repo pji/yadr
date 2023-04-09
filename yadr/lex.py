@@ -4,12 +4,11 @@ lex
 
 A lexer for `yadr` dice notation.
 """
-from functools import wraps
-from typing import Callable, Optional
+from typing import Optional
 
 from yadr import maps
 from yadr import pools
-from yadr.base import BaseLexer, ResultMethod
+from yadr.base import BaseLexer, ResultMethod, StateMethod
 from yadr.model import (
     CompoundResult,
     Result,
@@ -23,7 +22,7 @@ from yadr.model import (
 class Lexer(BaseLexer):
     """A state-machine to lex dice notation."""
     def __init__(self) -> None:
-        state_map: dict[Token, Callable] = {
+        state_map: dict[Token, StateMethod] = {
             Token.START: self._start,
             Token.AS_OPERATOR: self._as_operator,
             Token.BOOLEAN: self._boolean,
