@@ -2,7 +2,7 @@
 pools
 ~~~~~
 
-A module for handling YADN pools.
+A module for handling :ref:`YADN` pools.
 """
 from typing import Callable, Sequence
 
@@ -11,6 +11,7 @@ from yadr.model import symbols, Token, TokenInfo
 
 
 class Lexer(BaseLexer):
+    """A state machine to lex dice pools in :ref:`YADN` dice notation."""
     def __init__(self) -> None:
         state_map: dict[Token, Callable] = {
             Token.NUMBER: self._number,

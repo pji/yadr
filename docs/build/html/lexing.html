@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lexing &mdash; yadr 0.1.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="yadr Internals" href="internals.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            yadr
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dice_notation.html">Yet Another Dice Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="internals.html">yadr Internals</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Lexing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#yadr.base.BaseLexer"><code class="docutils literal notranslate"><span class="pre">BaseLexer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.base.BaseLexer.lex"><code class="docutils literal notranslate"><span class="pre">BaseLexer.lex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#yadr.lex.Lexer"><code class="docutils literal notranslate"><span class="pre">Lexer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yadr.maps.Lexer"><code class="docutils literal notranslate"><span class="pre">Lexer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yadr.pools.Lexer"><code class="docutils literal notranslate"><span class="pre">Lexer</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">yadr</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+      <li class="breadcrumb-item active">Lexing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/lexing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lexing">
+<h1>Lexing<a class="headerlink" href="#lexing" title="Permalink to this heading"></a></h1>
+<p><em class="dfn">Lexing</em> is the act of transforming text, such as Python code or
+a <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">Yet Another Dice Notation</span></a> string, into tokens for parsing.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">Yet Another Dice Notation</span></a> is a little complex. This implementation has three
+different lexers to handle its subsyntaxes. All three lexers are
+built on the <a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">yadr.base.BaseLexer</span></code></a> abstract base class.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="yadr.base.BaseLexer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">yadr.base.</span></span><span class="sig-name descname"><span class="pre">BaseLexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.11)"><span class="pre">collections.abc.Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bracket_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bracket_ends</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.11)"><span class="pre">collections.abc.Callable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_store</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Token</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Token.START</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yadr/base.html#BaseLexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.base.BaseLexer" title="Permalink to this definition"></a></dt>
+<dd><p>An abstract base class for building lexers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_map</strong> – A dictionary mapping the state of the lexer
+to the processing method for that state.</p></li>
+<li><p><strong>symbol_map</strong> – A dictionary mapping states of the lexer to
+characters that could occur within the text being lexed.</p></li>
+<li><p><strong>bracket_states</strong> – (Optional.) A dictionary mapping opening
+or delimiting states to a state that collects characters
+within the brackets or delimiters to send to a more
+specific lexer.</p></li>
+<li><p><strong>bracket_ends</strong> – (Optional.) A dictionary mapping bracket
+states to a state that processes characters after the end
+of the bracket state.</p></li>
+<li><p><strong>result_map</strong> – (Optional.) A dictionary mapping states
+to a result transformation method to transform the data
+in the lexed string before storing it in as a token
+value.</p></li>
+<li><p><strong>no_store</strong> – (Optional.) A list of states that should not
+be stored as tokens.</p></li>
+<li><p><strong>init_state</strong> – (Optional.) The initial state of the lexer.
+It defaults to <code class="xref py py-class docutils literal notranslate"><span class="pre">Token.START</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NoneType</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">yadr.base.BaseLexer</span></code></a> lexers are state machines used for
+translating a text string into tokens for parsing. It accomplishes
+this by processing the string one character at a time, allowing the
+current state of the lexer to determine whether the character is
+legal and what should be done with it.</p>
+<section id="state">
+<h2>State<a class="headerlink" href="#state" title="Permalink to this heading"></a></h2>
+<p>The current state of the lexer is determined by the value of
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">yadr.base.BaseLexer.state</span></code>. Its value will be a member
+of the enumeration used to define the tokens that exist within
+the language. This state is used to define the rule used to
+process the next character in the string.</p>
+<p>Characters that do not cause the state of the lexer to change
+should be appended to the end of the <cite>buffer</cite> attribute of
+the lexer.</p>
+</section>
+<section id="state-change">
+<h2>State Change<a class="headerlink" href="#state-change" title="Permalink to this heading"></a></h2>
+<p>When the lexer encounters a character that represents the end of
+the previous token and the start of a new token, the state of
+the lexer changes. The specific details can vary based on the
+current state of the lexer, but by default the following occurs
+when the state is changed:</p>
+<ul class="simple">
+<li><p>A new <code class="xref py py-class docutils literal notranslate"><span class="pre">model.TokenInfo</span></code> object is created that contains
+the current state of the lexer and the current value of the
+<cite>buffer</cite> attribute of the lexer.</p></li>
+<li><p>That <code class="xref py py-class docutils literal notranslate"><span class="pre">model.TokenInfo</span></code> object is appended to the <cite>tokens</cite>
+attribute of the lexer.</p></li>
+<li><p>The <cite>buffer</cite> of the lexer is cleared.</p></li>
+<li><p>The <cite>state</cite> of the lexer is changed to the new state.</p></li>
+<li><p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseLexer.process()</span></code> method is changed to the process
+method for the new state.</p></li>
+</ul>
+</section>
+<section id="baselexer-process-and-processing-methods">
+<h2><code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseLexer.process()</span></code> and Processing Methods<a class="headerlink" href="#baselexer-process-and-processing-methods" title="Permalink to this heading"></a></h2>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseLexer.process()</span></code> method of a <a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer</span></code></a>
+subclass should not be defined. Instead the name should be
+assigned to a “processing” method specific to the current state
+of the lexer. By convention, the names of these method starts
+with an underscore, which is followed by the name of the state in
+lowercase letters. So the processing method for the state:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Token</span><span class="o">.</span><span class="n">GROUP_OPEN</span>
+</pre></div>
+</div>
+<p>would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_group_open</span>
+</pre></div>
+</div>
+<p>The signature for processing methods are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<p>where <cite>char</cite> is the character being processed.</p>
+<p>While specific tokens may require different behavior, in general
+a processing method does two things:</p>
+<ul class="simple">
+<li><p>Define a list of states that are allowed to follow the
+current state within the syntax being lexed.</p></li>
+<li><p>Pass that list and the character to <code class="xref py py-meth docutils literal notranslate"><span class="pre">BaseLexer._check_char()</span></code>,
+which handles the actual processing.</p></li>
+</ul>
+<p>The end result of calling a processing method is usually that
+the characters in the string that make up the symbol for the
+current state are stored in a “TokenInfo” <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>, which
+consists of the token representing the state and the characters of
+the symbol. These tokens will then be used by the parser to
+execute the command contained in the string.</p>
+</section>
+<section id="the-state-map">
+<h2>The State Map<a class="headerlink" href="#the-state-map" title="Permalink to this heading"></a></h2>
+<p>To determine the correct processing method to use for a state, the
+lexer needs to have a mapping that defines the method for the state.
+This dictionary is the “state map.” The tokens for the state are
+the keys, and the processing method for that state is the value
+for the key. This dictionary is passed into the <a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer</span></code></a>
+as the <cite>state_map</cite> parameter when the lexer is initialized.</p>
+</section>
+<section id="the-symbol-map">
+<h2>The Symbol Map<a class="headerlink" href="#the-symbol-map" title="Permalink to this heading"></a></h2>
+<p>A BaseLexer uses a “symbol map” to associate characters in the
+string to a state. The symbol map is a dictionary. The keys are
+the tokens from the enumeration that defines state. The values
+are a list of the strings that are allowed in that state. For
+example, if you have a token named “MULDIV” that is the state for
+multiplication and division operators, the symbol map might look
+like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">state_map</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">MULDIV</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The symbol map is passed to the <cite>symbol_map</cite> parameter when the
+lexer is initialized.</p>
+</section>
+<section id="bracketing">
+<h2>Bracketing<a class="headerlink" href="#bracketing" title="Permalink to this heading"></a></h2>
+<p>Instead of running each character through
+<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer._check_char</span></code>, it is possible
+for a processing method to instead “bracket” characters
+until a specific character is reached. For example, characters
+after a quotation mark can be collected as a substring until
+the lexer hits another quotation mark.</p>
+<p>Why do this? The main use for this is to turn the bracketed
+substring into a single token, rather than three tokens: the
+opening bracket/delimiter, the content of the bracket, and the
+closing brack/delimiter.</p>
+<p>To expand on the quotation marks example above, let’s characters
+surrounded by quotation marks to belong to a token called
+“QUALIFIER”. We have the following enumeration of states and
+a <cite>symbol_map</cite> that defines which characters belong to which
+states:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">auto</span><span class="p">,</span> <span class="n">Enum</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Token</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">QUALIFIER</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">DELIM</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">QUALIFIER_END</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">symbol_map</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">DELIM</span><span class="p">:</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">QUALIFIER_END</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The string we want to lex is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&quot;spam&quot;&#39;</span>
+</pre></div>
+</div>
+<p>Without a bracket state, you’d end up with a token list that
+would look like the following, assuming the logic for the
+QUALIFIER state is written to accept alphabetical characters
+as valid for qualifiers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="p">(</span><span class="n">Token</span><span class="o">.</span><span class="n">DELIM</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="p">(</span><span class="n">Token</span><span class="o">.</span><span class="n">QUALIFER</span><span class="p">,</span> <span class="s1">&#39;spam&#39;</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="p">(</span><span class="n">Token</span><span class="o">.</span><span class="n">DELIM</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That’s probably fine, but the delimiter tokens don’t really
+do anything at this point. They were just there to set out
+the qualifier in the string. So, you can have them excluded
+from the token list like the following by using bracketing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="p">(</span><span class="n">Token</span><span class="o">.</span><span class="n">QUALIFER</span><span class="p">,</span> <span class="s1">&#39;spam&#39;</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The real power here comes from combining with a result map
+to send the bracketed content of to a different lexer and
+parser, which allows syntaxes to be nested within each other.</p>
+</section>
+<section id="bracket-states">
+<h2>Bracket States<a class="headerlink" href="#bracket-states" title="Permalink to this heading"></a></h2>
+<p>To have a processing method bracket, you need to associate
+the state for the opening bracket or delimiter with a
+processing method that handles the bracketing in a dictionary
+passed to the <cite>bracket_states</cite> parameter when initializing the
+BaseLexer. The <cite>bracket_states</cite> dictionary for the above example
+would look like this:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bracket_state</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">DELIM</span><span class="p">:</span> <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="bracket-ends">
+<h2>Bracket Ends<a class="headerlink" href="#bracket-ends" title="Permalink to this heading"></a></h2>
+<p>Because a bracket state hides the closing bracket or delimiter
+from the lexer, you need a different way to handle the state
+after a bracket state. This is handled by a standard processing
+method. By convention the name of this method is an underscore
+followed by the name of the bracket state followed by an
+underscore and then the word “end”. For our example it would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_qualifier_end</span>
+</pre></div>
+</div>
+<p>This state needs to have a state token assigned for it. In our
+example that is the <cite>Token.QUALIFIER_END</cite> token.</p>
+<p>This end state then needs to be linked to the bracket state in
+a dictionary that is passed to the <cite>bracket_ends</cite> parameter
+when initializing the lexer. In the example, the <cite>bracket_ends</cite>
+dictionary would look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bracket_ends</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER</span><span class="p">:</span> <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER_END</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="no-store">
+<h2>No Store<a class="headerlink" href="#no-store" title="Permalink to this heading"></a></h2>
+<p>Some states, like the initial state, bracket end states, and
+white space, shouldn’t be stored as tokens. These are defined
+by the “no store” list, which is passed to the <cite>no_store</cite>
+parameter when the lexer is initialized. For the example above,
+the no store list could look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">no_store</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER_END</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="result-transformations">
+<h2>Result Transformations<a class="headerlink" href="#result-transformations" title="Permalink to this heading"></a></h2>
+<p>By default, a <a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer</span></code></a> stores the symbols for the token
+as a string in the TokenInfo. This behavior can be changed with a
+“result transformation” method. By convention the name of a
+result transformation starts with an underscore, the letters “tf”,
+an underscore, and the name of the state they affect in all lower
+case. So the name of a result transformation method for the
+<cite>Token.NUMBER</cite> state would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_tf_number</span>
+</pre></div>
+</div>
+<p>Result transformations have the following signature:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="o">&lt;</span><span class="n">type_of_the_transformed_value</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>In the case of something like <cite>Token.NUMBER</cite> the transformation
+can be very simple, coercing a string to an integer. However,
+more complex transformations are possible, such as sending
+bracketed symbols to a different lexer and parser to allow syntax
+nesting.</p>
+</section>
+<section id="result-map">
+<h2>Result Map<a class="headerlink" href="#result-map" title="Permalink to this heading"></a></h2>
+<p>In order to link the result transformation methods to a state,
+a <a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer</span></code></a> needs a “result map”. The result map is a
+dictionary. The keys are the states where the transforms are used.
+The values are the result transformation methods to use for that
+state. For example, the result map for a lexer that transforms
+numbers and qualifiers might look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result_map</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">:</span> <span class="n">_tf_number</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER</span><span class="p">:</span> <span class="n">_qualifier</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The result map is passed to the <cite>result_map</cite> parameter when the
+<a class="reference internal" href="#yadr.base.BaseLexer" title="yadr.base.BaseLexer"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLexer</span></code></a> is initialized.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="yadr.base.BaseLexer.lex">
+<span class="sig-name descname"><span class="pre">lex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">yadr.model.Token</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.11)"><span class="pre">Union</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/yadr/base.html#BaseLexer.lex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.base.BaseLexer.lex" title="Permalink to this definition"></a></dt>
+<dd><p>Lex code into tokens for parsing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>code</strong> – A string of code to tranform into tokens.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)">tuple</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="yadr.lex.Lexer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">yadr.lex.</span></span><span class="sig-name descname"><span class="pre">Lexer</span></span><a class="reference internal" href="_modules/yadr/lex.html#Lexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.lex.Lexer" title="Permalink to this definition"></a></dt>
+<dd><p>A state-machine to lex <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">Yet Another Dice Notation</span></a> dice notation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="yadr.maps.Lexer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">yadr.maps.</span></span><span class="sig-name descname"><span class="pre">Lexer</span></span><a class="reference internal" href="_modules/yadr/maps.html#Lexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.maps.Lexer" title="Permalink to this definition"></a></dt>
+<dd><p>A state machine to lex dice maps in <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">Yet Another Dice Notation</span></a> dice notation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="yadr.pools.Lexer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">yadr.pools.</span></span><span class="sig-name descname"><span class="pre">Lexer</span></span><a class="reference internal" href="_modules/yadr/pools.html#Lexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.pools.Lexer" title="Permalink to this definition"></a></dt>
+<dd><p>A state machine to lex dice pools in <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">Yet Another Dice Notation</span></a> dice notation.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="internals.html" class="btn btn-neutral float-left" title="yadr Internals" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Paul J. Iutzi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

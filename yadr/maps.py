@@ -2,7 +2,7 @@
 maps
 ~~~~
 
-A module for handling YADN dice maps.
+A module for handling :ref:`YADN` dice maps.
 """
 from typing import Callable, Optional
 
@@ -12,6 +12,7 @@ from yadr.model import NamedMap, Result, symbols, Token, TokenInfo
 
 # Lexing.
 class Lexer(BaseLexer):
+    """A state machine to lex dice maps in :ref:`YADN` dice notation."""
     def __init__(self) -> None:
         state_map: dict[Token, Callable] = {
             Token.START: self._start,

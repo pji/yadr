@@ -20,7 +20,7 @@ from yadr.model import (
 
 # Lexers.
 class Lexer(BaseLexer):
-    """A state-machine to lex dice notation."""
+    """A state-machine to lex :ref:`YADN` dice notation."""
     def __init__(self) -> None:
         state_map: dict[Token, StateMethod] = {
             Token.START: self._start,

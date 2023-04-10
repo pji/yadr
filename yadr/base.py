@@ -2,7 +2,7 @@
 base
 ~~~~
 
-Base classes for the yadr package.
+Base classes for the :mod:`yadr` package.
 """
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -30,9 +30,31 @@ def _mutable(value, type_=list):
 class BaseLexer(ABC):
     """An abstract base class for building lexers.
 
-    :class:BaseLexer lexers are state machines used for translating
-    a text string into tokens for parsing. It accomplishes this by
-    processing the string one character at a time, allowing the
+    :param state_map: A dictionary mapping the state of the lexer
+        to the processing method for that state.
+    :param symbol_map: A dictionary mapping states of the lexer to
+        characters that could occur within the text being lexed.
+    :param bracket_states: (Optional.) A dictionary mapping opening
+        or delimiting states to a state that collects characters
+        within the brackets or delimiters to send to a more
+        specific lexer.
+    :param bracket_ends: (Optional.) A dictionary mapping bracket
+        states to a state that processes characters after the end
+        of the bracket state.
+    :param result_map: (Optional.) A dictionary mapping states
+        to a result transformation method to transform the data
+        in the lexed string before storing it in as a token
+        value.
+    :param no_store: (Optional.) A list of states that should not
+        be stored as tokens.
+    :param init_state: (Optional.) The initial state of the lexer.
+        It defaults to :class:`Token.START`.
+    :return: None.
+    :rtype: NoneType
+
+    :class:`yadr.base.BaseLexer` lexers are state machines used for
+    translating a text string into tokens for parsing. It accomplishes
+    this by processing the string one character at a time, allowing the
     current state of the lexer to determine whether the character is
     legal and what should be done with it.
 
@@ -40,7 +62,7 @@ class BaseLexer(ABC):
     State
     -----
     The current state of the lexer is determined by the value of
-    the `state` attribute of the lexer. Its value will be a member
+    :attr:`yadr.base.BaseLexer.state`. Its value will be a member
     of the enumeration used to define the tokens that exist within
     the language. This state is used to define the rule used to
     process the next character in the string.
@@ -58,24 +80,24 @@ class BaseLexer(ABC):
     current state of the lexer, but by default the following occurs
     when the state is changed:
 
-    *   A new TokenInfo object is created that contains the current
-        state of the lexer and the current value of the `buffer`
+    *   A new :class:`model.TokenInfo` object is created that contains
+        the current state of the lexer and the current value of the
+        `buffer` attribute of the lexer.
+    *   That :class:`model.TokenInfo` object is appended to the `tokens`
         attribute of the lexer.
-    *   That TokenInfo object is appended to the `tokens` attribute
-        of the lexer.
     *   The `buffer` of the lexer is cleared.
     *   The `state` of the lexer is changed to the new state.
-    *   The `process()` method is changed to the process method for
-        the new state.
+    *   The :meth:`BaseLexer.process` method is changed to the process
+        method for the new state.
 
 
-    `BaseLexer.process()` and Processing Methods
-    --------------------------------------------
-    The `process()` method of a BaseLexer subclass should not be
-    defined. Instead the name should be assigned to a "processing"
-    method specific to the current state of the lexer. By
-    convention, the names of these method starts with an
-    underscore, which is followed by the name of the state in
+    :meth:`BaseLexer.process()` and Processing Methods
+    --------------------------------------------------
+    The :meth:`BaseLexer.process` method of a :class:`BaseLexer`
+    subclass should not be defined. Instead the name should be
+    assigned to a "processing" method specific to the current state
+    of the lexer. By convention, the names of these method starts
+    with an underscore, which is followed by the name of the state in
     lowercase letters. So the processing method for the state::
 
         Token.GROUP_OPEN
@@ -95,14 +117,14 @@ class BaseLexer(ABC):
 
     *   Define a list of states that are allowed to follow the
         current state within the syntax being lexed.
-    *   pass that list and the character to the internal `_check_char()`
-        method that handles the actual processing.
+    *   Pass that list and the character to :meth:`BaseLexer._check_char`,
+        which handles the actual processing.
 
     The end result of calling a processing method is usually that
     the characters in the string that make up the symbol for the
-    current state are stored in a "TokenInfo" tuple, which consists
-    of the token representing the state and the characters of the
-    symbol. These tokens will then be used by the parser to
+    current state are stored in a "TokenInfo" :class:`tuple`, which
+    consists of the token representing the state and the characters of
+    the symbol. These tokens will then be used by the parser to
     execute the command contained in the string.
 
 
@@ -112,8 +134,8 @@ class BaseLexer(ABC):
     lexer needs to have a mapping that defines the method for the state.
     This dictionary is the "state map." The tokens for the state are
     the keys, and the processing method for that state is the value
-    for the key. This dictionary is passed into the BaseLexer as the
-    `state_map` parameter when the lexer is initialized.
+    for the key. This dictionary is passed into the :class:`BaseLexer`
+    as the `state_map` parameter when the lexer is initialized.
 
 
     The Symbol Map
@@ -136,8 +158,9 @@ class BaseLexer(ABC):
 
     Bracketing
     ----------
-    Instead of running each character through `_check_char()`, it is
-    possible for a processing method to instead "bracket" characters
+    Instead of running each character through
+    :class:`BaseLexer._check_char`, it is possible
+    for a processing method to instead "bracket" characters
     until a specific character is reached. For example, characters
     after a quotation mark can be collected as a substring until
     the lexer hits another quotation mark.
@@ -247,8 +270,8 @@ class BaseLexer(ABC):
 
     Result Transformations
     ----------------------
-    By default, a BaseLexer stores the symbols for the token as a
-    string in the TokenInfo. This behavior can be changed with a
+    By default, a :class:`BaseLexer` stores the symbols for the token
+    as a string in the TokenInfo. This behavior can be changed with a
     "result transformation" method. By convention the name of a
     result transformation starts with an underscore, the letters "tf",
     an underscore, and the name of the state they affect in all lower
@@ -276,11 +299,11 @@ class BaseLexer(ABC):
     Result Map
     ----------
     In order to link the result transformation methods to a state,
-    a BaseLexer needs a "result map". The result map is a dictionary.
-    The keys are the states where the transforms are used. The values
-    are the result transformation methods to use for that state. For
-    example, the result map for a lexer that transforms numbers and
-    qualifiers might look like::
+    a :class:`BaseLexer` needs a "result map". The result map is a
+    dictionary. The keys are the states where the transforms are used.
+    The values are the result transformation methods to use for that
+    state. For example, the result map for a lexer that transforms
+    numbers and qualifiers might look like::
 
         >>> result_map = {
         >>>     Token.NUMBER: _tf_number,
@@ -288,7 +311,7 @@ class BaseLexer(ABC):
         >>> }
 
     The result map is passed to the `result_map` parameter when the
-    BaseLexer is initialized.
+    :class:`BaseLexer` is initialized.
     """
     def __init__(self,
                  state_map: dict[Token, StateMethod],
@@ -298,30 +321,8 @@ class BaseLexer(ABC):
                  result_map: Optional[dict[Token, ResultMethod]] = None,
                  no_store: Optional[list[Token]] = None,
                  init_state: Token = Token.START) -> None:
-        """Initialize an instance of :class:Lexer.
-
-        :param state_map: A dictionary mapping the state of the lexer
-            to the processing method for that state.
-        :param symbol_map: A dictionary mapping states of the lexer to
-            characters that could occur within the text being lexed.
-        :param bracket_states: (Optional.) A dictionary mapping opening
-            or delimiting states to a state that collects characters
-            within the brackets or delimiters to send to a more
-            specific lexer.
-        :param bracket_ends: (Optional.) A dictionary mapping bracket
-            states to a state that processes characters after the end
-            of the bracket state.
-        :param result_map: (Optional.) A dictionary mapping states
-            to a result transformation method to transform the data
-            in the lexed string before storing it in as a token
-            value.
-        :param no_store: (Optional.) A list of states that should not
-            be stored as tokens.
-        :param init_state: (Optional.) The initial state of the lexer.
-            It defaults to :class:Token.START.
-        :return: None.
-        :rtype: NoneType
-        """
+        """Initialize an instance of :class:`BaseLexer`."""
+        # Assign the passed parameters.
         self.state_map = state_map
         self.symbol_map = symbol_map
         self.bracket_states = _mutable(bracket_states, dict)
@@ -329,27 +330,31 @@ class BaseLexer(ABC):
         self.result_map = _mutable(result_map, dict)
         self.no_store = _mutable(no_store)
         self.init_state = init_state
-        self.state = init_state
 
+        # Assign internal attributes.
+        self.state = init_state
         self.process: StateMethod = self._start
         self.buffer = ''
         self.tokens: list[TokenInfo] = []
 
     # Public methods.
-    def lex(self, yadn: str) -> tuple[TokenInfo, ...]:
-        """Lex a dice notation string.
+    def lex(self, code: str) -> tuple[TokenInfo, ...]:
+        """Lex code into tokens for parsing.
 
-        :param yadn: A string of YADN representing a die roll. For
-            details on YADN, see here: YADN_
-        :return: A :class:tuple object.
+        :param code: A string of code to tranform into tokens.
+        :return: A :class:`tuple` object.
         :rtype: tuple
-
-        .. _YADN: https://github.com/pji/yadr/blob/main/docs/dice_notation.rst
         """
-        for char in yadn:
+        # Process each character in the code.
+        for char in code:
             self.process(char)
+
+        # Reset the lexer after processing the string in case the lexer
+        # is reused.
         else:
             self._change_state(self.init_state, '')
+
+        # Return the tokens from the code.
         return tuple(self.tokens)
 
     # Private operation method.
