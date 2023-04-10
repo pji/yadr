@@ -12,6 +12,8 @@ wheel = "*"
 build = "*"
 twine = "*"
 mypy = "~=1.2.0"
+sphinx = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = "3.10"
