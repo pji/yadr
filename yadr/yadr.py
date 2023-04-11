@@ -17,10 +17,11 @@ from yadr.parser import dice_map, Parser
 
 
 # Execute YADN.
-def roll(yadn: str,
-         yadn_out: bool = False,
-         dice_map: Optional[dict[str, dict]] = None
-         ) -> str | Result | CompoundResult:
+def roll(
+    yadn: str,
+    yadn_out: bool = False,
+    dice_map: Optional[dict[str, dict]] = None
+) -> None | Result | CompoundResult:
     """Execute a string of YADN to roll dice.
 
     :param yadn: A string of YADN that defines the die roll to execute.
@@ -46,14 +47,16 @@ def roll(yadn: str,
     eighteen that is created by generating three random integers in the
     range of one to six.
     """
-    def roll_dice(yadn: str,
-                  dice_map: dict,
-                  yadn_out: bool) -> str | Result | CompoundResult:
+    def roll_dice(
+        yadn: str,
+        dice_map: dict,
+        yadn_out: bool
+    ) -> None | Result | CompoundResult:
         lexer = Lexer()
         tokens = lexer.lex(yadn)
         parser = Parser()
         parser.dice_map = dice_map
-        result: Result | CompoundResult = parser.parse(tokens)
+        result: None | Result | CompoundResult = parser.parse(tokens)
         if yadn_out:
             encoder = Encoder()
             result = encoder.encode(result)

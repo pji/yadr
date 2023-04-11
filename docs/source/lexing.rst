@@ -4,6 +4,11 @@
 Lexing
 ######
 
+.. warning::
+    If you are using this package to implement dice rolling, you
+    should never have to directly interact with these classes. These
+    are only documented to help with maintenance.
+
 :dfn:`Lexing` is the act of transforming text, such as Python code or
 a :ref:`YADN` string, into tokens for parsing.
 

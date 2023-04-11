@@ -4,9 +4,20 @@ operator
 
 Operators for handling the dice part of dice notation.
 """
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 import random
 import operator
+
+
+# Types for annotation.
+OptionsOp = Callable[[str, str], tuple[str, str]]
+ChoiceOp = Callable[[bool, tuple[str, str]], str]
+PoolGenOp = Callable[[int, int], tuple[int, ...]]
+DiceOp = Callable[[int, int], int]
+MathOp = Callable[[int, int], int]
+PoolOp = Callable[[Sequence[int], int], tuple[int, ...]]
+PoolDegenOp = Callable[[Sequence[int], int], int]
+UPoolDegenOp = Callable[[Sequence[int]], int]
 
 
 # Choice operators.
@@ -193,6 +204,68 @@ def _explode(value: int, size: int) -> int:
 
 
 # Registration.
+dice_ops: dict[str, DiceOp] = {
+    'd': die,
+    'd!': exploding_die,
+    'dc': concat,
+    'dh': keep_high_die,
+    'dl': keep_low_die,
+    'dw': wild_die,
+}
+math_ops: dict[str, MathOp] = {
+    # Comparison operators.
+    '>': operator.gt,
+    '<': operator.le,
+    '>=': operator.ge,
+    '<=': operator.le,
+    '==': operator.eq,
+    '!=': operator.ne,
+
+    # Operators.
+    '^': operator.pow,
+
+    # Multiplication/division operators.
+    '*': operator.mul,
+    '/': operator.floordiv,
+    '%': operator.mod,
+
+    # Addition/subtraction operators.
+    '+': operator.add,
+    '-': operator.sub,
+}
+pool_ops: dict[str, PoolOp] = {
+    'pa': pool_keep_above,
+    'pb': pool_keep_below,
+    'pc': pool_cap,
+    'pf': pool_floor,
+    'ph': pool_keep_high,
+    'pl': pool_keep_low,
+    'pr': pool_remove,
+    'p%': pool_modulo,
+}
+poolgen_ops: dict[str, PoolGenOp] = {
+    'g': dice_pool,
+    'g!': exploding_pool,
+}
+pooldegen_ops: dict[str, PoolDegenOp] = {
+    'nb': count_successes_with_botch,
+    'ns': count_successes,
+}
+options_ops: dict[str, OptionsOp] = {
+    ':': choice_options,
+}
+choice_ops: dict[str, ChoiceOp] = {
+    '?': choice,
+}
+ops_by_type = {
+    'options': {':': choice_options,},
+    'choice': {'?': choice,},
+    'unpooldegen': {
+        'C': pool_concatenate,
+        'N': pool_count,
+        'S': pool_sum,
+    },
+}
 ops_by_symbol = {
     # Choice operator.
     '?': choice,

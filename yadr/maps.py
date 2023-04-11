@@ -161,6 +161,7 @@ class Lexer(BaseLexer):
 
 # Parsing.
 class Parser:
+    """A state machine for parsing :ref:`YADN` dice maps."""
     def __init__(self) -> None:
         self.name: str = ''
         self.pairs: list[tuple[int, str | int]] = []
@@ -175,7 +176,13 @@ class Parser:
         }
 
     def parse(self, tokens: tuple[TokenInfo, ...]) -> NamedMap:
-        """Parse YADN dice mapping tokens."""
+        """Parse YADN dice mapping tokens.
+
+        :param tokens: A dice map as a sequence of :ref:`YADN` tokens
+            to parse.
+        :return: A class defined in :class:`yadr.model.NamedMap`.
+        :rtype: tuple
+        """
         for token_info in tokens:
             process = self.state_map[self.state]
             process(token_info)

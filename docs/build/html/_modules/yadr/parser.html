@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yadr.parser &mdash; yadr 0.1.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            yadr
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dice_notation.html">YADN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requirements.html">yadr Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">yadr</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">yadr.parser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for yadr.parser</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">parse</span>
+<span class="sd">~~~~~</span>
+
+<span class="sd">Parse dice notation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">yadr</span> <span class="kn">import</span> <span class="n">operator</span> <span class="k">as</span> <span class="n">yo</span>
+<span class="kn">from</span> <span class="nn">yadr.model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompoundResult</span><span class="p">,</span>
+    <span class="n">DiceMapping</span><span class="p">,</span>
+    <span class="n">Result</span><span class="p">,</span>
+    <span class="n">Token</span><span class="p">,</span>
+    <span class="n">TokenInfo</span><span class="p">,</span>
+    <span class="n">op_tokens</span><span class="p">,</span>
+    <span class="n">id_tokens</span>
+<span class="p">)</span>
+
+
+<span class="c1"># The dice map.</span>
+<span class="c1"># This needs to not be a global value, but it will require a very large</span>
+<span class="c1"># change to this module to get that to work. This will work for now.</span>
+<span class="n">dice_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="c1"># Parser specific operations.</span>
+<span class="k">def</span> <span class="nf">map_result</span><span class="p">(</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map a roll result to a dice map.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">dice_map</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">result</span><span class="p">]</span>
+    <span class="n">new_result</span> <span class="o">=</span> <span class="p">[</span><span class="n">map_result</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+    <span class="n">str_result</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">new_result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">str_result</span>
+
+
+<span class="c1"># Exceptons</span>
+<span class="k">class</span> <span class="nc">IsMap</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised to tell the parser not to expect results from the</span>
+<span class="sd">    current roll because the roll is a dice mapping.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">NoResult</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised to tell the parser no result was returned for the</span>
+<span class="sd">    passed :ref:`YADN` tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="c1"># Utility classes and functions.</span>
+<div class="viewcode-block" id="Tree"><a class="viewcode-back" href="../../execution.html#yadr.parser.Tree">[docs]</a><span class="k">class</span> <span class="nc">Tree</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A binary tree used to execute parsed :ref:`YADN`.</span>
+
+<span class="sd">    :param kind: The type of token to be executed.</span>
+<span class="sd">    :param value: The specific value of the token for execution.</span>
+<span class="sd">    :param left: (Optional.) The branch of tokens to be executed first.</span>
+<span class="sd">    :param right: (Optional.) The branch of tokens to be executed last.</span>
+<span class="sd">    :param dice_map: (Optional.) Dice maps to use during execution.</span>
+<span class="sd">    :return: None.</span>
+<span class="sd">    :rtype: :class:`NoneType`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="n">Token</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Result</span><span class="p">,</span>
+        <span class="n">left</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Tree&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">right</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Tree&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dice_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">left</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">right</span>
+        <span class="k">if</span> <span class="n">dice_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dice_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span> <span class="o">=</span> <span class="n">dice_map</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">(kind=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s1">, value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+<div class="viewcode-block" id="Tree.compute"><a class="viewcode-back" href="../../execution.html#yadr.parser.Tree.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the tree.</span>
+
+<span class="sd">        :return: The result of the identity or operation token.</span>
+<span class="sd">        :rtype: Result</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Simple identities do not need any computation.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">id_tokens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="c1"># The only tokens that should make it into Trees are identity</span>
+        <span class="c1"># or operation tokens. If a different type of token is here,</span>
+        <span class="c1"># there is a problem that can&#39;t be easily resolved.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">op_tokens</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Unknown token </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># Determine which operation is needed.</span>
+        <span class="n">ops_by_symbol</span> <span class="o">=</span> <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span>
+        <span class="n">ops_by_symbol</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_result</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">ops_by_symbol</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+        <span class="c1"># Compute the value of the tokens that are higher in the</span>
+        <span class="c1"># order of operations than this tree and on the left-side</span>
+        <span class="c1"># of this expression.</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="c1"># Compute the value of the tokens that are higher in the</span>
+        <span class="c1"># order of operations than this tree and on the right-side</span>
+        <span class="c1"># of this expression.</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="c1"># Perform the operation on the left and right values,</span>
+        <span class="c1"># returning the result.</span>
+        <span class="k">return</span> <span class="n">op</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_map_result</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map a roll result to a dice map.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">result</span><span class="p">]</span>
+        <span class="n">new_result</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_result</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+        <span class="n">str_result</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">new_result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">str_result</span></div>
+
+
+<div class="viewcode-block" id="Unary"><a class="viewcode-back" href="../../execution.html#yadr.parser.Unary">[docs]</a><span class="k">class</span> <span class="nc">Unary</span><span class="p">(</span><span class="n">Tree</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A unary tree used to execute parsed :ref:`YADN`.</span>
+
+<span class="sd">    :param kind: The type of token to be executed.</span>
+<span class="sd">    :param value: The specific value of the token for execution.</span>
+<span class="sd">    :param child: (Optional.) The branch of tokens to be executed first.</span>
+<span class="sd">    :return: None.</span>
+<span class="sd">    :rtype: :class:`NoneType`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="n">Token</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Result</span><span class="p">,</span>
+        <span class="n">child</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Tree&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">child</span>
+
+<div class="viewcode-block" id="Unary.compute"><a class="viewcode-back" href="../../execution.html#yadr.parser.Unary.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the tree.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">id_tokens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">op_tokens</span><span class="p">:</span>
+            <span class="n">op</span> <span class="o">=</span> <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">op</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># Parser class.</span>
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../parsing.html#yadr.parser.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A state machine for parsing :ref:`YADN`.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">top_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_operator</span>
+
+    <span class="c1"># Public method.</span>
+<div class="viewcode-block" id="Parser.parse"><a class="viewcode-back" href="../../parsing.html#yadr.parser.Parser.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TokenInfo</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Result</span> <span class="o">|</span> <span class="n">CompoundResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse one or more die rolls.</span>
+
+<span class="sd">        :param tokens: A sequence of lexed :ref:`YADN` tokens to parse.</span>
+<span class="sd">        :return: A class defined in either :class:`yadr.model.Result` or</span>
+<span class="sd">            :class:`yadr.model.CompoundResult`.</span>
+<span class="sd">        :rtype: Result | CompoundResult</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Split tokens into rolls for parsing.</span>
+        <span class="n">rolls</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">Token</span><span class="o">.</span><span class="n">ROLL_DELIMITER</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">index</span><span class="p">((</span><span class="n">Token</span><span class="o">.</span><span class="n">ROLL_DELIMITER</span><span class="p">,</span> <span class="s1">&#39;;&#39;</span><span class="p">))</span>
+            <span class="n">roll</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">rolls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roll</span><span class="p">)</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rolls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+
+        <span class="c1"># Parse each roll.</span>
+        <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Result</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">roll</span> <span class="ow">in</span> <span class="n">rolls</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_roll</span><span class="p">(</span><span class="n">roll</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">IsMap</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="n">NoResult</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="c1"># Return the results of the rolls.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">CompoundResult</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_make_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Token</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tranform tokens into trees for execution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Tree</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dice_map</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_roll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TokenInfo</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a sequence of YADN tokens.&quot;&quot;&quot;</span>
+        <span class="c1"># Parse the tokens into a tree.</span>
+        <span class="n">trees</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_tree</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">]</span>
+        <span class="n">trees</span> <span class="o">=</span> <span class="n">trees</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span>
+
+        <span class="c1"># Execute the parsed tree.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">parsed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NoResult</span><span class="p">(</span><span class="s1">&#39;The parsed string did not create a Tree.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parsed</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+    <span class="c1"># Parsing rules.</span>
+    <span class="k">def</span> <span class="nf">_identity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse an identity.&quot;&quot;&quot;</span>
+        <span class="n">identity_tokens</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Token</span><span class="o">.</span><span class="n">BOOLEAN</span><span class="p">,</span>
+            <span class="n">Token</span><span class="o">.</span><span class="n">NUMBER</span><span class="p">,</span>
+            <span class="n">Token</span><span class="o">.</span><span class="n">POOL</span><span class="p">,</span>
+            <span class="n">Token</span><span class="o">.</span><span class="n">QUALIFIER</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># If the tree is an identity, return it.</span>
+        <span class="k">if</span> <span class="n">tree</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">identity_tokens</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tree</span>
+
+        <span class="c1"># If the tree is a dice map, add it to the dice map and raise</span>
+        <span class="c1"># IsMap to prevent the parse from trying to return it as a</span>
+        <span class="c1"># result. The asserts in here are to keep mypy happy. They</span>
+        <span class="c1"># probably mean I need to rework how dice maps are handled to</span>
+        <span class="c1"># keep them out of this parser.</span>
+        <span class="k">elif</span> <span class="n">tree</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Token</span><span class="o">.</span><span class="n">MAP</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">map_</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">map_</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">map_</span>
+            <span class="k">raise</span> <span class="n">IsMap</span><span class="p">(</span><span class="s1">&#39;Roll is a map.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If the tree is starting a group, parse through that group.</span>
+        <span class="k">elif</span> <span class="n">tree</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Token</span><span class="o">.</span><span class="n">GROUP_OPEN</span><span class="p">:</span>
+            <span class="n">expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trees</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">Token</span><span class="o">.</span><span class="n">GROUP_CLOSE</span><span class="p">:</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">expression</span>
+
+        <span class="c1"># Handle anything unexpected that got here.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Unrecognized token </span><span class="si">{</span><span class="n">tree</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pool_gen_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse pool generation operator.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">POOL_GEN_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pool_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse pool operator.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">POOL_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool_gen_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_u_pool_degen_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse unary pool degeneration.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">U_POOL_DEGEN_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pool_degen_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse unary pool degeneration.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">POOL_DEGEN_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_u_pool_degen_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_dice_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse dice operators.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">DICE_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pool_degen_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_ex_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse exponentiation.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">EX_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dice_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_md_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse addition and subtraction.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">MD_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ex_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_as_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse addition and subtraction.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">AS_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_md_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_comparison_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse comparisons.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">COMPARISON_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_options_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse comparisons.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">OPTIONS_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_choice_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse chocies.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">CHOICE_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_map_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse dice mapping operators.&quot;&quot;&quot;</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_operator</span>
+        <span class="n">rule_affects</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">MAPPING_OPERATOR</span>
+        <span class="n">next_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_choice_operator</span>
+        <span class="k">return</span> <span class="n">rule</span><span class="p">(</span><span class="n">rule_affects</span><span class="p">,</span> <span class="n">next_rule</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+
+    <span class="c1"># Base rules.</span>
+    <span class="k">def</span> <span class="nf">_binary_operator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rule_affects</span><span class="p">:</span> <span class="n">Token</span><span class="p">,</span>
+        <span class="n">next_rule</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">]],</span> <span class="n">Tree</span><span class="p">],</span>
+        <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a binary operator.&quot;&quot;&quot;</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">next_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">trees</span> <span class="ow">and</span> <span class="n">trees</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">rule_affects</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">left</span>
+            <span class="n">tree</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">next_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span>
+            <span class="n">left</span> <span class="o">=</span> <span class="n">tree</span>
+        <span class="k">return</span> <span class="n">left</span>
+
+    <span class="k">def</span> <span class="nf">_unary_operator</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rule_affects</span><span class="p">:</span> <span class="n">Token</span><span class="p">,</span>
+        <span class="n">next_rule</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">]],</span> <span class="n">Tree</span><span class="p">],</span>
+        <span class="n">trees</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tree</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse an unary operator.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">trees</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">rule_affects</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">unary</span> <span class="o">=</span> <span class="n">Unary</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="n">tree</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">unary</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">next_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">unary</span>
+        <span class="k">return</span> <span class="n">next_rule</span><span class="p">(</span><span class="n">trees</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Paul J. Iutzi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

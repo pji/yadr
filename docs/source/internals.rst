@@ -14,3 +14,5 @@ maintaining the package.
 
    self
    /lexing.rst
+   /parsing.rst
+   /execution.rst

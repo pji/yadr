@@ -103,6 +103,7 @@ class Lexer(BaseLexer):
 
 
 class Parser:
+    """A state machine for parsing :ref:`YADN` dice pools."""
     def parse(self, tokens: Sequence[TokenInfo]) -> tuple[int, ...]:
         """Parse YADN pool tokens."""
         values = []

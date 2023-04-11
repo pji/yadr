@@ -7,7 +7,7 @@ Parse dice notation.
 from collections.abc import Callable, Sequence
 from functools import wraps
 import operator
-from typing import Optional
+from typing import Any, Optional
 
 from yadr import operator as yo
 from yadr.model import (
@@ -47,9 +47,31 @@ class IsMap(Exception):
     """
 
 
+class NoResult(Exception):
+    """Raised to tell the parser no result was returned for the
+    passed :ref:`YADN` tokens.
+    """
+
+
 # Utility classes and functions.
+def _bad_type(side: str, need: str, got: Any) -> None:
+    """Raise a TypeError."""
+    name = type(got).__name__
+    msg = f'{side.title()} operand must be {need}. Was {name}.'
+    raise ValueError(msg)
+
+
 class Tree:
-    """A binary tree."""
+    """A binary tree used to execute parsed :ref:`YADN`.
+
+    :param kind: The type of token to be executed.
+    :param value: The specific value of the token for execution.
+    :param left: (Optional.) The branch of tokens to be executed first.
+    :param right: (Optional.) The branch of tokens to be executed last.
+    :param dice_map: (Optional.) Dice maps to use during execution.
+    :return: None.
+    :rtype: :class:`NoneType`
+    """
     def __init__(
         self,
         kind: Token,
@@ -71,17 +93,120 @@ class Tree:
         return f'{name}(kind={self.kind}, value={self.value})'
 
     def compute(self):
+        """Execute the tree.
+
+        :return: The result of the identity or operation token.
+        :rtype: Result
+        """
+        # Simple identities do not need any computation.
         if self.kind in id_tokens:
             return self.value
-        left = self.left.compute()
-        right = self.right.compute()
-        if self.kind in op_tokens:
-            ops_by_symbol = yo.ops_by_symbol
-            ops_by_symbol['m'] = self._map_result
-            op = ops_by_symbol[self.value]
-        else:
+
+        # The only tokens that should make it into Trees are identity
+        # or operation tokens. If a different type of token is here,
+        # there is a problem that can't be easily resolved.
+        if self.kind not in op_tokens:
             msg = f'Unknown token {self.kind}'
             raise TypeError(msg)
+
+        # Compute the value of the tokens that are higher in the
+        # order of operations than this tree and on the left-side
+        # of this expression.
+        left = self.left.compute()
+
+        # Compute the value of the tokens that are higher in the
+        # order of operations than this tree and on the right-side
+        # of this expression.
+        right = self.right.compute()
+
+        # Dice operators.
+        if self.value in yo.dice_ops:
+            if not isinstance(left, int):
+                _bad_type('left', 'int', left)
+            if not isinstance(right, int):
+                _bad_type('right', 'int', left)
+            op = yo.dice_ops[self.value]
+
+        # Math operators.
+        elif self.value in yo.math_ops:
+            if not isinstance(left, int):
+                _bad_type('left', 'int', left)
+            if not isinstance(right, int):
+                _bad_type('right', 'int', left)
+            op = yo.math_ops[self.value]
+
+        # Pool generation operators.
+        elif self.value in yo.poolgen_ops:
+            if not isinstance(left, int):
+                _bad_type('left', 'int', left)
+            if not isinstance(right, int):
+                _bad_type('right', 'int', left)
+            op = yo.poolgen_ops[self.value]
+
+        # Pool operators.
+        elif self.value in yo.pool_ops:
+            if not isinstance(left, Sequence):
+                _bad_type('left', 'sequence', left)
+            if not all(isinstance(n, int) for n in left):
+                _bad_type('left', 'sequence[int]', left)
+            if not isinstance(right, int):
+                _bad_type('right', 'int', left)
+            op = yo.pool_ops[self.value]
+
+        # Pool degeneration operators.
+        elif self.value in yo.pooldegen_ops:
+            if not isinstance(left, Sequence):
+                _bad_type('left', 'sequence', left)
+            if not all(isinstance(n, int) for n in left):
+                _bad_type('left', 'sequence[int]', left)
+            if not isinstance(right, int):
+                _bad_type('right', 'int', left)
+            op = yo.pooldegen_ops[self.value]
+
+        # Choice option operators.
+        elif self.value in yo.options_ops:
+            if not isinstance(left, str):
+                _bad_type('left', 'str', left)
+            if not isinstance(right, str):
+                _bad_type('right', 'str', left)
+            op = yo.options_ops[self.value]
+
+        # Choice operators.
+        elif self.value in yo.choice_ops:
+            if not isinstance(left, bool):
+                _bad_type('left', 'bool', left)
+            if not isinstance(right, tuple):
+                _bad_type('right', 'tuple', right)
+            if (
+                isinstance(right, tuple)
+                and (
+                    not all(isinstance(n, str) for n in right)
+                    or len(right) != 2
+                )
+            ):
+                _bad_type('right', 'tuple[str, str]', right)
+            op = yo.choice_ops[self.value]
+
+        # Map result.
+        elif self.value == 'm':
+            if not isinstance(left, (int, tuple)):
+                _bad_type('left', 'int or tuple', left)
+            if (
+                isinstance(left, tuple)
+                and not all(isinstance(n, int) for n in left)
+            ):
+                _bad_type('left', 'int or tuple[int]', left)
+            if not isinstance(right, str):
+                _bad_type('right', 'str', left)
+            op = self._map_result
+
+        # Determine which operation is needed.
+        else:
+            msg = f'Operator not recognized: {self.value}.'
+            raise ValueError(msg)
+
+        # Perform the operation on the left and right values,
+        # returning the result.
         return op(left, right)
 
     def _map_result(
@@ -97,7 +222,14 @@ class Tree:
 
 
 class Unary(Tree):
-    """A unary tree."""
+    """A unary tree used to execute parsed :ref:`YADN`.
+
+    :param kind: The type of token to be executed.
+    :param value: The specific value of the token for execution.
+    :param child: (Optional.) The branch of tokens to be executed first.
+    :return: None.
+    :rtype: :class:`NoneType`
+    """
     def __init__(
         self,
         kind: Token,
@@ -109,6 +241,7 @@ class Unary(Tree):
         self.child = child
 
     def compute(self):
+        """Execute the tree."""
         if self.kind in id_tokens:
             return self.value
         child = self.child.compute()
@@ -119,13 +252,23 @@ class Unary(Tree):
 
 # Parser class.
 class Parser:
+    """A state machine for parsing :ref:`YADN`."""
     def __init__(self) -> None:
         self.dice_map: dict[str, DiceMapping] = dict()
         self.top_rule = self._map_operator
 
     # Public method.
-    def parse(self, tokens: Sequence[TokenInfo]) -> Result | CompoundResult:
-        """Parse one or more die rolls."""
+    def parse(
+        self,
+        tokens: Sequence[TokenInfo]
+    ) -> None | Result | CompoundResult:
+        """Parse one or more die rolls.
+
+        :param tokens: A sequence of lexed :ref:`YADN` tokens to parse.
+        :return: A class defined in either :class:`yadr.model.Result` or
+            :class:`yadr.model.CompoundResult`.
+        :rtype: Result | CompoundResult
+        """
         # Split tokens into rolls for parsing.
         rolls = []
         while (Token.ROLL_DELIMITER, ';') in tokens:
@@ -143,26 +286,31 @@ class Parser:
                 results.append(self._parse_roll(roll))
             except IsMap:
                 continue
+            except NoResult:
+                continue
 
         # Return the results of the rolls.
-        results = [result for result in results if result is not None]
         if len(results) > 1:
             return CompoundResult(results)
         elif results:
             return results[0]
         return None
 
+    def _make_tree(self, kind: Token, value: Result) -> Tree:
+        """Tranform tokens into trees for execution."""
+        return Tree(kind, value, dice_map=self.dice_map)
+
     def _parse_roll(self, tokens: Sequence[TokenInfo]) -> Result:
         """Parse a sequence of YADN tokens."""
-        def make_tree(kind, value):
-            return Tree(kind, value, dice_map=self.dice_map)
-
-        trees = [make_tree(kind, value) for kind, value in tokens]
+        # Parse the tokens into a tree.
+        trees = [self._make_tree(kind, value) for kind, value in tokens]
         trees = trees[::-1]
         parsed = self.top_rule(trees)
-        if parsed:
-            return parsed.compute()
-        return None
+
+        # Execute the parsed tree.
+        if not parsed:
+            raise NoResult('The parsed string did not create a Tree.')
+        return parsed.compute()
 
     # Parsing rules.
     def _identity(self, trees: list[Tree]) -> Tree:

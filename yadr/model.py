@@ -140,7 +140,6 @@ Result = Union[
     str,
     Pool,
     NamedMap,
-    None
 ]
 TokenInfo = tuple[Token, Result]
 

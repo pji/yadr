@@ -1,11 +1,13 @@
 .. _YADN:
 
-#########################
-Yet Another Dice Notation
-#########################
+####
+YADN
+####
 
-The purpose of this document is to define the syntax of dice notation
-for the purposes of the `yadr` package. It has the following goals:
+:dfn:`Yet Another Dice Notation (YADN)` is a dice notation syntax.
+
+The purpose of this document is to define the syntax of :ref:`YADN`
+for the purposes of the :mod:`yadr` package. It has the following goals:
 
 *   Follow commonly seen features of other dice notations.
 *   Avoid surprising users where possible.

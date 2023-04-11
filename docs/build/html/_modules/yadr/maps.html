@@ -40,7 +40,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Welcome to yadr’s documentation!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../dice_notation.html">Yet Another Dice Notation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dice_notation.html">YADN</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../requirements.html">yadr Requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
 </ul>
@@ -232,7 +232,8 @@
 
 
 <span class="c1"># Parsing.</span>
-<span class="k">class</span> <span class="nc">Parser</span><span class="p">:</span>
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../parsing.html#yadr.maps.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A state machine for parsing :ref:`YADN` dice maps.&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -246,12 +247,18 @@
             <span class="n">Token</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TokenInfo</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NamedMap</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse YADN dice mapping tokens.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Parser.parse"><a class="viewcode-back" href="../../parsing.html#yadr.maps.Parser.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TokenInfo</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">NamedMap</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse YADN dice mapping tokens.</span>
+
+<span class="sd">        :param tokens: A dice map as a sequence of :ref:`YADN` tokens</span>
+<span class="sd">            to parse.</span>
+<span class="sd">        :return: A class defined in :class:`yadr.model.NamedMap`.</span>
+<span class="sd">        :rtype: tuple</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">token_info</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
             <span class="n">process</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span>
             <span class="n">process</span><span class="p">(</span><span class="n">token_info</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pairs</span><span class="p">})</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pairs</span><span class="p">})</span></div>
 
     <span class="c1"># Parsing rules.</span>
     <span class="k">def</span> <span class="nf">_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_info</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Token</span><span class="p">,</span> <span class="n">Result</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -305,7 +312,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">NAME</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Dice mapping cannot start with a </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
