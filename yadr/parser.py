@@ -97,6 +97,11 @@ class Tree:
 
         :return: The result of the identity or operation token.
         :rtype: Result
+
+        .. warning::
+            The return here is too complex to type check. At least
+            it's too complex for me to type check at this point. I'll
+            keep trying, but for now it's not annotated.
         """
         # Simple identities do not need any computation.
         if self.kind in id_tokens:
@@ -119,89 +124,11 @@ class Tree:
         # of this expression.
         right = self.right.compute()
 
-        # Dice operators.
-        if self.value in yo.dice_ops:
-            if not isinstance(left, int):
-                _bad_type('left', 'int', left)
-            if not isinstance(right, int):
-                _bad_type('right', 'int', left)
-            op = yo.dice_ops[self.value]
-
-        # Math operators.
-        elif self.value in yo.math_ops:
-            if not isinstance(left, int):
-                _bad_type('left', 'int', left)
-            if not isinstance(right, int):
-                _bad_type('right', 'int', left)
-            op = yo.math_ops[self.value]
-
-        # Pool generation operators.
-        elif self.value in yo.poolgen_ops:
-            if not isinstance(left, int):
-                _bad_type('left', 'int', left)
-            if not isinstance(right, int):
-                _bad_type('right', 'int', left)
-            op = yo.poolgen_ops[self.value]
-
-        # Pool operators.
-        elif self.value in yo.pool_ops:
-            if not isinstance(left, Sequence):
-                _bad_type('left', 'sequence', left)
-            if not all(isinstance(n, int) for n in left):
-                _bad_type('left', 'sequence[int]', left)
-            if not isinstance(right, int):
-                _bad_type('right', 'int', left)
-            op = yo.pool_ops[self.value]
-
-        # Pool degeneration operators.
-        elif self.value in yo.pooldegen_ops:
-            if not isinstance(left, Sequence):
-                _bad_type('left', 'sequence', left)
-            if not all(isinstance(n, int) for n in left):
-                _bad_type('left', 'sequence[int]', left)
-            if not isinstance(right, int):
-                _bad_type('right', 'int', left)
-            op = yo.pooldegen_ops[self.value]
-
-        # Choice option operators.
-        elif self.value in yo.options_ops:
-            if not isinstance(left, str):
-                _bad_type('left', 'str', left)
-            if not isinstance(right, str):
-                _bad_type('right', 'str', left)
-            op = yo.options_ops[self.value]
-
-        # Choice operators.
-        elif self.value in yo.choice_ops:
-            if not isinstance(left, bool):
-                _bad_type('left', 'bool', left)
-            if not isinstance(right, tuple):
-                _bad_type('right', 'tuple', right)
-            if (
-                isinstance(right, tuple)
-                and (
-                    not all(isinstance(n, str) for n in right)
-                    or len(right) != 2
-                )
-            ):
-                _bad_type('right', 'tuple[str, str]', right)
-            op = yo.choice_ops[self.value]
-
-        # Map result.
-        elif self.value == 'm':
-            if not isinstance(left, (int, tuple)):
-                _bad_type('left', 'int or tuple', left)
-            if (
-                isinstance(left, tuple)
-                and not all(isinstance(n, int) for n in left)
-            ):
-                _bad_type('left', 'int or tuple[int]', left)
-            if not isinstance(right, str):
-                _bad_type('right', 'str', left)
-            op = self._map_result
-
-        # Determine which operation is needed.
-        else:
+        # Determine the operation to run.
+        yo.ops_by_symbol['m'] = self._map_result
+        try:
+            op = yo.ops_by_symbol[self.value]
+        except IndexError:
             msg = f'Operator not recognized: {self.value}.'
             raise ValueError(msg)
 
@@ -241,12 +168,28 @@ class Unary(Tree):
         self.child = child
 
     def compute(self):
-        """Execute the tree."""
+        """Execute the tree.
+
+        :return: The result of the identity or operation token.
+        :rtype: Result
+
+        .. warning::
+            This is not type annotated to remain consistent with
+            :meth:`yadr.parser.Tree.compute`. See the docstring there
+            for why.
+        """
+        # Simple identities do not need any computation.
         if self.kind in id_tokens:
             return self.value
+
+        # Compute the result of any children.
         child = self.child.compute()
+
+        # Determine the operation to perform.
         if self.kind in op_tokens:
             op = yo.ops_by_symbol[self.value]
+
+        # Perform the operation and return the result.
         return op(child)
 
 

@@ -25,7 +25,7 @@ I guess. And so was born Yet Another Dice Notation (YADN) and `yadr`.
 
 For a description of YADN see: YADN_
 
-.. _YADN: https://github.com/pji/yadr/blob/main/docs/dice_notation.rst
+.. _YADN: https://github.com/pji/yadr/docs/build/html/dice_notation.html
 
 
 Do we need another Python dice rolling package?

@@ -79,7 +79,7 @@
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">import</span> <span class="nn">operator</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">yadr</span> <span class="kn">import</span> <span class="n">operator</span> <span class="k">as</span> <span class="n">yo</span>
 <span class="kn">from</span> <span class="nn">yadr.model</span> <span class="kn">import</span> <span class="p">(</span>
@@ -126,6 +126,13 @@
 
 
 <span class="c1"># Utility classes and functions.</span>
+<span class="k">def</span> <span class="nf">_bad_type</span><span class="p">(</span><span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">need</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">got</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise a TypeError.&quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">got</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s1"> operand must be </span><span class="si">{</span><span class="n">need</span><span class="si">}</span><span class="s1">. Was </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">.&#39;</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="Tree"><a class="viewcode-back" href="../../execution.html#yadr.parser.Tree">[docs]</a><span class="k">class</span> <span class="nc">Tree</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A binary tree used to execute parsed :ref:`YADN`.</span>
 
@@ -162,6 +169,11 @@
 
 <span class="sd">        :return: The result of the identity or operation token.</span>
 <span class="sd">        :rtype: Result</span>
+
+<span class="sd">        .. warning::</span>
+<span class="sd">            The return here is too complex to type check. At least</span>
+<span class="sd">            it&#39;s too complex for me to type check at this point. I&#39;ll</span>
+<span class="sd">            keep trying, but for now it&#39;s not annotated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Simple identities do not need any computation.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">id_tokens</span><span class="p">:</span>
@@ -174,11 +186,6 @@
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Unknown token </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-        <span class="c1"># Determine which operation is needed.</span>
-        <span class="n">ops_by_symbol</span> <span class="o">=</span> <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span>
-        <span class="n">ops_by_symbol</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_result</span>
-        <span class="n">op</span> <span class="o">=</span> <span class="n">ops_by_symbol</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
-
         <span class="c1"># Compute the value of the tokens that are higher in the</span>
         <span class="c1"># order of operations than this tree and on the left-side</span>
         <span class="c1"># of this expression.</span>
@@ -188,6 +195,14 @@
         <span class="c1"># order of operations than this tree and on the right-side</span>
         <span class="c1"># of this expression.</span>
         <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="c1"># Determine the operation to run.</span>
+        <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_result</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">op</span> <span class="o">=</span> <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Operator not recognized: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">.&#39;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="c1"># Perform the operation on the left and right values,</span>
         <span class="c1"># returning the result.</span>
@@ -225,12 +240,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">child</span>
 
 <div class="viewcode-block" id="Unary.compute"><a class="viewcode-back" href="../../execution.html#yadr.parser.Unary.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the tree.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the tree.</span>
+
+<span class="sd">        :return: The result of the identity or operation token.</span>
+<span class="sd">        :rtype: Result</span>
+
+<span class="sd">        .. warning::</span>
+<span class="sd">            This is not type annotated to remain consistent with</span>
+<span class="sd">            :meth:`yadr.parser.Tree.compute`. See the docstring there</span>
+<span class="sd">            for why.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Simple identities do not need any computation.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">id_tokens</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="c1"># Compute the result of any children.</span>
         <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="c1"># Determine the operation to perform.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">op_tokens</span><span class="p">:</span>
             <span class="n">op</span> <span class="o">=</span> <span class="n">yo</span><span class="o">.</span><span class="n">ops_by_symbol</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+
+        <span class="c1"># Perform the operation and return the result.</span>
         <span class="k">return</span> <span class="n">op</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div></div>
 
 

@@ -438,8 +438,10 @@ degeneration operator::
     n = "success"
 
 
-Result Maps
-===========
+.. _dice_amps:
+
+Dice Maps
+=========
 Maps are key-value pairs that can be used to substitute a mapped
 value onto a roll result. For example, a mapping of the "ability die"
 from *Star Wars: Edge of the Empire* would look like::
@@ -453,14 +455,14 @@ from *Star Wars: Edge of the Empire* would look like::
                  7: "success advantage",
                  8: "advantage advantage"}
 
-A result map cannot be part of an expression. Instead it is passed in a
+A dice map cannot be part of an expression. Instead it is passed in a
 separate roll before the role where it will be used. The map is then
 stored in memory by its name, so that it can be referenced in a later
 roll through a "mapping operator".
 
 .. note:
-    Manually entering a result map for every roll expression is
-    a tedious way to role dice. Interpretors implementing YADN
+    Manually entering a doce map for every roll expression is
+    a tedious way to roll dice. Interpretors implementing YADN
     may include pre-built maps for common dice systems for users
     to reference. The implementation details are left to the
     developer. However, in multiuser systems be careful about
