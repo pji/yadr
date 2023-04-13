@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yadr.yadr &mdash; yadr 0.1.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            yadr
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Public API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dice_notation.html">YADN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requirements.html">yadr Requirements</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">yadr</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">yadr.yadr</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for yadr.yadr</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">yadr</span>
+<span class="sd">~~~~</span>
+
+<span class="sd">The core of the :mod:`yadr` package.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">argparse</span> <span class="kn">import</span> <span class="n">ArgumentParser</span>
+<span class="kn">from</span> <span class="nn">importlib.resources</span> <span class="kn">import</span> <span class="n">open_text</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">yadr</span> <span class="kn">import</span> <span class="n">maps</span> <span class="k">as</span> <span class="n">m</span>
+<span class="kn">from</span> <span class="nn">yadr.encode</span> <span class="kn">import</span> <span class="n">Encoder</span>
+<span class="kn">from</span> <span class="nn">yadr.lex</span> <span class="kn">import</span> <span class="n">Lexer</span>
+<span class="kn">from</span> <span class="nn">yadr.model</span> <span class="kn">import</span> <span class="n">CompoundResult</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">,</span> <span class="n">Result</span><span class="p">,</span> <span class="n">TokenInfo</span>
+<span class="kn">from</span> <span class="nn">yadr.parser</span> <span class="kn">import</span> <span class="n">dice_map</span><span class="p">,</span> <span class="n">Parser</span>
+
+
+<span class="c1"># Execute YADN.</span>
+<div class="viewcode-block" id="roll"><a class="viewcode-back" href="../../api.html#yadr.roll">[docs]</a><span class="k">def</span> <span class="nf">roll</span><span class="p">(</span>
+    <span class="n">yadn</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">yadn_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">dice_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Result</span> <span class="o">|</span> <span class="n">CompoundResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a string of :ref:`YADN` to roll dice.</span>
+
+<span class="sd">    :param yadn: A string of :ref:`YADN` that defines the die roll to</span>
+<span class="sd">        execute.</span>
+<span class="sd">    :param yadn_out: (Optional.) Whether the output should be in native</span>
+<span class="sd">        Python objects or :ref:`YADN` notation. The default is native</span>
+<span class="sd">        Python objects.</span>
+<span class="sd">    :param dice_map: (Optional.) A dictionary of maps for transforming</span>
+<span class="sd">        the value rolled. See :ref:`dice_maps` for details.</span>
+<span class="sd">    :return: The result depends on the details of the die roll.</span>
+<span class="sd">    :rtype: None, Result, or CompoundResult</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; import yadr</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; yadr.roll(&#39;3d6&#39;)                        # doctest: +SKIP</span>
+<span class="sd">        16</span>
+
+<span class="sd">    The specific result will depend on the :ref:`YADN` being executed.</span>
+<span class="sd">    In the example above, it will be an integer in the range of three to</span>
+<span class="sd">    eighteen that is created by generating three random integers in the</span>
+<span class="sd">    range of one to six.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get the default dice maps and add any passed into the roll.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dice_map</span><span class="p">:</span>
+        <span class="n">dice_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">default_maps</span> <span class="o">=</span> <span class="n">get_default_maps</span><span class="p">()</span>
+    <span class="n">default_maps</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dice_map</span><span class="p">)</span>
+
+    <span class="c1"># Lex the YADN into tokens for parsing.</span>
+    <span class="n">lexer</span> <span class="o">=</span> <span class="n">Lexer</span><span class="p">()</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">lexer</span><span class="o">.</span><span class="n">lex</span><span class="p">(</span><span class="n">yadn</span><span class="p">)</span>
+
+    <span class="c1"># Parse and execute the YADN tokens.</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">dice_map</span> <span class="o">=</span> <span class="n">default_maps</span>
+    <span class="n">result</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Result</span> <span class="o">|</span> <span class="n">CompoundResult</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+
+    <span class="c1"># If needed, encode the result into YADN and return the result.</span>
+    <span class="k">if</span> <span class="n">yadn_out</span><span class="p">:</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<span class="c1"># Utility.</span>
+<span class="k">def</span> <span class="nf">read_file</span><span class="p">(</span><span class="n">loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read test from a file.</span>
+
+<span class="sd">    :param loc: The file system location of the file.</span>
+<span class="sd">    :return: A :class:str object.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">contents</span>
+
+
+<span class="k">def</span> <span class="nf">parse_map</span><span class="p">(</span><span class="n">yadn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the contents of a dice mapping file.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;;&#39;</span> <span class="ow">in</span> <span class="n">yadn</span><span class="p">:</span>
+        <span class="n">yadn_parts</span> <span class="o">=</span> <span class="n">yadn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+        <span class="n">dice_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">yadn_parts</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s1">&#39;;&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">part</span>
+            <span class="n">dice_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parse_map</span><span class="p">(</span><span class="n">part</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dice_map</span>
+
+    <span class="n">mlexer</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">Lexer</span><span class="p">()</span>
+    <span class="n">mparser</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">Parser</span><span class="p">()</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="n">mlexer</span><span class="o">.</span><span class="n">lex</span><span class="p">(</span><span class="n">yadn</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">mparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="p">}</span>
+
+
+<span class="c1"># Command parsing.</span>
+<div class="viewcode-block" id="add_dice_map"><a class="viewcode-back" href="../../api.html#yadr.add_dice_map">[docs]</a><span class="k">def</span> <span class="nf">add_dice_map</span><span class="p">(</span><span class="n">loc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the dice-maps from a given file.</span>
+
+<span class="sd">    :param loc: The location of the file of dice mappings to load.</span>
+<span class="sd">    :return: None.</span>
+<span class="sd">    :rtype: NoneType</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; from yadr import add_dice_map</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; path = &#39;tests/data/__test_dice_map.txt&#39;</span>
+<span class="sd">        &gt;&gt;&gt; add_dice_map(path)              # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">        {&#39;spam&#39;: {1: &#39;eggs&#39;, 2: &#39;bacon&#39;, 3: &#39;eggs&#39;, 4: &#39;tomato&#39;}, &#39;fudge&#39;:</span>
+<span class="sd">        {1: &#39;-&#39;, 2: &#39;&#39;, 3: &#39;+&#39;}}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">yadn</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parse_map</span><span class="p">(</span><span class="n">yadn</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_default_maps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the default dice maps.</span>
+
+<span class="sd">    :return: The default dice maps as a :class:`dict` of :class:`dict`</span>
+<span class="sd">        objects.</span>
+<span class="sd">    :rtype: dict</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; from yadr.yadr import get_default_maps</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; get_default_maps()              # doctest: +ELLIPSIS</span>
+<span class="sd">        {&#39;sweote boost&#39;: {1: &#39;&#39;,...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">default_file</span> <span class="o">=</span> <span class="n">open_text</span><span class="p">(</span><span class="s1">&#39;yadr.data&#39;</span><span class="p">,</span> <span class="s1">&#39;dice_maps.yadn&#39;</span><span class="p">)</span>
+    <span class="n">default_maps_yadn</span> <span class="o">=</span> <span class="n">default_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">default_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">parse_map</span><span class="p">(</span><span class="n">default_maps_yadn</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="list_dice_maps"><a class="viewcode-back" href="../../api.html#yadr.list_dice_maps">[docs]</a><span class="k">def</span> <span class="nf">list_dice_maps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the list of the default dice maps.</span>
+
+<span class="sd">    :return: A :class:`str` object.</span>
+<span class="sd">    :rtype: str</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; from yadr import list_dice_maps</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; list_dice_maps()                # doctest: +ELLIPSIS</span>
+<span class="sd">        &#39;sweote boost...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dice_map</span> <span class="o">=</span> <span class="n">get_default_maps</span><span class="p">()</span>
+    <span class="n">maps_</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dice_map</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">maps_</span></div>
+
+
+<span class="k">def</span> <span class="nf">parse_cli</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse command line options.&quot;&quot;&quot;</span>
+    <span class="c1"># Stand up the parser.</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Execute YADN syntax to roll dice.&#39;</span><span class="p">,</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s1">&#39;yadr&#39;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Define the command line arguments.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;yadn&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;A string of YADN describing the die roll.&#39;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;?&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--list_dice_maps&#39;</span><span class="p">,</span> <span class="s1">&#39;-l&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;List the names of the default dice maps.&#39;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--add_dice_map&#39;</span><span class="p">,</span> <span class="s1">&#39;-m&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Load the dice mappings at the given file location.&#39;</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Parse and execute the command.</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">dice_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">add_dice_map</span><span class="p">:</span>
+        <span class="n">dice_map</span> <span class="o">=</span> <span class="n">add_dice_map</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">add_dice_map</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">list_dice_maps</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">list_dice_maps</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">yadn</span><span class="p">:</span>
+        <span class="n">raw_result</span> <span class="o">=</span> <span class="n">roll</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">yadn</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dice_map</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_result</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Paul J. Iutzi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

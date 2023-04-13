@@ -17,7 +17,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="YADN" href="dice_notation.html" /> 
+    <link rel="next" title="Public API" href="api.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,9 +42,10 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Public API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="dice_notation.html">YADN</a></li>
-<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
 </ul>
 
         </div>
@@ -77,6 +78,11 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Public API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#rolling-dice">Rolling Dice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#managing-dice-maps">Managing Dice Maps</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="dice_notation.html">YADN</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#what-is-dice-notation">What is dice notation?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#sources">Sources</a></li>
@@ -88,16 +94,9 @@
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#pool-degeneration-operators">Pool Degeneration Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#dice-operators">Dice Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#qualifiers">Qualifiers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="dice_notation.html#result-maps">Result Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dice_notation.html#dice-maps">Dice Maps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#mapping-operators">Mapping Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dice_notation.html#example-usage">Example Usage</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="requirements.html#purpose">Purpose</a></li>
-<li class="toctree-l2"><a class="reference internal" href="requirements.html#functional-requirements">Functional Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="requirements.html#technical-requirements">Technical Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="requirements.html#design-discussion">Design Discussion</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a><ul>
@@ -105,6 +104,13 @@
 <li class="toctree-l2"><a class="reference internal" href="lexing.html">Lexing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="parsing.html">Parsing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="execution.html">Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#purpose">Purpose</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#functional-requirements">Functional Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#technical-requirements">Technical Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#design-discussion">Design Discussion</a></li>
 </ul>
 </li>
 </ul>
@@ -127,7 +133,7 @@ run it as a module with the following:</p>
 </pre></div>
 </div>
 <p>If you want to import it into your own code, install and import the
-package as usual. You can then use the <code class="xref py py-func docutils literal notranslate"><span class="pre">yadr.roll()</span></code> function
+package as usual. You can then use the <a class="reference internal" href="api.html#yadr.roll" title="yadr.roll"><code class="xref py py-func docutils literal notranslate"><span class="pre">yadr.roll()</span></code></a> function
 to execute a string of YADN.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">yadr</span>
 <span class="go">&gt;&gt;&gt;</span>
@@ -149,7 +155,7 @@ to execute a string of YADN.:</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="dice_notation.html" class="btn btn-neutral float-right" title="YADN" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="api.html" class="btn btn-neutral float-right" title="Public API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

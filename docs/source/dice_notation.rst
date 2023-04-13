@@ -438,7 +438,7 @@ degeneration operator::
     n = "success"
 
 
-.. _dice_amps:
+.. _dice_maps:
 
 Dice Maps
 =========

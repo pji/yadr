@@ -2,7 +2,7 @@
 yadr
 ~~~~
 
-The core of the :ref:`yadr` package.
+The core of the :mod:`yadr` package.
 """
 from argparse import ArgumentParser
 from importlib.resources import open_text
@@ -101,7 +101,7 @@ def parse_map(yadn: str) -> dict[str, DiceMapping]:
 
 # Command parsing.
 def add_dice_map(loc: str) -> dict[str, DiceMapping]:
-    """Load the dice-maps in the given file into memory.
+    """Load the dice-maps from a given file.
 
     :param loc: The location of the file of dice mappings to load.
     :return: None.
@@ -109,18 +109,31 @@ def add_dice_map(loc: str) -> dict[str, DiceMapping]:
 
     Usage::
 
+        >>> from yadr import add_dice_map
+        >>>
         >>> path = 'tests/data/__test_dice_map.txt'
         >>> add_dice_map(path)              # doctest: +NORMALIZE_WHITESPACE
         {'spam': {1: 'eggs', 2: 'bacon', 3: 'eggs', 4: 'tomato'}, 'fudge':
         {1: '-', 2: '', 3: '+'}}
-
     """
     yadn = read_file(loc)
     return parse_map(yadn)
 
 
 def get_default_maps() -> dict[str, DiceMapping]:
-    """Get the default dice maps."""
+    """Get the default dice maps.
+
+    :return: The default dice maps as a :class:`dict` of :class:`dict`
+        objects.
+    :rtype: dict
+
+    Usage::
+
+        >>> from yadr.yadr import get_default_maps
+        >>>
+        >>> get_default_maps()              # doctest: +ELLIPSIS
+        {'sweote boost': {1: '',...
+    """
     default_file = open_text('yadr.data', 'dice_maps.yadn')
     default_maps_yadn = default_file.read()
     default_file.close()
@@ -128,10 +141,17 @@ def get_default_maps() -> dict[str, DiceMapping]:
 
 
 def list_dice_maps() -> str:
-    """Get the list of the currently loaded dice maps.
+    """Get the list of the default dice maps.
 
-    :return: A :class:str object.
+    :return: A :class:`str` object.
     :rtype: str
+
+    Usage::
+
+        >>> from yadr import list_dice_maps
+        >>>
+        >>> list_dice_maps()                # doctest: +ELLIPSIS
+        'sweote boost...
     """
     dice_map = get_default_maps()
     maps_ = '\n'.join(dice_map)
@@ -156,7 +176,7 @@ def parse_cli() -> None:
     )
     p.add_argument(
         '--list_dice_maps', '-l',
-        help='List the names of the loaded dice maps.',
+        help='List the names of the default dice maps.',
         action='store_true'
     )
     p.add_argument(

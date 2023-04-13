@@ -17,8 +17,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="yadr Requirements" href="requirements.html" />
-    <link rel="prev" title="Welcome to yadr’s documentation!" href="index.html" /> 
+    <link rel="next" title="yadr Internals" href="internals.html" />
+    <link rel="prev" title="Public API" href="api.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,6 +43,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Public API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">YADN</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#what-is-dice-notation">What is dice notation?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sources">Sources</a></li>
@@ -54,13 +55,13 @@
 <li class="toctree-l2"><a class="reference internal" href="#pool-degeneration-operators">Pool Degeneration Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dice-operators">Dice Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#qualifiers">Qualifiers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#result-maps">Result Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dice-maps">Dice Maps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mapping-operators">Mapping Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-usage">Example Usage</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
 </ul>
 
         </div>
@@ -510,8 +511,8 @@ n = &quot;success&quot;
 </pre></div>
 </div>
 </section>
-<section id="result-maps">
-<h2>Result Maps<a class="headerlink" href="#result-maps" title="Permalink to this heading"></a></h2>
+<section id="dice-maps">
+<span id="id2"></span><h2>Dice Maps<a class="headerlink" href="#dice-maps" title="Permalink to this heading"></a></h2>
 <p>Maps are key-value pairs that can be used to substitute a mapped
 value onto a roll result. For example, a mapping of the “ability die”
 from <em>Star Wars: Edge of the Empire</em> would look like:</p>
@@ -525,7 +526,7 @@ from <em>Star Wars: Edge of the Empire</em> would look like:</p>
              <span class="mi">8</span><span class="p">:</span> <span class="s2">&quot;advantage advantage&quot;</span><span class="p">}</span>
 </pre></div>
 </div>
-<p>A result map cannot be part of an expression. Instead it is passed in a
+<p>A dice map cannot be part of an expression. Instead it is passed in a
 separate roll before the role where it will be used. The map is then
 stored in memory by its name, so that it can be referenced in a later
 roll through a “mapping operator”.</p>
@@ -654,8 +655,8 @@ having a fragment of the terminal’s passcode algorithms:</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to yadr’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="requirements.html" class="btn btn-neutral float-right" title="yadr Requirements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="api.html" class="btn btn-neutral float-left" title="Public API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="internals.html" class="btn btn-neutral float-right" title="yadr Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

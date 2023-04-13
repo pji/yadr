@@ -13,9 +13,10 @@ Welcome to yadr's documentation!
    :caption: Contents:
 
    self
+   /api.rst
    /dice_notation.rst
-   /requirements.rst
    /internals.rst
+   /requirements.rst
 
 
 .. _intro:
