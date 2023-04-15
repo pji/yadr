@@ -4,9 +4,8 @@ model
 
 Common data elements for the yadr package.
 """
-from collections import UserString
-from enum import Enum, EnumMeta, auto
-from typing import Generic, NamedTuple, Sequence, Union, Tuple, TypeVar
+from enum import Enum, auto
+from typing import Union
 
 
 # YADN Tokens.
@@ -127,21 +126,20 @@ yadn_symbols_raw = {
 
 
 # Classes.
-class CompoundResult(Tuple):
+class CompoundResult(tuple):
     """The result of multiple rolls."""
 
 
 # Types.
 DiceMapping = dict[int, Union[int, str]]
-NamedMap = Tuple[str, DiceMapping]
-Pool = Tuple[int]
+NamedMap = tuple[str, DiceMapping]
+Pool = tuple[int, ...]
 Result = Union[
     int,
     bool,
     str,
     Pool,
     NamedMap,
-    None
 ]
 TokenInfo = tuple[Token, Result]
 

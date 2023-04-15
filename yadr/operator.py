@@ -4,9 +4,20 @@ operator
 
 Operators for handling the dice part of dice notation.
 """
+from collections.abc import Callable, Sequence
 import random
 import operator
-from typing import Sequence
+
+
+# Types for annotation.
+OptionsOp = Callable[[str, str], tuple[str, str]]
+ChoiceOp = Callable[[bool, tuple[str, str]], str]
+PoolGenOp = Callable[[int, int], tuple[int, ...]]
+DiceOp = Callable[[int, int], int]
+MathOp = Callable[[int, int], int]
+PoolOp = Callable[[Sequence[int], int], tuple[int, ...]]
+PoolDegenOp = Callable[[Sequence[int], int], int]
+UPoolDegenOp = Callable[[Sequence[int]], int]
 
 
 # Choice operators.

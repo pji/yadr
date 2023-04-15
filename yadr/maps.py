@@ -2,16 +2,17 @@
 maps
 ~~~~
 
-A module for handling YADN dice maps.
+A module for handling :ref:`YADN` dice maps.
 """
 from typing import Callable, Optional
 
-from yadr.base import BaseLexer
+from yadr.base import BaseLexer, _mutable
 from yadr.model import NamedMap, Result, symbols, Token, TokenInfo
 
 
 # Lexing.
 class Lexer(BaseLexer):
+    """A state machine to lex dice maps in :ref:`YADN` dice notation."""
     def __init__(self) -> None:
         state_map: dict[Token, Callable] = {
             Token.START: self._start,
@@ -160,9 +161,10 @@ class Lexer(BaseLexer):
 
 # Parsing.
 class Parser:
-    def __init__(self):
-        self.name = ''
-        self.pairs = []
+    """A state machine for parsing :ref:`YADN` dice maps."""
+    def __init__(self) -> None:
+        self.name: str = ''
+        self.pairs: list[tuple[int, str | int]] = []
         self.buffer: Optional[int] = None
         self.state = Token.START
         self.state_map = {
@@ -174,7 +176,13 @@ class Parser:
         }
 
     def parse(self, tokens: tuple[TokenInfo, ...]) -> NamedMap:
-        """Parse YADN dice mapping tokens."""
+        """Parse YADN dice mapping tokens.
+
+        :param tokens: A dice map as a sequence of :ref:`YADN` tokens
+            to parse.
+        :return: A class defined in :class:`yadr.model.NamedMap`.
+        :rtype: tuple
+        """
         for token_info in tokens:
             process = self.state_map[self.state]
             process(token_info)
@@ -195,7 +203,7 @@ class Parser:
 
     def _name(self, token_info: tuple[Token, Result]) -> None:
         token, value = token_info
-        if token == Token.QUALIFIER:
+        if token == Token.QUALIFIER and isinstance(value, str):
             self.name = value
         elif token == Token.NAME_DELIMITER:
             self.state = Token.KEY
@@ -207,8 +215,13 @@ class Parser:
 
     def _value(self, token_info: tuple[Token, Result]) -> None:
         token, value = token_info
-        if (token == Token.QUALIFIER
-                or token == Token.NUMBER and isinstance(value, int)):
+        if (
+            isinstance(self.buffer, int)
+            and (
+                token == Token.QUALIFIER and isinstance(value, str)
+                or token == Token.NUMBER and isinstance(value, int)
+            )
+        ):
             key = self.buffer
             pair = (key, value)
             self.pairs.append(pair)

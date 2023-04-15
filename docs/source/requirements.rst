@@ -89,6 +89,7 @@ Right now, lexing follows the following process:
 *   Get character.
 *   Send character to processing method for current state.
 *   Check:
+
     *   If character should be buffered,
     *   If state changes,
     *   If character allowed.
@@ -122,21 +123,26 @@ access to preloaded dice maps without those dice maps being global
 variables. It seems messy.
 
 *   There are three phases of interpreting YADN:
+
     *   Lexing,
     *   Parsing,
     *   Executing.
+
 *   Operators act during the execution phase.
 *   That suggests that storing the dice map in either the lexer or
     the parser won't help.
 *   Execution is done by Tree objects.
 *   Tree objects are:
+
     *   Created by the parser,
     *   Executed by the parser.
+
 *   So, in theory, the parser could store the dice_map and pass it to
     the tree as part of the call to execute.
 *   This would require dice mappings to be stored in the parser
     during parsing.
 *   This requires either:
+
     *   The parsing rules are methods of the parser,
     *   The parser object is passed to the pasring rules.
 
