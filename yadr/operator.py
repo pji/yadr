@@ -18,16 +18,7 @@ MathOp = Callable[[int, int], int]
 PoolOp = Callable[[Sequence[int], int], tuple[int, ...]]
 PoolDegenOp = Callable[[Sequence[int], int], int]
 UPoolDegenOp = Callable[[Sequence[int]], int]
-Operation = (
-    OptionsOp
-    | ChoiceOp
-    | PoolGenOp
-    | DiceOp
-    | MathOp
-    | PoolOp
-    | PoolDegenOp
-    | UPoolDegenOp
-)
+Operation = Callable
 
 
 # Registration.
@@ -38,37 +29,77 @@ ops: dict[str, Operation] = {
     '%': operator.mod,
     '+': operator.add,
     '-': operator.sub,
+    '>': operator.gt,
+    '<': operator.le,
+    '>=': operator.ge,
+    '<=': operator.le,
+    '==': operator.eq,
+    '!=': operator.ne,
 }
 
 
+class operation:
+    """A registration decorator for operations.
+
+    :param symbol: The string used to refer to the operation.
+    :return: None.
+    :rtype: NoneType
+    """
+    def __init__(self, symbol: str) -> None:
+        self.symbol = symbol
+
+    def __call__(self, fn: Operation) -> Operation:
+        """Register the operation.
+
+        :param fn: The decorated function. It's sent automatically
+            when :class:`operator.operation` is used as a decorator.
+        :return: The decorated :class:`collections.abc.Callable`.
+        :rtype: Callable
+        """
+        ops[self.symbol] = fn
+        return fn
+
+
 # Choice operators.
+@operation(':')
 def choice_options(a: str, b: str) -> tuple[str, str]:
-    """Create the options for a choice."""
+    """Create the options for a choice.
+
+    :param a: The qualifier for the true condition of a choice.
+    :param b: The qualifier for the false condition of a choice.
+    :return: The qualifiers as a :class:`tuple`.
+    :rtype: tuple
+
+    Usage::
+
+        >>> choice_options('success', 'failure')
+        ('success', 'failure')
+    """
     return (a, b)
 
 
+@operation('?')
 def choice(boolean: bool, options: tuple[str, str]) -> str:
-    """Make a choice."""
+    """Make a choice.
+
+    :param boolean: The decision as a :class:`bool`.
+    :param options: The two options to pick from.
+    :return: The chosen option as a :class:`str`.
+    :rtype: str
+
+    Usage::
+
+        >>> choice(False, ('spam', 'eggs'))
+        'eggs'
+    """
     result = options[0]
     if not boolean:
         result = options[1]
     return result
 
 
-# Pool generation operator.
-def dice_pool(num: int, size: int) -> tuple[int, ...]:
-    """Roll a die pool."""
-    return tuple(random.randint(1, size) for _ in range(num))
-
-
-def exploding_pool(num: int, size: int) -> tuple[int, ...]:
-    """Roll a die pool."""
-    pool: Sequence[int] = dice_pool(num, size)
-    pool = [_explode(n, size) for n in pool]
-    return tuple(pool)
-
-
 # Dice operators.
+@operation('dc')
 def concat(num: int, size: int) -> int:
     """Concatenate the least significant digits."""
     base = 10
@@ -77,29 +108,34 @@ def concat(num: int, size: int) -> int:
     return pool_concatenate(pool)
 
 
+@operation('d')
 def die(num: int, size: int) -> int:
     """Roll a number of same-sized dice and return the result."""
     pool = dice_pool(num, size)
     return sum(pool)
 
 
+@operation('d!')
 def exploding_die(num: int, size: int) -> int:
     """Roll a number of exploding same-sized dice."""
     return sum(exploding_pool(num, size))
 
 
+@operation('dh')
 def keep_high_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the highest."""
     pool = dice_pool(num, size)
     return max(pool)
 
 
+@operation('dl')
 def keep_low_die(num: int, size: int) -> int:
     """Roll a number of dice and keep the lowest."""
     pool = dice_pool(num, size)
     return min(pool)
 
 
+@operation('dw')
 def wild_die(num: int, size: int) -> int:
     """Roll a number of same-sized dice and return the result."""
     wild = exploding_pool(1, size)
@@ -110,6 +146,7 @@ def wild_die(num: int, size: int) -> int:
 
 
 # Pool operators.
+@operation('pc')
 def pool_cap(pool: Sequence[int], cap: int) -> tuple[int, ...]:
     """Cap the maximum value in a pool."""
     result = []
@@ -120,6 +157,7 @@ def pool_cap(pool: Sequence[int], cap: int) -> tuple[int, ...]:
     return tuple(result)
 
 
+@operation('pf')
 def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
     """Floor the minimum value in a pool."""
     result = []
@@ -130,14 +168,17 @@ def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
     return tuple(result)
 
 
+@operation('pa')
 def pool_keep_above(pool: Sequence[int], floor: int) -> tuple[int, ...]:
     return tuple(n for n in pool if n >= floor)
 
 
+@operation('pb')
 def pool_keep_below(pool: Sequence[int], ceiling: int) -> tuple[int, ...]:
     return tuple(n for n in pool if n <= ceiling)
 
 
+@operation('ph')
 def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     """Keep a number of the highest dice."""
     pool = list(pool)
@@ -153,6 +194,7 @@ def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     return tuple(pool)
 
 
+@operation('pl')
 def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     """Keep a number of the lowest dice."""
     pool = list(pool)
@@ -168,43 +210,68 @@ def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
     return tuple(pool)
 
 
+@operation('p%')
 def pool_modulo(pool: Sequence[int], divisor: int) -> tuple[int, ...]:
     """Perform a modulo operation of each member."""
     return tuple(n % divisor for n in pool)
 
 
+@operation('pr')
 def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
     """Remove members of a pool of the given value."""
     return tuple(n for n in pool if n != cut)
 
 
 # Pool degeneration operators.
+@operation('C')
 def pool_concatenate(pool: Sequence[int]) -> int:
     """Count the dice in the pool."""
     str_value = ''.join((str(m) for m in pool))
     return int(str_value)
 
 
+@operation('N')
 def pool_count(pool: Sequence[int]) -> int:
     """Count the dice in the pool."""
     return len(pool)
 
 
+@operation('S')
 def pool_sum(pool: Sequence[int]) -> int:
     """Sum the dice in the pool."""
     return sum(pool)
 
 
+@operation('ns')
 def count_successes(pool: Sequence[int], target: int) -> int:
     """Count the number of successes in the pool."""
     pool = pool_keep_above(pool, target)
     return len(pool)
 
 
+@operation('nb')
 def count_successes_with_botch(pool: Sequence[int], target: int) -> int:
+    """Count the number of successes in the pool. Then remove a success
+    for each botch.
+    """
     botches = len([n for n in pool if n == 1])
     pool = pool_keep_above(pool, target)
     return len(pool) - botches
+
+
+# Pool generation operator.
+@operation('g')
+def dice_pool(num: int, size: int) -> tuple[int, ...]:
+    """Roll a die pool."""
+    return tuple(random.randint(1, size) for _ in range(num))
+
+
+@operation('g!')
+def exploding_pool(num: int, size: int) -> tuple[int, ...]:
+    """Roll a die pool."""
+    pool: Sequence[int] = dice_pool(num, size)
+    pool = [_explode(n, size) for n in pool]
+    return tuple(pool)
 
 
 # Utility functions.
@@ -222,64 +289,3 @@ def _explode(value: int, size: int) -> int:
         explode_value = random.randint(1, size)
         value += _explode(explode_value, size)
     return value
-
-
-# Registration.
-ops_by_symbol = {
-    # Choice operator.
-    '?': choice,
-
-    # Comparison operators.
-    '>': operator.gt,
-    '<': operator.le,
-    '>=': operator.ge,
-    '<=': operator.le,
-    '==': operator.eq,
-    '!=': operator.ne,
-
-    # Dice operators.
-    'd': die,
-    'd!': exploding_die,
-    'dc': concat,
-    'dh': keep_high_die,
-    'dl': keep_low_die,
-    'dw': wild_die,
-
-    # Operators.
-    '^': operator.pow,
-
-    # Multiplication/division operators.
-    '*': operator.mul,
-    '/': operator.floordiv,
-    '%': operator.mod,
-
-    # Addition/subtraction operators.
-    '+': operator.add,
-    '-': operator.sub,
-
-    # Pool degeneration operators.
-    'nb': count_successes_with_botch,
-    'ns': count_successes,
-
-    # Pool generation operators.
-    'g': dice_pool,
-    'g!': exploding_pool,
-
-    # Pool operators.
-    'pa': pool_keep_above,
-    'pb': pool_keep_below,
-    'pc': pool_cap,
-    'pf': pool_floor,
-    'ph': pool_keep_high,
-    'pl': pool_keep_low,
-    'pr': pool_remove,
-    'p%': pool_modulo,
-
-    # Options operator.
-    ':': choice_options,
-
-    # Unary pool degeneration operators.
-    'C': pool_concatenate,
-    'N': pool_count,
-    'S': pool_sum,
-}

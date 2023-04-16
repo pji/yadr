@@ -125,12 +125,13 @@ class Tree:
         right = self.right.compute()
 
         # Determine the operation to run.
-        yo.ops_by_symbol['m'] = self._map_result
         try:
-            op = yo.ops_by_symbol[self.value]
-        except IndexError:
-            msg = f'Operator not recognized: {self.value}.'
-            raise ValueError(msg)
+            op = yo.ops[self.value]
+        except KeyError:
+            if self.value != 'm':
+                msg = f'Operator not recognized: {self.value}.'
+                raise ValueError(msg)
+            op = self._map_result
 
         # Perform the operation on the left and right values,
         # returning the result.
@@ -187,7 +188,7 @@ class Unary(Tree):
 
         # Determine the operation to perform.
         if self.kind in op_tokens:
-            op = yo.ops_by_symbol[self.value]
+            op = yo.ops[self.value]
 
         # Perform the operation and return the result.
         return op(child)
