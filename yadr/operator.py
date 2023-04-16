@@ -18,6 +18,27 @@ MathOp = Callable[[int, int], int]
 PoolOp = Callable[[Sequence[int], int], tuple[int, ...]]
 PoolDegenOp = Callable[[Sequence[int], int], int]
 UPoolDegenOp = Callable[[Sequence[int]], int]
+Operation = (
+    OptionsOp
+    | ChoiceOp
+    | PoolGenOp
+    | DiceOp
+    | MathOp
+    | PoolOp
+    | PoolDegenOp
+    | UPoolDegenOp
+)
+
+
+# Registration.
+ops: dict[str, Operation] = {
+    '^': operator.pow,
+    '*': operator.mul,
+    '/': operator.floordiv,
+    '%': operator.mod,
+    '+': operator.add,
+    '-': operator.sub,
+}
 
 
 # Choice operators.
