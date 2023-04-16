@@ -461,7 +461,7 @@ stored in memory by its name, so that it can be referenced in a later
 roll through a "mapping operator".
 
 .. note:
-    Manually entering a doce map for every roll expression is
+    Manually entering a dice map for every roll expression is
     a tedious way to roll dice. Interpretors implementing YADN
     may include pre-built maps for common dice systems for users
     to reference. The implementation details are left to the

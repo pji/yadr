@@ -101,7 +101,26 @@ def choice(boolean: bool, options: tuple[str, str]) -> str:
 # Dice operators.
 @operation('dc')
 def concat(num: int, size: int) -> int:
-    """Concatenate the least significant digits."""
+    """Concatenate the least significant digits.
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The concatenated least significant digits as a
+        :class:`int`.
+    :rtype: int
+
+    Usage::
+
+        >>> # This line is to ensure predictability for testing.
+        >>> # Do not use outside of test cases.
+        >>> _seed('spam')
+        >>>
+        >>> # Roll 2d10 as percentile dice. It's not quite right,
+        >>> # since 00 should be 100, but the physical dice have
+        >>> # that problem, too.
+        >>> concat(2, 10)
+        21
+    """
     base = 10
     pool = dice_pool(num, size)
     pool = pool_modulo(pool, base)
