@@ -65,6 +65,8 @@ class operation:
 def choice_options(a: str, b: str) -> tuple[str, str]:
     """Create the options for a choice.
 
+    :ref:`YADN` reference: :ref:`qualifiers`
+
     :param a: The qualifier for the true condition of a choice.
     :param b: The qualifier for the false condition of a choice.
     :return: The qualifiers as a :class:`tuple`.
@@ -81,6 +83,8 @@ def choice_options(a: str, b: str) -> tuple[str, str]:
 @operation('?')
 def choice(boolean: bool, options: tuple[str, str]) -> str:
     """Make a choice.
+
+    :ref:`YADN` reference: :ref:`qualifiers`
 
     :param boolean: The decision as a :class:`bool`.
     :param options: The two options to pick from.
@@ -103,9 +107,11 @@ def choice(boolean: bool, options: tuple[str, str]) -> str:
 def concat(num: int, size: int) -> int:
     """Concatenate the least significant digits.
 
+    :ref:`YADN` reference: :ref:`concat`
+
     :param num: The number of dice to roll.
     :param size: The highest number that can be rolled on a die.
-    :return: The concatenated least significant digits as a
+    :return: The concatenated least significant digits as an
         :class:`int`.
     :rtype: int
 
@@ -129,14 +135,52 @@ def concat(num: int, size: int) -> int:
 
 @operation('d')
 def die(num: int, size: int) -> int:
-    """Roll a number of same-sized dice and return the result."""
+    """Roll a number of same-sized dice and return the result.
+
+    :ref:`YADN` reference: :ref:`die`
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The sum of the result of each die as an :class:`int`.
+    :rtype: int
+
+    Usage::
+
+        >>> # This line is to ensure predictability for testing.
+        >>> # Do not use outside of test cases.
+        >>> _seed('spam')
+        >>>
+        >>> # Roll 3d6.
+        >>> die(3, 6)
+        5
+
+    """
     pool = dice_pool(num, size)
     return sum(pool)
 
 
 @operation('d!')
 def exploding_die(num: int, size: int) -> int:
-    """Roll a number of exploding same-sized dice."""
+    """Roll a number of exploding same-sized dice.
+
+    :ref:`YADN` reference: :ref:`explode`
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The sum of the result of each die as an :class:`int`.
+    :rtype: int
+
+    Usage::
+
+        >>> # This line is to ensure predictability for testing.
+        >>> # Do not use outside of test cases.
+        >>> _seed('spam')
+        >>>
+        >>> # Roll 5d!6.
+        >>> exploding_die(5, 6)
+        15
+
+    """
     return sum(exploding_pool(num, size))
 
 

@@ -330,10 +330,14 @@ S P (pool sum):
         n = 30
 
 
+.. _dice_ops:
+
 Dice Operators
 ==============
 Dice operators generate a pool, act on the members, and then collapse
 that pool into a number. They are defined as follows:
+
+.. _die:
 
 x d y (dice sum):
     Generate x random integers n within the range 1 ≤ n ≤ y. Unless
@@ -346,6 +350,8 @@ x d y (dice sum):
         n = S[11]
         n = 11
 
+.. _concat:
+
 x dc y (concat):
     Generate x random integers n within the range 1 ≤ n ≤ y. Concatenate
     the least significant digit of each value into a single integer. For
@@ -355,6 +361,8 @@ x dc y (concat):
         n = C [3, 17] p% 10
         n = C [3, 7]
         n = 37
+
+.. _explode:
 
 x d! y (exploding dice):
     Like `dice sum` but if any n = y, it explodes (a new integer in the
@@ -416,6 +424,8 @@ x dw y (wild die):
         n = S[1] + S[5, 1, 6]
         n = 0
 
+
+.. _qualifiers:
 
 Qualifiers
 ==========

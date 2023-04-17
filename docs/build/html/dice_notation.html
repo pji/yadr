@@ -404,10 +404,10 @@ that sum. For example:</p>
 </dl>
 </section>
 <section id="dice-operators">
-<h2>Dice Operators<a class="headerlink" href="#dice-operators" title="Permalink to this heading"></a></h2>
+<span id="dice-ops"></span><h2>Dice Operators<a class="headerlink" href="#dice-operators" title="Permalink to this heading"></a></h2>
 <p>Dice operators generate a pool, act on the members, and then collapse
 that pool into a number. They are defined as follows:</p>
-<dl>
+<dl id="die">
 <dt>x d y (dice sum):</dt><dd><p>Generate x random integers n within the range 1 ≤ n ≤ y. Unless
 modified by a roll operator, the result is treated as the sum
 of the integers. Roll operators are allowed to interact with the
@@ -419,6 +419,8 @@ of the same dice. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="concat">
 <dt>x dc y (concat):</dt><dd><p>Generate x random integers n within the range 1 ≤ n ≤ y. Concatenate
 the least significant digit of each value into a single integer. For
 example:</p>
@@ -429,6 +431,8 @@ example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="explode">
 <dt>x d! y (exploding dice):</dt><dd><p>Like <cite>dice sum</cite> but if any n = y, it explodes (a new integer in the
 same range is generated and added to n). New integers generated
 from explosions also explode if they equal y. For example:</p>
@@ -492,7 +496,7 @@ results than YADN can currently handle).:</p>
 </dl>
 </section>
 <section id="qualifiers">
-<h2>Qualifiers<a class="headerlink" href="#qualifiers" title="Permalink to this heading"></a></h2>
+<span id="id2"></span><h2>Qualifiers<a class="headerlink" href="#qualifiers" title="Permalink to this heading"></a></h2>
 <p>It is common for dice systems to turn a quantitative result generated
 by the dice into a qualitative result. A common example of this is the
 “critical hit” system in later editions of <em>Dungeons and Dragons:</em> in
@@ -512,7 +516,7 @@ n = &quot;success&quot;
 </div>
 </section>
 <section id="dice-maps">
-<span id="id2"></span><h2>Dice Maps<a class="headerlink" href="#dice-maps" title="Permalink to this heading"></a></h2>
+<span id="id3"></span><h2>Dice Maps<a class="headerlink" href="#dice-maps" title="Permalink to this heading"></a></h2>
 <p>Maps are key-value pairs that can be used to substitute a mapped
 value onto a roll result. For example, a mapping of the “ability die”
 from <em>Star Wars: Edge of the Empire</em> would look like:</p>

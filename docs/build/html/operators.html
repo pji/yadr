@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operators &mdash; yadr 0.1.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="yadr Requirements" href="requirements.html" />
+    <link rel="prev" title="Execution" href="execution.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            yadr
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to yadr’s documentation!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Public API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dice_notation.html">YADN</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="internals.html">yadr Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lexing.html">Lexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parsing.html">Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="execution.html">Execution</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Operators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#qualifiers"><span class="xref std std-ref">qualifiers</span></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.choice"><code class="docutils literal notranslate"><span class="pre">choice()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.choice_options"><code class="docutils literal notranslate"><span class="pre">choice_options()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dice-ops"><span class="xref std std-ref">dice_ops</span></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.concat"><code class="docutils literal notranslate"><span class="pre">concat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.die"><code class="docutils literal notranslate"><span class="pre">die()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.exploding_die"><code class="docutils literal notranslate"><span class="pre">exploding_die()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">yadr Requirements</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">yadr</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="internals.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> Internals</a></li>
+      <li class="breadcrumb-item active">Operators</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/operators.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="operators">
+<span id="id1"></span><h1>Operators<a class="headerlink" href="#operators" title="Permalink to this heading"></a></h1>
+<p>Operators are functions that implement the various operators found
+in <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a>. <code class="xref py py-mod docutils literal notranslate"><span class="pre">yadr</span></code> is designed to avoid the need for
+someone using it to ever need to call these functions directly. They
+are intended to be invoked through the parsing of <a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a>. Their
+documentation here is just intended for maintenance purposes.</p>
+<section id="qualifiers">
+<h2><a class="reference internal" href="dice_notation.html#qualifiers"><span class="std std-ref">Qualifiers</span></a><a class="headerlink" href="#qualifiers" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.choice">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boolean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></span><a class="reference internal" href="_modules/yadr/operator.html#choice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.choice" title="Permalink to this definition"></a></dt>
+<dd><p>Make a choice.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#qualifiers"><span class="std std-ref">Qualifiers</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>boolean</strong> – The decision as a <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>.</p></li>
+<li><p><strong>options</strong> – The two options to pick from.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The chosen option as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)">str</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">choice</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">,</span> <span class="s1">&#39;eggs&#39;</span><span class="p">))</span>
+<span class="go">&#39;eggs&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.choice_options">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">choice_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/yadr/operator.html#choice_options"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.choice_options" title="Permalink to this definition"></a></dt>
+<dd><p>Create the options for a choice.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#qualifiers"><span class="std std-ref">Qualifiers</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> – The qualifier for the true condition of a choice.</p></li>
+<li><p><strong>b</strong> – The qualifier for the false condition of a choice.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The qualifiers as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)">tuple</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">choice_options</span><span class="p">(</span><span class="s1">&#39;success&#39;</span><span class="p">,</span> <span class="s1">&#39;failure&#39;</span><span class="p">)</span>
+<span class="go">(&#39;success&#39;, &#39;failure&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="dice-ops">
+<h2><a class="reference internal" href="dice_notation.html#dice-ops"><span class="std std-ref">Dice Operators</span></a><a class="headerlink" href="#dice-ops" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.concat">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/yadr/operator.html#concat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.concat" title="Permalink to this definition"></a></dt>
+<dd><p>Concatenate the least significant digits.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#concat"><span class="std std-ref">x dc y (concat):</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num</strong> – The number of dice to roll.</p></li>
+<li><p><strong>size</strong> – The highest number that can be rolled on a die.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The concatenated least significant digits as an
+<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># This line is to ensure predictability for testing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Do not use outside of test cases.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_seed</span><span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 2d10 as percentile dice. It&#39;s not quite right,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># since 00 should be 100, but the physical dice have</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># that problem, too.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concat</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="go">21</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.die">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">die</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/yadr/operator.html#die"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.die" title="Permalink to this definition"></a></dt>
+<dd><p>Roll a number of same-sized dice and return the result.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#die"><span class="std std-ref">x d y (dice sum):</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num</strong> – The number of dice to roll.</p></li>
+<li><p><strong>size</strong> – The highest number that can be rolled on a die.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sum of the result of each die as an <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># This line is to ensure predictability for testing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Do not use outside of test cases.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_seed</span><span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 3d6.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">die</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">5</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.exploding_die">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">exploding_die</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/yadr/operator.html#exploding_die"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.exploding_die" title="Permalink to this definition"></a></dt>
+<dd><p>Roll a number of exploding same-sized dice.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#explode"><span class="std std-ref">x d! y (exploding dice):</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num</strong> – The number of dice to roll.</p></li>
+<li><p><strong>size</strong> – The highest number that can be rolled on a die.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sum of the result of each die as an <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># This line is to ensure predictability for testing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Do not use outside of test cases.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_seed</span><span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 5d!6.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exploding_die</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">15</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="execution.html" class="btn btn-neutral float-left" title="Execution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="requirements.html" class="btn btn-neutral float-right" title="yadr Requirements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Paul J. Iutzi.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

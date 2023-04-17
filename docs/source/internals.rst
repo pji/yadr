@@ -16,3 +16,4 @@ maintaining the package.
    /lexing.rst
    /parsing.rst
    /execution.rst
+   /operators.rst
