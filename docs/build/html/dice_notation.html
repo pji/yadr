@@ -283,10 +283,10 @@ n = [2, 9, 1, 1, 13, 3]
 </dl>
 </section>
 <section id="pool-operators">
-<h2>Pool Operators<a class="headerlink" href="#pool-operators" title="Permalink to this heading"></a></h2>
+<span id="pool-ops"></span><h2>Pool Operators<a class="headerlink" href="#pool-operators" title="Permalink to this heading"></a></h2>
 <p>Pool operators interact with or change a pool or its members. They
 are defined as follows:</p>
-<dl>
+<dl id="pool-keep-above">
 <dt>P pa y (pool keep above):</dt><dd><p>For a given pool P, remove all members with a value below y. For
 example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pa</span> <span class="mi">7</span>
@@ -295,6 +295,8 @@ example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-keep-below">
 <dt>P pb y (pool keep below):</dt><dd><p>For a given pool P, remove all members with a value above y. For
 example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pb</span> <span class="mi">7</span>
@@ -303,6 +305,8 @@ example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-cap">
 <dt>P pc y (pool cap):</dt><dd><p>For a given pool P, limit the maximum value of each member in P
 to y. Values greater than y become y. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pc</span> <span class="mi">7</span>
@@ -311,6 +315,8 @@ to y. Values greater than y become y. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-floor">
 <dt>P pc y (pool floor):</dt><dd><p>For a given pool P, limit the minimum value of each member in P
 to y. Values greater than y become y. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pf</span> <span class="mi">7</span>
@@ -319,6 +325,8 @@ to y. Values greater than y become y. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-keep-high">
 <dt>P ph y (pool keep high):</dt><dd><p>For a given pool P, select the top y members with the highest
 values. Return those members as a pool. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">ph</span> <span class="mi">3</span>
@@ -327,6 +335,8 @@ values. Return those members as a pool. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-keep-low">
 <dt>P pl y (pool keep low):</dt><dd><p>For a given pool P, select the top y members with the lowest
 values. Return those members as a pool.
 For example:</p>
@@ -336,6 +346,8 @@ For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-remove">
 <dt>P pr y (pool remove):</dt><dd><p>For a given pool P, remove all members with value y.
 For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pr</span> <span class="mi">7</span>
@@ -344,6 +356,8 @@ For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-mod">
 <dt>P p% y (pool modulo):</dt><dd><p>For a given pool P, perform a modulo y operation on each member
 (M % y). For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">pr</span> <span class="mi">7</span>
@@ -355,10 +369,10 @@ For example:</p>
 </dl>
 </section>
 <section id="pool-degeneration-operators">
-<h2>Pool Degeneration Operators<a class="headerlink" href="#pool-degeneration-operators" title="Permalink to this heading"></a></h2>
+<span id="pool-degen-ops"></span><h2>Pool Degeneration Operators<a class="headerlink" href="#pool-degeneration-operators" title="Permalink to this heading"></a></h2>
 <p>Pool degeneration operators act on the members of a pool, collapsing it
 into a number. They are defined as follows:</p>
-<dl>
+<dl id="count-successes">
 <dt>P ns y (count successes):</dt><dd><p>For a given pool P, count the number of members with a value greater
 than or equal to y. Return that count. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="n">dp10</span> <span class="n">ps</span> <span class="mi">7</span>
@@ -367,6 +381,8 @@ than or equal to y. Return that count. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="count-botch">
 <dt>P nb y (count successes and botches):</dt><dd><p>For a given pool P, let a be the number of members with a value
 greater than or equal to y. Let b be the number of members with
 a value of one. Return the difference between a and b. For example:</p>
@@ -379,6 +395,8 @@ a value of one. Return the difference between a and b. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-concat">
 <dt>C P (pool concatenate):</dt><dd><p>For a given pool P, concatenate the digits of each member. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="n">C</span> <span class="mi">5</span><span class="n">dp10</span>
 <span class="n">n</span> <span class="o">=</span> <span class="n">C</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
@@ -386,6 +404,8 @@ a value of one. Return the difference between a and b. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-count">
 <dt>N P (pool count):</dt><dd><p>For a given pool P, return the number of members in P. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="n">N</span> <span class="mi">5</span><span class="n">dp10</span>
 <span class="n">n</span> <span class="o">=</span> <span class="n">N</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
@@ -393,6 +413,8 @@ a value of one. Return the difference between a and b. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="pool-sum">
 <dt>S P (pool sum):</dt><dd><p>For a given pool P, add together the values of all members. Return
 that sum. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="n">S</span> <span class="mi">5</span><span class="n">dp10</span>
@@ -446,6 +468,8 @@ n = 29
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="keep-high">
 <dt>x dh y (keep high die):</dt><dd><p>Generate x random integers n within the range 1 ≤ n ≤ y. Return
 the integer with the highest value. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="n">dh20</span>
@@ -455,6 +479,8 @@ the integer with the highest value. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="keep-low">
 <dt>x dl y (keep low die):</dt><dd><p>Generate x random integers n within the range 1 ≤ n ≤ y. Return
 the integer with the lowest value. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="n">dl20</span>
@@ -464,6 +490,8 @@ the integer with the lowest value. For example:</p>
 </pre></div>
 </div>
 </dd>
+</dl>
+<dl id="wild-die">
 <dt>x dw y (wild die):</dt><dd><p>Generate two pools of random integers within the range 1 ≤ n ≤ y.
 The first pool, called the “wild” pool, has only one member. The
 standard pool has x minus one (x - 1) members. If the value of
@@ -514,6 +542,25 @@ n = true ? &quot;success&quot; : &quot;failure&quot;
 n = &quot;success&quot;
 </pre></div>
 </div>
+<p>This introduces two operators into YADN:</p>
+<dl id="choice-options">
+<dt>x : y (choice option)</dt><dd><p>Contain two optons, x and y, that will be selected from by a
+choice operator.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="s2">&quot;win&quot;</span> <span class="o">|</span> <span class="s2">&quot;lose&quot;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl id="choice">
+<dt>x ? y</dt><dd><p>Select a member of choice option y based on the boolean x. If
+x is true, select the first qualifier in the option. If x is
+false, select the second qualifier.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>n = true ? &quot;success&quot; : &quot;failure&quot;
+n = &quot;success&quot;
+</pre></div>
+</div>
+</dd>
+</dl>
 </section>
 <section id="dice-maps">
 <span id="id3"></span><h2>Dice Maps<a class="headerlink" href="#dice-maps" title="Permalink to this heading"></a></h2>

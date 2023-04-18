@@ -211,10 +211,14 @@ x g! y (exploding pool):
         n = [2, 9, 1, 1, 13, 3]
 
 
+.. _pool_ops:
+
 Pool Operators
 ==============
 Pool operators interact with or change a pool or its members. They
 are defined as follows:
+
+.. _pool_keep_above:
 
 P pa y (pool keep above):
     For a given pool P, remove all members with a value below y. For
@@ -224,6 +228,8 @@ P pa y (pool keep above):
         n = [3, 1, 9, 7, 10] pa 7
         n = [ 9, 7, 10]
 
+.. _pool_keep_below:
+
 P pb y (pool keep below):
     For a given pool P, remove all members with a value above y. For
     example::
@@ -231,6 +237,8 @@ P pb y (pool keep below):
         n = 5dp10 pb 7
         n = [3, 1, 9, 7, 10] pa 7
         n = [3, 1]
+
+.. _pool_cap:
 
 P pc y (pool cap):
     For a given pool P, limit the maximum value of each member in P
@@ -240,6 +248,8 @@ P pc y (pool cap):
         n = [3, 1, 9, 7, 10] pc 7
         n = [3, 1, 7, 7, 7]
 
+.. _pool_floor:
+
 P pc y (pool floor):
     For a given pool P, limit the minimum value of each member in P
     to y. Values greater than y become y. For example::
@@ -248,6 +258,8 @@ P pc y (pool floor):
         n = [3, 1, 9, 7, 10] pf 7
         n = [7, 7, 9, 7, 10]
 
+.. _pool_keep_high:
+
 P ph y (pool keep high):
     For a given pool P, select the top y members with the highest
     values. Return those members as a pool. For example::
@@ -255,6 +267,8 @@ P ph y (pool keep high):
         n = 5dp10 ph 3
         n = [3, 1, 9, 7, 10] ph 3
         n = [9, 7, 10]
+
+.. _pool_keep_low:
 
 P pl y (pool keep low):
     For a given pool P, select the top y members with the lowest
@@ -265,6 +279,8 @@ P pl y (pool keep low):
         n = [3, 1, 9, 7, 10] pl 3
         n = [3, 1, 7]
 
+.. _pool_remove:
+
 P pr y (pool remove):
     For a given pool P, remove all members with value y.
     For example::
@@ -272,6 +288,8 @@ P pr y (pool remove):
         n = 5dp10 pr 7
         n = [3, 1, 9, 7, 10] pr 7
         n = [3, 1, 9, 10]
+
+.. _pool_mod:
 
 P p% y (pool modulo):
     For a given pool P, perform a modulo y operation on each member
@@ -282,10 +300,14 @@ P p% y (pool modulo):
         n = [3, 1, 9, 0]
 
 
+.. _pool_degen_ops:
+
 Pool Degeneration Operators
 ===========================
 Pool degeneration operators act on the members of a pool, collapsing it
 into a number. They are defined as follows:
+
+.. _count_successes:
 
 P ns y (count successes):
     For a given pool P, count the number of members with a value greater
@@ -294,6 +316,8 @@ P ns y (count successes):
         n = 5dp10 ps 7
         n = [3, 1, 9, 7, 10] ps 7
         n = 3
+
+.. _count_botch:
 
 P nb y (count successes and botches):
     For a given pool P, let a be the number of members with a value
@@ -307,6 +331,8 @@ P nb y (count successes and botches):
         n = 3 - 1
         n = 2
 
+.. _pool_concat:
+
 C P (pool concatenate):
     For a given pool P, concatenate the digits of each member. For example::
     
@@ -314,12 +340,16 @@ C P (pool concatenate):
         n = C [3, 1, 9, 7, 10]
         n = 319710
 
+.. _pool_count:
+
 N P (pool count):
     For a given pool P, return the number of members in P. For example::
     
         n = N 5dp10
         n = N [3, 1, 9, 7, 10]
         n = 5
+
+.. _pool_sum:
 
 S P (pool sum):
     For a given pool P, add together the values of all members. Return
@@ -377,6 +407,8 @@ x d! y (exploding dice):
         n = S[1, 5, 3, 13, 6, 1]
         n = 29
 
+.. _keep_high:
+
 x dh y (keep high die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the highest value. For example::
@@ -386,6 +418,8 @@ x dh y (keep high die):
         n = S[17]
         n = 17
 
+.. _keep_low:
+
 x dl y (keep low die):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
     the integer with the lowest value. For example::
@@ -394,6 +428,8 @@ x dl y (keep low die):
         n = S([1, 17] pl 1)
         n = S[1]
         n = 1
+
+.. _wild_die:
 
 x dw y (wild die):
     Generate two pools of random integers within the range 1 ≤ n ≤ y.
@@ -446,6 +482,26 @@ degeneration operator::
     n = 21 >= 20 ? "success" : "failure"
     n = true ? "success" : "failure"
     n = "success"
+
+This introduces two operators into YADN:
+
+.. _choice_options:
+
+x \: y (choice option)
+    Contain two optons, x and y, that will be selected from by a
+    choice operator.::
+    
+        n = "win" | "lose"
+
+.. _choice:
+
+x ? y
+    Select a member of choice option y based on the boolean x. If
+    x is true, select the first qualifier in the option. If x is
+    false, select the second qualifier.::
+    
+        n = true ? "success" : "failure"
+        n = "success"
 
 
 .. _dice_maps:

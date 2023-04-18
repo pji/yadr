@@ -138,7 +138,7 @@
 <span class="k">def</span> <span class="nf">choice_options</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the options for a choice.</span>
 
-<span class="sd">    :ref:`YADN` reference: :ref:`qualifiers`</span>
+<span class="sd">    :ref:`YADN` reference: :ref:`choice_options`</span>
 
 <span class="sd">    :param a: The qualifier for the true condition of a choice.</span>
 <span class="sd">    :param b: The qualifier for the false condition of a choice.</span>
@@ -157,7 +157,7 @@
 <span class="k">def</span> <span class="nf">choice</span><span class="p">(</span><span class="n">boolean</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a choice.</span>
 
-<span class="sd">    :ref:`YADN` reference: :ref:`qualifiers`</span>
+<span class="sd">    :ref:`YADN` reference: :ref:`choice`</span>
 
 <span class="sd">    :param boolean: The decision as a :class:`bool`.</span>
 <span class="sd">    :param options: The two options to pick from.</span>
@@ -257,66 +257,201 @@
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">exploding_pool</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dh&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="keep_high_die"><a class="viewcode-back" href="../../operators.html#yadr.operator.keep_high_die">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dh&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">keep_high_die</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of dice and keep the highest.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of dice and keep the highest.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`keep_high`</span>
+
+<span class="sd">    :param num: The number of dice to roll.</span>
+<span class="sd">    :param size: The highest number that can be rolled on a die.</span>
+<span class="sd">    :return: The highest value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # This line is to ensure predictability for testing.</span>
+<span class="sd">        &gt;&gt;&gt; # Do not use outside of test cases.</span>
+<span class="sd">        &gt;&gt;&gt; _seed(&#39;spam&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Roll 5dh6.</span>
+<span class="sd">        &gt;&gt;&gt; keep_high_die(5, 6)</span>
+<span class="sd">        5</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">dice_pool</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dl&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="keep_low_die"><a class="viewcode-back" href="../../operators.html#yadr.operator.keep_low_die">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dl&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">keep_low_die</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of dice and keep the lowest.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of dice and keep the lowest.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`keep_low`</span>
+
+<span class="sd">    :param num: The number of dice to roll.</span>
+<span class="sd">    :param size: The highest number that can be rolled on a die.</span>
+<span class="sd">    :return: The lowest value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # This line is to ensure predictability for testing.</span>
+<span class="sd">        &gt;&gt;&gt; # Do not use outside of test cases.</span>
+<span class="sd">        &gt;&gt;&gt; _seed(&#39;spam&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Roll 5dh6.</span>
+<span class="sd">        &gt;&gt;&gt; keep_low_die(5, 6)</span>
+<span class="sd">        1</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">dice_pool</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dw&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="wild_die"><a class="viewcode-back" href="../../operators.html#yadr.operator.wild_die">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;dw&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wild_die</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of same-sized dice and return the result.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Roll a number of same-sized dice and return the result, with</span>
+<span class="sd">    one of the dice being the wild die.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`wild_die`</span>
+
+<span class="sd">    :param num: The number of dice to roll.</span>
+<span class="sd">    :param size: The highest number that can be rolled on a die.</span>
+<span class="sd">    :return: The sum of the values as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # This line is to ensure predictability for testing.</span>
+<span class="sd">        &gt;&gt;&gt; # Do not use outside of test cases.</span>
+<span class="sd">        &gt;&gt;&gt; _seed(&#39;spam&#39;)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Roll 5dw6.</span>
+<span class="sd">        &gt;&gt;&gt; wild_die(5, 6)</span>
+<span class="sd">        0</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">wild</span> <span class="o">=</span> <span class="n">exploding_pool</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
     <span class="n">regular</span> <span class="o">=</span> <span class="n">dice_pool</span><span class="p">(</span><span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">wild</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">0</span>
-    <span class="k">return</span> <span class="nb">sum</span><span class="p">((</span><span class="nb">sum</span><span class="p">(</span><span class="n">wild</span><span class="p">),</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regular</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">((</span><span class="nb">sum</span><span class="p">(</span><span class="n">wild</span><span class="p">),</span> <span class="nb">sum</span><span class="p">(</span><span class="n">regular</span><span class="p">)))</span></div>
 
 
 <span class="c1"># Pool operators.</span>
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pc&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_cap"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_cap">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pc&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_cap</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">cap</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cap the maximum value in a pool.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cap the maximum value in a pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_cap`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param cap: The maximum value of a die roll.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pc6.</span>
+<span class="sd">        &gt;&gt;&gt; pool_cap([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        (4, 6, 3, 5, 1, 6)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">pool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">cap</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">cap</span>
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pf&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_floor"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_floor">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pf&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_floor</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">floor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Floor the minimum value in a pool.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Floor the minimum value in a pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_floor`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param floor: The minimum value of a die roll.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pf6.</span>
+<span class="sd">        &gt;&gt;&gt; pool_floor([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        (6, 10, 6, 6, 6, 9)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">pool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">floor</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">floor</span>
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pa&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_keep_above"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_keep_above">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pa&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_keep_above</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">floor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="n">floor</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discard all values in a pool below a given value.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_keep_above`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param floor: The minimum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pa6.</span>
+<span class="sd">        &gt;&gt;&gt; pool_keep_above([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        (10, 9)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="n">floor</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pb&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_keep_below"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_keep_below">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pb&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_keep_below</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">ceiling</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discard all values in a pool above a given value.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_keep_below`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param ceiling: The maximum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pb6.</span>
+<span class="sd">        &gt;&gt;&gt; pool_keep_below([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        (4, 3, 5, 1)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_keep_high"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_keep_high">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;ph&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_keep_high</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">keep</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep a number of the highest dice.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep a number of the highest dice.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_keep_high`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param keep: The maximum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]ph3.</span>
+<span class="sd">        &gt;&gt;&gt; pool_keep_high([4, 10, 3, 5, 1, 9], 3)</span>
+<span class="sd">        (10, 5, 9)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
     <span class="n">remove</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span> <span class="o">-</span> <span class="n">keep</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">remove</span><span class="p">):</span>
@@ -327,12 +462,27 @@
                 <span class="n">low_value</span> <span class="o">=</span> <span class="n">n</span>
                 <span class="n">low_index</span> <span class="o">=</span> <span class="n">i</span>
         <span class="n">pool</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">low_index</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pl&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_keep_low"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_keep_low">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pl&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_keep_low</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">keep</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep a number of the lowest dice.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep a number of the lowest dice.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_keep_low`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param keep: The maximum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pl3.</span>
+<span class="sd">        &gt;&gt;&gt; pool_keep_low([4, 10, 3, 5, 1, 9], 3)</span>
+<span class="sd">        (4, 3, 1)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
     <span class="n">remove</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span> <span class="o">-</span> <span class="n">keep</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">remove</span><span class="p">):</span>
@@ -343,56 +493,157 @@
                 <span class="n">high_value</span> <span class="o">=</span> <span class="n">n</span>
                 <span class="n">high_index</span> <span class="o">=</span> <span class="n">i</span>
         <span class="n">pool</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">high_index</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;p%&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_modulo"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_modulo">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;p%&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_modulo</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">divisor</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform a modulo operation of each member.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="n">divisor</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform a modulo operation of each member.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_mod`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param divisor: The maximum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]p%3.</span>
+<span class="sd">        &gt;&gt;&gt; pool_modulo([4, 10, 3, 5, 1, 9], 3)</span>
+<span class="sd">        (1, 1, 0, 2, 1, 0)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="n">divisor</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pr&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_remove"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_remove">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;pr&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_remove</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">cut</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove members of a pool of the given value.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">cut</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove members of a pool of the given value.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_remove`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param cut: The maximum value to keep.</span>
+<span class="sd">    :return: The resulting values as a :class:`tuple`.</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]pr5.</span>
+<span class="sd">        &gt;&gt;&gt; pool_remove([4, 10, 3, 5, 1, 9], 5)</span>
+<span class="sd">        (4, 10, 3, 1, 9)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">cut</span><span class="p">)</span></div>
 
 
 <span class="c1"># Pool degeneration operators.</span>
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_concatenate"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_concatenate">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_concatenate</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the dice in the pool.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concatenate the dice in the pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_concat`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :return: The resulting value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll C[4, 10, 3, 5, 1, 9].</span>
+<span class="sd">        &gt;&gt;&gt; pool_concatenate([4, 10, 3, 5, 1, 9])</span>
+<span class="sd">        4103519</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">str_value</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pool</span><span class="p">))</span>
-    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">str_value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">str_value</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_count"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_count">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_count</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the dice in the pool.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the dice in the pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_count`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :return: The resulting value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll N[4, 10, 3, 5, 1, 9].</span>
+<span class="sd">        &gt;&gt;&gt; pool_count([4, 10, 3, 5, 1, 9])</span>
+<span class="sd">        6</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="pool_sum"><a class="viewcode-back" href="../../operators.html#yadr.operator.pool_sum">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pool_sum</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum the dice in the pool.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sum the dice in the pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`pool_sum`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :return: The resulting value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll S[4, 10, 3, 5, 1, 9].</span>
+<span class="sd">        &gt;&gt;&gt; pool_sum([4, 10, 3, 5, 1, 9])</span>
+<span class="sd">        32</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;ns&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="count_successes"><a class="viewcode-back" href="../../operators.html#yadr.operator.count_successes">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;ns&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">count_successes</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the number of successes in the pool.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the number of successes in the pool.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`count_successes`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param target: The target number for success.</span>
+<span class="sd">    :return: The resulting value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]ns6.</span>
+<span class="sd">        &gt;&gt;&gt; count_successes([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        2</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">pool_keep_above</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span></div>
 
 
-<span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;nb&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="count_successes_with_botch"><a class="viewcode-back" href="../../operators.html#yadr.operator.count_successes_with_botch">[docs]</a><span class="nd">@operation</span><span class="p">(</span><span class="s1">&#39;nb&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">count_successes_with_botch</span><span class="p">(</span><span class="n">pool</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Count the number of successes in the pool. Then remove a success</span>
 <span class="sd">    for each botch.</span>
+
+<span class="sd">    :ref:`YADN` reference: :ref:`count_botch`</span>
+
+<span class="sd">    :param pool: A sequence of die values.</span>
+<span class="sd">    :param target: The target number for success.</span>
+<span class="sd">    :return: The resulting value as an :class:`int`.</span>
+<span class="sd">    :rtype: int</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        &gt;&gt;&gt; # Roll [4, 10, 3, 5, 1, 9]nb6.</span>
+<span class="sd">        &gt;&gt;&gt; count_successes_with_botch([4, 10, 3, 5, 1, 9], 6)</span>
+<span class="sd">        1</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">botches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">([</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pool</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">pool_keep_above</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span> <span class="o">-</span> <span class="n">botches</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span> <span class="o">-</span> <span class="n">botches</span></div>
 
 
 <span class="c1"># Pool generation operator.</span>
