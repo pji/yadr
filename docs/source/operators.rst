@@ -29,6 +29,13 @@ documentation here is just intended for maintenance purposes.
 .. autofunction:: yadr.operator.wild_die
 
 
+:ref:`pool_gen_ops`
+=====================
+
+.. autofunction:: yadr.operator.dice_pool
+.. autofunction:: yadr.operator.exploding_pool
+
+
 :ref:`pool_ops`
 ===============
 

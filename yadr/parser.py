@@ -196,7 +196,38 @@ class Unary(Tree):
 
 # Parser class.
 class Parser:
-    """A state machine for parsing :ref:`YADN`."""
+    """A state machine for parsing :ref:`YADN`.
+
+    How Parsing Works
+    =================
+    Essentially, parsing turns an ordered list of tokens into a
+    tree structure for execution. For example, let's say we have
+    the :ref:`YADN` expression::
+
+        3 * ( 4 - 2 )
+
+    That is lexed into the tokens::
+
+        Token(NUMBER, 3)
+        Token(MD_OPERATOR, '*')
+        Token(GROUP_OPEN, '(')
+        Token(NUMBER, 4)
+        Token(AS_OPERATOR, '-')
+        Token(NUMBER, 2)
+        Token(GROUP_CLOSE, ')')
+
+    Which is then parsed into the tree::
+
+            *
+           / \\
+          -   3
+         / \\
+        4   2
+
+    Where each token ends up in each tree is dependent on the
+    :ref:`ops_order` defined by :ref:`YADN`.
+
+    """
     def __init__(self) -> None:
         self.dice_map: dict[str, DiceMapping] = dict()
         self.top_rule = self._map_operator

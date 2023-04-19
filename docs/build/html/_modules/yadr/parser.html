@@ -269,7 +269,38 @@
 
 <span class="c1"># Parser class.</span>
 <div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../../parsing.html#yadr.parser.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A state machine for parsing :ref:`YADN`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A state machine for parsing :ref:`YADN`.</span>
+
+<span class="sd">    How Parsing Works</span>
+<span class="sd">    =================</span>
+<span class="sd">    Essentially, parsing turns an ordered list of tokens into a</span>
+<span class="sd">    tree structure for execution. For example, let&#39;s say we have</span>
+<span class="sd">    the :ref:`YADN` expression::</span>
+
+<span class="sd">        3 * ( 4 - 2 )</span>
+
+<span class="sd">    That is lexed into the tokens::</span>
+
+<span class="sd">        Token(NUMBER, 3)</span>
+<span class="sd">        Token(MD_OPERATOR, &#39;*&#39;)</span>
+<span class="sd">        Token(GROUP_OPEN, &#39;(&#39;)</span>
+<span class="sd">        Token(NUMBER, 4)</span>
+<span class="sd">        Token(AS_OPERATOR, &#39;-&#39;)</span>
+<span class="sd">        Token(NUMBER, 2)</span>
+<span class="sd">        Token(GROUP_CLOSE, &#39;)&#39;)</span>
+
+<span class="sd">    Which is then parsed into the tree::</span>
+
+<span class="sd">            *</span>
+<span class="sd">           / \\</span>
+<span class="sd">          -   3</span>
+<span class="sd">         / \\</span>
+<span class="sd">        4   2</span>
+
+<span class="sd">    Where each token ends up in each tree is dependent on the</span>
+<span class="sd">    :ref:`ops_order` defined by :ref:`YADN`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dice_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DiceMapping</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">top_rule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_operator</span>

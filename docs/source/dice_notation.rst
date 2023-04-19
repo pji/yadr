@@ -164,6 +164,8 @@ understandable for now.)::
     RESULT ::= NUMBER | POOL | RESULT ROLL_DELIMITER RESULT
 
 
+.. _ops_order:
+
 Order of Operations
 ===================
 The order of operations in YADN is as follows:
@@ -186,11 +188,15 @@ collapsed before it is passed to an operator. The trade-off seems
 worthwhile here, but this may be reviewed in the future.
 
 
+.. _pool_gen_ops:
+
 Pool Generation Operators
 =========================
 Pool generation operators generate a pool. These serve as the foundation
 for most dice interactions described by YADN. The pool generation
 operators are defined as follows:
+
+.. _dice_pool:
 
 x dp y (dice pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return
@@ -198,6 +204,8 @@ x dp y (dice pool):
     
         n = 5dp10
         n = [3, 4, 7, 10, 3]
+
+.. _exploding_pool:
 
 x g! y (exploding pool):
     Generate x random integers n within the range 1 ≤ n ≤ y. Return

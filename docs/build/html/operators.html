@@ -65,6 +65,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#yadr.operator.wild_die"><code class="docutils literal notranslate"><span class="pre">wild_die()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#pool-gen-ops"><span class="xref std std-ref">pool_gen_ops</span></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.dice_pool"><code class="docutils literal notranslate"><span class="pre">dice_pool()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#yadr.operator.exploding_pool"><code class="docutils literal notranslate"><span class="pre">exploding_pool()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#pool-ops"><span class="xref std std-ref">pool_ops</span></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#yadr.operator.pool_cap"><code class="docutils literal notranslate"><span class="pre">pool_cap()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#yadr.operator.pool_floor"><code class="docutils literal notranslate"><span class="pre">pool_floor()</span></code></a></li>
@@ -366,6 +371,71 @@ one of the dice being the wild die.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 5dw6.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">wild_die</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 <span class="go">0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="pool-gen-ops">
+<h2><a class="reference internal" href="dice_notation.html#pool-gen-ops"><span class="std std-ref">Pool Generation Operators</span></a><a class="headerlink" href="#pool-gen-ops" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.dice_pool">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">dice_pool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/yadr/operator.html#dice_pool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.dice_pool" title="Permalink to this definition"></a></dt>
+<dd><p>Roll a dice pool.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#dice-pool"><span class="std std-ref">x dp y (dice pool):</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num</strong> – The number of dice to roll.</p></li>
+<li><p><strong>size</strong> – The highest number that can be rolled on a die.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The the values as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)">tuple</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># This line is to ensure predictability for testing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Do not use outside of test cases.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_seed</span><span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 5g6.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dice_pool</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">(1, 1, 3, 5, 5)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="yadr.operator.exploding_pool">
+<span class="sig-prename descclassname"><span class="pre">yadr.operator.</span></span><span class="sig-name descname"><span class="pre">exploding_pool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/yadr/operator.html#exploding_pool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#yadr.operator.exploding_pool" title="Permalink to this definition"></a></dt>
+<dd><p>Roll an exploding dice pool.</p>
+<p><a class="reference internal" href="dice_notation.html#yadn"><span class="std std-ref">YADN</span></a> reference: <a class="reference internal" href="dice_notation.html#exploding-pool"><span class="std std-ref">x g! y (exploding pool):</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num</strong> – The number of dice to roll.</p></li>
+<li><p><strong>size</strong> – The highest number that can be rolled on a die.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The the values as a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.11)">tuple</a></p>
+</dd>
+</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># This line is to ensure predictability for testing.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Do not use outside of test cases.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_seed</span><span class="p">(</span><span class="s1">&#39;spam&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Roll 5g!6.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exploding_pool</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">(1, 1, 3, 5, 5)</span>
 </pre></div>
 </div>
 </dd></dl>

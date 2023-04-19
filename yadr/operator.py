@@ -576,30 +576,80 @@ def count_successes_with_botch(pool: Sequence[int], target: int) -> int:
 # Pool generation operator.
 @operation('g')
 def dice_pool(num: int, size: int) -> tuple[int, ...]:
-    """Roll a die pool."""
+    """Roll a dice pool.
+
+    :ref:`YADN` reference: :ref:`dice_pool`
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The the values as a :class:`tuple`.
+    :rtype: tuple
+
+    Usage::
+
+        >>> # This line is to ensure predictability for testing.
+        >>> # Do not use outside of test cases.
+        >>> _seed('spam')
+        >>>
+        >>> # Roll 5g6.
+        >>> dice_pool(5, 6)
+        (1, 1, 3, 5, 5)
+
+    """
     return tuple(random.randint(1, size) for _ in range(num))
 
 
 @operation('g!')
 def exploding_pool(num: int, size: int) -> tuple[int, ...]:
-    """Roll a die pool."""
+    """Roll an exploding dice pool.
+
+    :ref:`YADN` reference: :ref:`exploding_pool`
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The the values as a :class:`tuple`.
+    :rtype: tuple
+
+    Usage::
+
+        >>> # This line is to ensure predictability for testing.
+        >>> # Do not use outside of test cases.
+        >>> _seed('spam')
+        >>>
+        >>> # Roll 5g!6.
+        >>> exploding_pool(5, 6)
+        (1, 1, 3, 5, 5)
+
+    """
     pool: Sequence[int] = dice_pool(num, size)
     pool = [_explode(n, size) for n in pool]
     return tuple(pool)
 
 
 # Utility functions.
+def _explode(value: int, size: int) -> int:
+    """Explode the value of a die.
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The the values as an :class:`int`.
+    :rtype: int
+    """
+    if value == size:
+        explode_value = random.randint(1, size)
+        value += _explode(explode_value, size)
+    return value
+
+
 def _seed(seed: int | str | bytes) -> None:
-    """Seed the random number generator for testing purposes."""
+    """Seed the random number generator for testing purposes.
+
+    :param seed: A seed value for the random number generator.
+    :return: None.
+    :rtype: NoneType
+    """
     if isinstance(seed, str):
         seed = bytes(seed, encoding='utf_8')
     if isinstance(seed, bytes):
         seed = int.from_bytes(seed, 'little')
     random.seed(seed)
-
-
-def _explode(value: int, size: int) -> int:
-    if value == size:
-        explode_value = random.randint(1, size)
-        value += _explode(explode_value, size)
-    return value
