@@ -4,12 +4,6 @@ test_yadr
 
 Unit tests for the yadr.yadr module.
 """
-from copy import deepcopy
-from io import StringIO
-import sys
-import unittest as ut
-from unittest.mock import patch
-
 from yadr import yadr
 
 
