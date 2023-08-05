@@ -99,13 +99,13 @@ module to execute a string of YADN.::
 
 How do I run the tests?
 =======================
-I'm using the `unittest` Python standard library for the unit tests.
-To just run those tests, go to the root of your clone of the `yadr`
-repository and use the following command::
+I'm using the `pytest` library for the unit tests. To just run those tests,
+go to the root of your clone of the `yadr` repository and use the following
+command::
 
-    python3 -m unittest discover tests
+    python3 -m pytest
 
-The full suite of style checks, mypy, and such I use can be run with
-the following::
+The full suite of style checks, mypy, and such I use can be run using a
+shortcut I have set up in the Makefile::
 
-    ./precommit.py
+    make pre
