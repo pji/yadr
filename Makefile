@@ -21,3 +21,7 @@ docs:
 pre:
 	python precommit.py
 	git status
+
+.PHONY: test
+test:
+	python -m pytest

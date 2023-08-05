@@ -13,132 +13,86 @@ from unittest.mock import patch
 from yadr import yadr
 
 
-# Test cases.
-class ParseCliTestCase(ut.TestCase):
-    def setUp(self):
-        self.argv_buffer = sys.argv
-
-    def tearDown(self):
-        sys.argv = self.argv_buffer
-
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('random.randint')
-    def test_yadn(self, mock_randint, mock_stdout):
-        """Execute YADN from the command line."""
-        # Expected value.
-        exp = '11\n'
-
-        # Test data and state.
-        sys.argv = ['python -m yadr', '3d6']
-        mock_randint.side_effect = (4, 4, 3)
-
-        # Run test.
-        yadr.parse_cli()
-
-        # Extract actual result and determine success.
-        act = mock_stdout.getvalue()
-        self.assertEqual(exp, act)
-
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('random.randint')
-    def test_yadn_dice_maps(self, mock_randint, mock_stdout):
-        """The -m option followed by a file path should load in the
-        dice maps at the given location.
-        """
-        # Expected value.
-        exp = '["+", ""]\n'
-
-        # Test data and state.
-        sys.argv = [
-            'python -m yadr',
-            '2g3m"fudge"',
-            '-m',
-            'tests/data/__test_dice_map.txt'
-        ]
-        mock_randint.side_effect = (3, 2)
-
-        # Run test.
-        yadr.parse_cli()
-
-        # Extract actual result and determine success.
-        act = mock_stdout.getvalue()
-        self.assertEqual(exp, act)
-
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('random.randint')
-    def test_list_default_dice_maps(self, mock_randint, mock_stdout):
-        """The -l option will list the default dice maps."""
-        # Expected data and state.
-        default_map_loc = 'yadr/data/dice_maps.yadn'
-        with open(default_map_loc) as fh:
-            lines = fh.readlines()
-        lines = [line for line in lines if '=' in line]
-        lines = [line.split('"')[1] for line in lines]
-
-        # Expected value.
-        exp = '\n'.join(lines) + '\n'
-
-        # Test data and state.
-        sys.argv = [
-            'python -m yadr',
-            '-l'
-        ]
-        mock_randint.side_effect = (3, 2)
-
-        # Run test.
-        yadr.parse_cli()
-
-        # Extract actual result and determine success.
-        act = mock_stdout.getvalue()
-        self.assertEqual(exp, act)
+# Test yadr.roll().
+def test_roll(mocker):
+    """Execute a YADN string."""
+    exp = 11
+    yadn = ('3d6',)
+    dice = (4, 4, 3)
+    roll_test(exp, yadn, dice, mocker)
 
 
-class RollTestCase(ut.TestCase):
-    @patch('random.randint')
-    def test_roll_default_dice_maps(self, mock_randint):
-        """Execute a YADN string using a default dice map."""
-        # Expected value.
-        exp = '-'
+def test_roll_with_default_dice_map(mocker):
+    """Execute a YADN string using a default dice map."""
+    exp = '-'
+    yadn = ('1d3m"fate"',)
+    dice = (1,)
+    roll_test(exp, yadn, dice, mocker)
 
-        # Test data and state.
-        mock_randint.side_effect = (1,)
-        yadn = '1d3m"fate"'
 
-        # Run test.
-        act = yadr.roll(yadn)
+def test_roll_with_yadn_output(mocker):
+    """Execute a YADN string returning a YADN string."""
+    exp = '11'
+    yadn = ('3d6', True)
+    dice = (4, 4, 3)
+    roll_test(exp, yadn, dice, mocker)
 
-        # Determine test results.
-        self.assertEqual(exp, act)
 
-    @patch('random.randint')
-    def test_roll(self, mock_randint):
-        """Execute a YADN string."""
-        # Expected value.
-        exp = 11
+def roll_test(exp, params, dice, mocker):
+    mocker.patch('random.randint', side_effect=dice)
+    assert yadr.roll(*params) == exp
 
-        # Test data and state.
-        mock_randint.side_effect = (4, 4, 3)
-        yadn = '3d6'
 
-        # Run test.
-        act = yadr.roll(yadn)
+# Test parse_cli().
+def test_parse_cli(mocker, capsys):
+    """Execute YADN from the command line."""
+    cmd = ['python -m yadr', '3d6']
+    dice = (4, 4, 3)
+    result = cli_test(cmd, dice, mocker, capsys)
+    assert result == '11\n'
 
-        # Determine test results.
-        self.assertEqual(exp, act)
 
-    @patch('random.randint')
-    def test_roll_yadn_out(self, mock_randint):
-        """Execute a YADN string."""
-        # Expected value.
-        exp = '11'
+def test_parse_cli_with_dice_maps(mocker, capsys):
+    """The -m option followed by a file path should load in the
+    dice maps at the given location.
+    """
+    cmd = [
+        'python -m yadr',
+        '2g3m"fudge"',
+        '-m',
+        'tests/data/__test_dice_map.txt'
+    ]
+    dice = (3, 2)
+    result = cli_test(cmd, dice, mocker, capsys)
+    assert result == '["+", ""]\n'
 
-        # Test data and state.
-        mock_randint.side_effect = (4, 4, 3)
-        yadn = '3d6'
-        yadn_out = True
 
-        # Run test.
-        act = yadr.roll(yadn, yadn_out)
+def test_parse_cli_with_listing_default_maps(mocker, capsys):
+    """The -l option will list the default dice maps."""
+    cmd = ['python -m yadr', '-l']
+    dice = ()
+    result = cli_test(cmd, dice, mocker, capsys)
 
-        # Determine test results.
-        self.assertEqual(exp, act)
+    # Build the expected value.
+    default_map_loc = 'yadr/data/dice_maps.yadn'
+    with open(default_map_loc) as fh:
+        lines = fh.readlines()
+    lines = [line for line in lines if '=' in line]
+    lines = [line.split('"')[1] for line in lines]
+    expected = '\n'.join(lines) + '\n'
+
+    assert result == expected
+
+
+def cli_test(cmd, dice, mocker, capsys):
+    """Test the output of running `yadr` from the command line."""
+    # Set up the test.
+    mocker.patch('sys.argv', cmd)
+    mocker.patch('random.randint', side_effect=dice)
+
+    # Run the test.
+    yadr.parse_cli()
+
+    # Capture and return the test result.
+    captured = capsys.readouterr()
+    return captured.out
