@@ -11,184 +11,101 @@ from yadr import operator as op
 
 
 # Choice test cases.
-class ChoiceTestCase(ut.TestCase):
-    def test_choice_options(self):
-        """Generate choice options."""
-        # Expected value.
-        exp = ('spam', 'eggs')
+def test_choice_options():
+    """Generate choice options."""
+    a = 'spam'
+    b = 'eggs'
+    assert op.choice_options(a, b) == (a, b,)
 
-        # Test data and state.
-        a = exp[0]
-        b = exp[1]
 
-        # Run test.
-        act = op.choice_options(a, b)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    def test_choice(self):
-        """Make a choice."""
-        # Expected value.
-        exp = 'spam'
-
-        # Test data and state.
-        boolean = True
-        options = ('spam', 'eggs')
-
-        # Run test.
-        act = op.choice(boolean, options)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_choice():
+    """Make a choice."""
+    boolean = True
+    options = ('spam', 'eggs')
+    assert op.choice(boolean, options) == 'spam'
 
 
 # Dice operation test cases.
-class ConcatTestCase(ut.TestCase):
-    @patch('random.randint')
-    def test_concat(self, mock_randint):
-        """Concatenate the least significant digit of the dice."""
-        # Expected value.
-        exp = 304
-
-        # Test data and state.
-        mock_randint.side_effect = (3, 10, 4)
-        num = 3
-        size = 10
-
-        # Run test.
-        act = op.concat(num, size)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_concat(mocker):
+    """Concatenate the least significant digit of the dice."""
+    mocker.patch('random.randint', side_effect=(3, 10, 4))
+    num = 3
+    size = 10
+    assert op.concat(num, size) == 304
 
 
-class DieTestCase(ut.TestCase):
-    def die_test(self, exp, args=None, kwargs=None, seed='spam'):
-        """Common test for the die function."""
-        if not args:
-            args = []
-        if not kwargs:
-            kwargs = {}
-        op._seed(seed)
-        act = op.die(*args, **kwargs)
-        self.assertEqual(exp, act)
-
-    def test_die(self):
-        """Given a number of dice and the size of the die,
-        roll that many dice and return the result.
-        """
-        exp = 4
-        kwargs = {
-            'num': 1,
-            'size': 6,
-        }
-        seed = 'spam12'
-        self.die_test(exp, kwargs=kwargs, seed=seed)
+def test_die(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and return the result.
+    """
+    mocker.patch('random.randint', side_effect=(4, 2, 1))
+    num = 2
+    size = 6
+    assert op.die(num, size) == 6
 
 
-class ExplodingDie(ut.TestCase):
-    def exploding_die_test(self, exp, num, size):
-        """Common test for the die function."""
-        act = op.exploding_die(num, size)
-        self.assertEqual(exp, act)
-
-    @patch('random.randint')
-    def test_exploding_die(self, mock_randint):
-        """Given a number of dice and the size of the die,
-        roll that many exploding dice and return the result.
-        """
-        exp = 25
-        mock_randint.side_effect = [2, 1, 4, 4, 3, 1, 4, 4, 2]
-        num = 5
-        size = 4
-        self.exploding_die_test(exp, num, size)
+def test_exploding_die(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    exploding dice and return the result.
+    """
+    mocker.patch('random.randint', side_effect=[2, 1, 4, 4, 3, 1, 4, 4, 2])
+    num = 5
+    size = 4
+    assert op.exploding_die(num, size) == 25
 
 
-class KeepHighDie(ut.TestCase):
-    @patch('random.randint')
-    def test_keep_high_die(self, mock_randint):
-        # Expected value.
-        exp = 18
-
-        # Test data and state.
-        mock_randint.side_effect = [15, 3, 6, 18, 10]
-        num = 5
-        size = 20
-
-        # Run test.
-        act = op.keep_high_die(num, size)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_keep_high_die(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and keep the highest.
+    """
+    mocker.patch('random.randint', side_effect=[15, 3, 6, 18, 10, 20])
+    num = 5
+    size = 20
+    assert op.keep_high_die(num, size) == 18
 
 
-class KeepLowDie(ut.TestCase):
-    @patch('random.randint')
-    def test_keep_high_die(self, mock_randint):
-        # Expected value.
-        exp = 3
-
-        # Test data and state.
-        mock_randint.side_effect = [15, 3, 6, 18, 10]
-        num = 5
-        size = 20
-
-        # Run test.
-        act = op.keep_low_die(num, size)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_keep_low_die(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and keep the lowest.
+    """
+    mocker.patch('random.randint', side_effect=[15, 3, 6, 18, 10, 1])
+    num = 5
+    size = 20
+    assert op.keep_low_die(num, size) == 3
 
 
-class WildDie(ut.TestCase):
-    @patch('random.randint')
-    def test_wild_die(self, mock_randint):
-        # Expected value.
-        exp = 17
+def test_wild_die(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and add them together. If the first die rolled doesn't roll
+    the highest number possible for that die, it is counted like any
+    other die.
+    """
+    mocker.patch('random.randint', side_effect=[3, 4, 1, 5, 4, 2])
+    num = 5
+    size = 6
+    assert op.wild_die(num, size) == 17
 
-        # Test data and state.
-        mock_randint.side_effect = [3, 4, 1, 5, 4]
-        num = 5
-        size = 6
 
-        # Run test.
-        act = op.wild_die(num, size)
+def test_wild_die_explodes(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and add them together. If the first die rolled rolls the
+    highest number possible for that die, it explodes.
+    """
+    mocker.patch('random.randint', side_effect=[6, 2, 4, 1, 5, 4, 3])
+    num = 5
+    size = 6
+    assert op.wild_die(num, size) == 22
 
-        # Determine test result.
-        self.assertEqual(exp, act)
 
-    @patch('random.randint')
-    def test_wild_die_explodes(self, mock_randint):
-        # Expected value.
-        exp = 22
-
-        # Test data and state.
-        mock_randint.side_effect = [6, 2, 4, 1, 5, 4]
-        num = 5
-        size = 6
-
-        # Run test.
-        act = op.wild_die(num, size)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
-
-    @patch('random.randint')
-    def test_wild_die_is_one(self, mock_randint):
-        # Expected value.
-        exp = 0
-
-        # Test data and state.
-        mock_randint.side_effect = [1, 4, 1, 5, 4]
-        num = 5
-        size = 6
-
-        # Run test.
-        act = op.wild_die(num, size)
-
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_wild_die_is_one(mocker):
+    """Given a number of dice and the size of the die, roll that many
+    dice and add them together. If the first die rolled rolls the
+    a one, the roll is zero.
+    """
+    mocker.patch('random.randint', side_effect=[1, 4, 1, 5, 4])
+    num = 5
+    size = 6
+    assert op.wild_die(num, size) == 0
 
 
 # Pool degeneration test cases.
