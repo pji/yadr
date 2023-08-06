@@ -4,11 +4,139 @@ test_lex
 
 Unit tests for the dice notation lexer.
 """
+from collections import namedtuple
 import unittest as ut
+
+import pytest
 
 from tests.common import BaseTests
 from yadr import lex
 from yadr import model as m
+
+
+# Utility functions.
+def build_group_cases():
+    yield YADN('(3+3)', (
+        (m.Token.GROUP_OPEN, '('),
+        (m.Token.NUMBER, 3),
+        (m.Token.AS_OPERATOR, '+'),
+        (m.Token.NUMBER, 3),
+        (m.Token.GROUP_CLOSE, ')'),
+    ))
+
+
+def build_negative_sign_cases():
+    yield YADN('-2', ((m.Token.NUMBER, -2),))
+
+
+def build_number_cases():
+    symbols = m.yadn_symbols_raw[m.Token.NUMBER].split()
+    for symbol in symbols:
+        yield YADN(symbol, ((m.Token.NUMBER, int(symbol)),))
+
+
+def build_u_pool_degeneration_operator_cases():
+    symbols = m.yadn_symbols_raw[m.Token.U_POOL_DEGEN_OPERATOR].split()
+    for symbol in symbols:
+        yadn = f'{symbol}[3, 3]'
+        yield YADN(yadn, (
+            (m.Token.U_POOL_DEGEN_OPERATOR, symbol),
+            (m.Token.POOL, (3, 3)),
+        ))
+
+
+def permutations(befores, afters):
+    for before in befores:
+        for after in afters:
+            yield before, after
+
+
+def whitespacer(symbols):
+    boundaries = ('', ' ')
+    for boundary in boundaries:
+        yield boundary.join(symbols)
+
+
+# Common data.
+YADN = namedtuple('YADN', 'yadn tokens')
+
+
+cases = {
+    m.Token.GROUP_OPEN: build_group_cases,
+    m.Token.NEGATIVE_SIGN: build_negative_sign_cases,
+    m.Token.NUMBER: build_number_cases,
+    m.Token.U_POOL_DEGEN_OPERATOR: build_u_pool_degeneration_operator_cases,
+}
+cases[m.Token.GROUP_CLOSE] = cases[m.Token.GROUP_OPEN]
+
+
+# Pytest fixtures.
+@pytest.fixture
+def lexer():
+    return lex.Lexer()
+
+
+# AS_OPERATOR tests.
+def test_as_operator_allowed(lexer):
+    """Given an addition or subtraction operator, return the correct
+    tokens for the YADN.
+    """
+    symbols = {
+        YADN('+', ((m.Token.AS_OPERATOR, '+'),)),
+        YADN('-', ((m.Token.AS_OPERATOR, '-'),)),
+    }
+    allowed_before = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+    ]
+    allowed_after = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    for symbol in symbols:
+        for b_key, a_key in permutations(allowed_before, allowed_after):
+            befores = cases[b_key]()
+            afters = cases[a_key]()
+            for before, after in permutations(befores, afters):
+                yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
+                actual = lexer.lex(yadn)
+                expected = (
+                    *before.tokens,
+                    *symbol.tokens,
+                    *after.tokens,
+                )
+                assert actual == expected
+
+
+def test_addition(lexer):
+    """Given a basic addition equation, return the tokens that represent
+    the equation.
+    """
+    symbols = ('15', '+', '3')
+    yadns = whitespacer(symbols)
+    for yadn in yadns:
+        assert lexer.lex(yadn) == (
+            (lex.Token.NUMBER, 15),
+            (lex.Token.AS_OPERATOR, '+'),
+            (lex.Token.NUMBER, 3),
+        )
+
+
+def test_subtraction(lexer):
+    """Given a basic subtraction equation, return the tokens that represent
+    the equation.
+    """
+    symbols = ('15', '-', '3')
+    yadns = whitespacer(symbols)
+    for yadn in yadns:
+        assert lexer.lex(yadn) == (
+            (lex.Token.NUMBER, 15),
+            (lex.Token.AS_OPERATOR, '-'),
+            (lex.Token.NUMBER, 3),
+        )
 
 
 # Symbol test cases.
