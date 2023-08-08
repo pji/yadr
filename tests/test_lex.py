@@ -43,6 +43,7 @@ YADN = namedtuple('YADN', 'yadn tokens')
 
 
 @reg(m.Token.AS_OPERATOR)
+@reg(m.Token.COMPARISON_OPERATOR)
 @reg(m.Token.DICE_OPERATOR)
 @reg(m.Token.EX_OPERATOR)
 @reg(m.Token.MD_OPERATOR)
@@ -56,6 +57,12 @@ def build_standard_cases(token):
             (token, symbol),
             (m.Token.NUMBER, 3),
         ))
+
+
+@reg_case(m.Token.BOOLEAN)
+def build_boolean_cases():
+    for yadn in get_yadn(m.Token.BOOLEAN):
+        yield yadn
 
 
 @reg_case(m.Token.CHOICE_OPERATOR)
@@ -86,6 +93,24 @@ def build_group_cases():
     yield YADN(')', ((m.Token.GROUP_CLOSE, ')'),))
 
 
+@reg_case(m.Token.MAPPING_OPERATOR)
+def build_mapping_operator_cases():
+    for yadn in build_qualifier_cases():
+        yield YADN(f'm{yadn.yadn}', (
+            (m.Token.MAPPING_OPERATOR, 'm'),
+            *yadn.tokens
+        ))
+
+
+@reg_case(m.Token.MAP)
+@reg_case(m.Token.MAP_OPEN)
+def build_map_cases():
+    yield YADN('{"spam"=1:"win",2:"lose"}', ((m.Token.MAP, ('spam', {
+        1: 'win',
+        2: 'lose',
+    })),))
+
+
 @reg_case(m.Token.NEGATIVE_SIGN)
 def build_negative_sign_cases():
     yield YADN('-2', ((m.Token.NUMBER, -2),))
@@ -96,6 +121,14 @@ def build_number_cases():
     symbols = m.yadn_symbols_raw[m.Token.NUMBER].split()
     for symbol in symbols:
         yield YADN(symbol, ((m.Token.NUMBER, int(symbol)),))
+
+
+@reg_case(m.Token.OPTIONS_OPERATOR)
+def build_options_operator_cases():
+    yield YADN(':"spam"', (
+        (m.Token.OPTIONS_OPERATOR, ':'),
+        (m.Token.QUALIFIER, 'spam'),
+    ))
 
 
 @reg_case(m.Token.POOL)
@@ -150,10 +183,30 @@ def lexer():
 # Core test code.
 def lexer_test(token, before, alloweds, lexer):
     symbols = get_yadn(token)
+    disalloweds = [token for token in cases if token not in alloweds]
+    if m.Token.AS_OPERATOR in alloweds:
+        disalloweds = [
+            token for token in disalloweds
+            if token != m.Token.NEGATIVE_SIGN
+        ]
+    if m.Token.NEGATIVE_SIGN in alloweds:
+        disalloweds = [
+            token for token in disalloweds
+            if token != m.Token.AS_OPERATOR
+        ]
+    if token == m.Token.NUMBER:
+        disalloweds = [
+            token for token in disalloweds
+            if token != m.Token.NUMBER
+        ]
+
     for symbol in symbols:
+
+        # Test alloweds.
         for key in alloweds:
             afters = cases[key]()
             for after in afters:
+                lexer = lex.Lexer()
                 try:
                     yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
                 except AttributeError:
@@ -165,6 +218,32 @@ def lexer_test(token, before, alloweds, lexer):
                 )
                 actual = lexer.lex(yadn)
                 assert actual == expected
+
+        # Test disalloweds.
+        for key in disalloweds:
+            afters = cases[key]()
+            for after in afters:
+                lexer = lex.Lexer()
+                if not isinstance(after, YADN):
+                    raise TypeError(f'{key}\n' + str(type(after)))
+                try:
+                    yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
+                except AttributeError:
+                    raise AttributeError(
+                        f'{key}\n'
+                        f'{afters}\n'
+                        f'{before!r}\n{symbol!r}\n{after!r}'
+                    )
+                expected = (
+                    *before.tokens,
+                    *symbol.tokens,
+                    *after.tokens,
+                )
+                try:
+                    pytest.raises(ValueError, lexer.lex, yadn)
+                except BaseException as ex:
+                    msg = f'\n{before!r}\n{symbol!r}\n{after!r}'
+                    raise ex.__class__(str(ex) + msg)
 
 
 # Symbol unit tests.
@@ -301,6 +380,172 @@ def test_map(lexer):
     before = YADN('', ())
     alloweds = [
         m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_mapping_operator(lexer):
+    """Given a mapping operator, return the correct tokens for the YADN."""
+    token = m.Token.MAPPING_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_number(lexer):
+    """Given a number, return the correct tokens for the YADN."""
+    token = m.Token.NUMBER
+    before = YADN('', ())
+    alloweds = [
+        m.Token.AS_OPERATOR,
+        m.Token.COMPARISON_OPERATOR,
+        m.Token.EX_OPERATOR,
+        m.Token.DICE_OPERATOR,
+        m.Token.GROUP_CLOSE,
+        m.Token.MAPPING_OPERATOR,
+        m.Token.MD_OPERATOR,
+        m.Token.POOL_GEN_OPERATOR,
+        m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_number_multiple_digits(lexer):
+    """Given a number with multiple digits, return the correct tokens
+    for the YADN.
+    """
+    token = YADN('34', ((m.Token.NUMBER, 34)))
+    before = YADN('', ())
+    alloweds = [
+        m.Token.AS_OPERATOR,
+        m.Token.COMPARISON_OPERATOR,
+        m.Token.EX_OPERATOR,
+        m.Token.DICE_OPERATOR,
+        m.Token.GROUP_CLOSE,
+        m.Token.MAPPING_OPERATOR,
+        m.Token.MD_OPERATOR,
+        m.Token.POOL_GEN_OPERATOR,
+        m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_options_operator(lexer):
+    """Given a options operator, return the correct tokens for the YADN."""
+    token = m.Token.OPTIONS_OPERATOR
+    before = YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),))
+    alloweds = [
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_pool_degen_operator(lexer):
+    """Given a pool degeneration operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.POOL_DEGEN_OPERATOR
+    before = YADN('[3,3]', ((m.Token.POOL, (3, 3)),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_pool_gen_operator(lexer):
+    """Given a pool generation operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.POOL_GEN_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_pool_operator(lexer):
+    """Given a pool operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.POOL_OPERATOR
+    before = YADN('[3,3]', ((m.Token.POOL, (3, 3)),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_pool(lexer):
+    """Given a pool, return the correct tokens for the YADN."""
+    token = YADN('[3,3]', ((m.Token.POOL, (3, 3)),))
+    before = YADN('', ())
+    alloweds = [
+        m.Token.GROUP_CLOSE,
+        m.Token.POOL_OPERATOR,
+        m.Token.POOL_DEGEN_OPERATOR,
+        m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_qualifier(lexer):
+    """Given a qualifier, return the correct tokens for the YADN."""
+    token = YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),))
+    before = YADN('', ())
+    alloweds = [
+        m.Token.OPTIONS_OPERATOR,
+        m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_roll_delimiter(lexer):
+    """Given a roll delimiter, return the correct tokens for the YADN."""
+    token = m.Token.ROLL_DELIMITER
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.BOOLEAN,
+        m.Token.GROUP_OPEN,
+        m.Token.MAP_OPEN,
+        m.Token.MAP,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.POOL,
+        m.Token.POOL_OPEN,
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_u_pool_degen_operator(lexer):
+    """Given an unary pool degeneration operator, return the correct
+    tokens for the YADN.
+    """
+    token = m.Token.U_POOL_DEGEN_OPERATOR
+    before = YADN('', ())
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.POOL,
+        m.Token.POOL_OPEN,
+        m.Token.U_POOL_DEGEN_OPERATOR,
     ]
     lexer_test(token, before, alloweds, lexer)
 
