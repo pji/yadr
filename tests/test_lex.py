@@ -5,6 +5,7 @@ test_lex
 Unit tests for the dice notation lexer.
 """
 from collections import namedtuple
+from functools import partial
 import unittest as ut
 
 import pytest
@@ -14,7 +15,62 @@ from yadr import lex
 from yadr import model as m
 
 
-# Utility functions.
+# Registration.
+cases = {}
+
+
+class reg:
+    def __init__(self, key):
+        self.key = key
+
+    def __call__(self, fn):
+        new = partial(fn, token=self.key)
+        cases[self.key] = new
+        return new
+
+
+class reg_case:
+    def __init__(self, key):
+        self.key = key
+
+    def __call__(self, fn):
+        cases[self.key] = fn
+        return fn
+
+
+# Common test case utilities.
+YADN = namedtuple('YADN', 'yadn tokens')
+
+
+@reg(m.Token.AS_OPERATOR)
+@reg(m.Token.DICE_OPERATOR)
+@reg(m.Token.EX_OPERATOR)
+@reg(m.Token.MD_OPERATOR)
+@reg(m.Token.POOL_OPERATOR)
+@reg(m.Token.POOL_GEN_OPERATOR)
+@reg(m.Token.ROLL_DELIMITER)
+def build_standard_cases(token):
+    symbols = m.yadn_symbols_raw[token].split()
+    for symbol in symbols:
+        yield YADN(f'{symbol}3', (
+            (token, symbol),
+            (m.Token.NUMBER, 3),
+        ))
+
+
+@reg_case(m.Token.CHOICE_OPERATOR)
+def build_choice_operator_cases():
+    yadns = get_yadn(m.Token.CHOICE_OPERATOR)
+    for yadn in yadns:
+        yield YADN(f'{yadn.yadn}"spam":"eggs"', (
+            *yadn.tokens,
+            (m.Token.QUALIFIER, 'spam'),
+            (m.Token.OPTIONS_OPERATOR, ':'),
+            (m.Token.QUALIFIER, 'eggs'),
+        ))
+
+
+@reg_case(m.Token.GROUP_OPEN)
 def build_group_cases():
     yield YADN('(3+3)', (
         (m.Token.GROUP_OPEN, '('),
@@ -25,16 +81,40 @@ def build_group_cases():
     ))
 
 
+@reg_case(m.Token.GROUP_CLOSE)
+def build_group_cases():
+    yield YADN(')', ((m.Token.GROUP_CLOSE, ')'),))
+
+
+@reg_case(m.Token.NEGATIVE_SIGN)
 def build_negative_sign_cases():
     yield YADN('-2', ((m.Token.NUMBER, -2),))
 
 
+@reg_case(m.Token.NUMBER)
 def build_number_cases():
     symbols = m.yadn_symbols_raw[m.Token.NUMBER].split()
     for symbol in symbols:
         yield YADN(symbol, ((m.Token.NUMBER, int(symbol)),))
 
 
+@reg_case(m.Token.POOL)
+@reg_case(m.Token.POOL_OPEN)
+def build_pool_cases():
+    yield YADN('[3,3]', ((m.Token.POOL, (3, 3)),))
+
+
+@reg_case(m.Token.QUALIFIER)
+@reg_case(m.Token.QUALIFIER_DELIMITER)
+def build_qualifier_cases():
+    yadns = [
+        YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),)),
+    ]
+    for yadn in yadns:
+        yield yadn
+
+
+@reg_case(m.Token.U_POOL_DEGEN_OPERATOR)
 def build_u_pool_degeneration_operator_cases():
     symbols = m.yadn_symbols_raw[m.Token.U_POOL_DEGEN_OPERATOR].split()
     for symbol in symbols:
@@ -45,29 +125,20 @@ def build_u_pool_degeneration_operator_cases():
         ))
 
 
-def permutations(befores, afters):
-    for before in befores:
-        for after in afters:
-            yield before, after
-
-
-def whitespacer(symbols):
-    boundaries = ('', ' ')
-    for boundary in boundaries:
-        yield boundary.join(symbols)
-
-
-# Common data.
-YADN = namedtuple('YADN', 'yadn tokens')
-
-
-cases = {
-    m.Token.GROUP_OPEN: build_group_cases,
-    m.Token.NEGATIVE_SIGN: build_negative_sign_cases,
-    m.Token.NUMBER: build_number_cases,
-    m.Token.U_POOL_DEGEN_OPERATOR: build_u_pool_degeneration_operator_cases,
-}
-cases[m.Token.GROUP_CLOSE] = cases[m.Token.GROUP_OPEN]
+def get_yadn(token):
+    if isinstance(token, YADN):
+        return token
+    symbols = m.yadn_symbols_raw[token].split()
+    for symbol in symbols:
+        yadn = symbol
+        value = symbol
+        if token == m.Token.NUMBER:
+            value = int(value)
+        elif token == m.Token.BOOLEAN:
+            value = True
+            if symbol == 'F':
+                value = False
+        yield YADN(yadn, ((token, value),))
 
 
 # Pytest fixtures.
@@ -76,67 +147,162 @@ def lexer():
     return lex.Lexer()
 
 
-# AS_OPERATOR tests.
-def test_as_operator_allowed(lexer):
-    """Given an addition or subtraction operator, return the correct
-    tokens for the YADN.
-    """
-    symbols = {
-        YADN('+', ((m.Token.AS_OPERATOR, '+'),)),
-        YADN('-', ((m.Token.AS_OPERATOR, '-'),)),
-    }
-    allowed_before = [
-        m.Token.GROUP_OPEN,
-        m.Token.NEGATIVE_SIGN,
-        m.Token.NUMBER,
-    ]
-    allowed_after = [
-        m.Token.GROUP_OPEN,
-        m.Token.NEGATIVE_SIGN,
-        m.Token.NUMBER,
-        m.Token.U_POOL_DEGEN_OPERATOR,
-    ]
+# Core test code.
+def lexer_test(token, before, alloweds, lexer):
+    symbols = get_yadn(token)
     for symbol in symbols:
-        for b_key, a_key in permutations(allowed_before, allowed_after):
-            befores = cases[b_key]()
-            afters = cases[a_key]()
-            for before, after in permutations(befores, afters):
-                yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
-                actual = lexer.lex(yadn)
+        for key in alloweds:
+            afters = cases[key]()
+            for after in afters:
+                try:
+                    yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
+                except AttributeError:
+                    raise AttributeError(f'{before!r}{symbol!r}{after!r}')
                 expected = (
                     *before.tokens,
                     *symbol.tokens,
                     *after.tokens,
                 )
+                actual = lexer.lex(yadn)
                 assert actual == expected
 
 
-def test_addition(lexer):
-    """Given a basic addition equation, return the tokens that represent
-    the equation.
+# Symbol unit tests.
+def test_as_operator(lexer):
+    """Given an addition or subtraction operator, return the correct
+    tokens for the YADN.
     """
-    symbols = ('15', '+', '3')
-    yadns = whitespacer(symbols)
-    for yadn in yadns:
-        assert lexer.lex(yadn) == (
-            (lex.Token.NUMBER, 15),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.NUMBER, 3),
-        )
+    token = m.Token.AS_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
 
 
-def test_subtraction(lexer):
-    """Given a basic subtraction equation, return the tokens that represent
-    the equation.
+def test_boolean(lexer):
+    """Given an addition or subtraction operator, return the correct
+    tokens for the YADN.
     """
-    symbols = ('15', '-', '3')
-    yadns = whitespacer(symbols)
-    for yadn in yadns:
-        assert lexer.lex(yadn) == (
-            (lex.Token.NUMBER, 15),
-            (lex.Token.AS_OPERATOR, '-'),
-            (lex.Token.NUMBER, 3),
-        )
+    token = m.Token.BOOLEAN
+    before = YADN('', ())
+    alloweds = [
+        m.Token.CHOICE_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_choice_operator(lexer):
+    """Given a choice, return the correct tokens for the YADN.
+    """
+    token = m.Token.CHOICE_OPERATOR
+    before = YADN('T', ((m.Token.BOOLEAN, True),))
+    alloweds = [
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_comparison_operator(lexer):
+    """Given a comparison operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.COMPARISON_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_dice_operator(lexer):
+    """Given a comparison operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.DICE_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_ex_operator(lexer):
+    """Given a exponentiation operator, return the correct tokens for
+    the YADN.
+    """
+    token = m.Token.EX_OPERATOR
+    before = YADN('3', ((m.Token.NUMBER, 3),))
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_group(lexer):
+    """Given a group close, return the correct tokens for the YADN."""
+    token = m.Token.GROUP_CLOSE
+    before = YADN('(3', (
+        (m.Token.GROUP_OPEN, '('),
+        (m.Token.NUMBER, 3),
+    ))
+    alloweds = [
+        m.Token.AS_OPERATOR,
+        m.Token.MD_OPERATOR,
+        m.Token.EX_OPERATOR,
+        m.Token.DICE_OPERATOR,
+        m.Token.GROUP_CLOSE,
+        m.Token.POOL_OPERATOR,
+        m.Token.ROLL_DELIMITER,
+        m.Token.POOL_GEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_group_open(lexer):
+    """Given a group open, return the correct tokens for the YADN."""
+    token = m.Token.GROUP_OPEN
+    before = YADN('', ())
+    alloweds = [
+        m.Token.GROUP_OPEN,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.POOL,
+        m.Token.POOL_OPEN,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds, lexer)
+
+
+def test_map(lexer):
+    """Given a map, return the correct tokens for the YADN."""
+    token = YADN(
+        '{"name"=1:"none",2:"success",3:"success",4:"success success"}',
+        ((m.Token.MAP, ('name', {
+            1: "none",
+            2: "success",
+            3: "success",
+            4: "success success",
+        })),)
+    )
+    before = YADN('', ())
+    alloweds = [
+        m.Token.ROLL_DELIMITER,
+    ]
+    lexer_test(token, before, alloweds, lexer)
 
 
 # Symbol test cases.

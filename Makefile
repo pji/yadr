@@ -25,3 +25,8 @@ pre:
 .PHONY: test
 test:
 	python -m pytest
+
+
+.PHONY: testv
+testv:
+	python -m pytest -vv
