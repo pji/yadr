@@ -26,7 +26,7 @@ class reg:
     def __call__(self, fn):
         new = partial(fn, token=self.key)
         cases[self.key] = new
-        return new
+        return fn
 
 
 class reg_case:
@@ -43,8 +43,13 @@ YADN = namedtuple('YADN', 'yadn tokens')
 
 
 def get_yadn(token):
+    """Build a :class:`YADN` object for each valid symbol for the token."""
+    # If a YADN object was passed, just yield it back.
     if isinstance(token, YADN):
         yield token
+
+    # Otherwise get the symbols for the token type, build and then
+    # yield the YADN object for each of the symbols.
     else:
         symbols = m.yadn_symbols_raw[token].split()
         for symbol in symbols:
@@ -60,12 +65,6 @@ def get_yadn(token):
 
 
 # Build the test data for testing each type of token.
-@reg_case(m.Token.BOOLEAN)
-def build_boolean_cases():
-    for yadn in get_yadn(m.Token.BOOLEAN):
-        yield yadn
-
-
 @reg_case(m.Token.CHOICE_OPERATOR)
 def build_choice_operator_cases():
     yadns = get_yadn(m.Token.CHOICE_OPERATOR)
@@ -98,18 +97,13 @@ def build_group_cases():
 @reg(m.Token.POOL_GEN_OPERATOR)
 @reg(m.Token.POOL_OPERATOR)
 @reg(m.Token.ROLL_DELIMITER)
-def build_folowed_by_number_cases(token):
+def build_followed_by_number_cases(token):
     symbols = m.yadn_symbols_raw[token].split()
     for symbol in symbols:
         yield YADN(f'{symbol}3', (
             (token, symbol),
             (m.Token.NUMBER, 3),
         ))
-
-
-@reg_case(m.Token.GROUP_CLOSE)
-def build_group_cases():
-    yield YADN(')', ((m.Token.GROUP_CLOSE, ')'),))
 
 
 @reg_case(m.Token.MAPPING_OPERATOR)
@@ -135,13 +129,6 @@ def build_negative_sign_cases():
     yield YADN('-2', ((m.Token.NUMBER, -2),))
 
 
-@reg_case(m.Token.NUMBER)
-def build_number_cases():
-    symbols = m.yadn_symbols_raw[m.Token.NUMBER].split()
-    for symbol in symbols:
-        yield YADN(symbol, ((m.Token.NUMBER, int(symbol)),))
-
-
 @reg_case(m.Token.OPTIONS_OPERATOR)
 def build_options_operator_cases():
     yield YADN(':"spam"', (
@@ -160,6 +147,14 @@ def build_pool_cases():
 @reg_case(m.Token.QUALIFIER_DELIMITER)
 def build_qualifier_cases():
     yield YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),))
+
+
+@reg(m.Token.BOOLEAN)
+@reg(m.Token.GROUP_CLOSE)
+@reg(m.Token.NUMBER)
+def build_token_only_case(token):
+    for yadn in get_yadn(token):
+        yield yadn
 
 
 @reg_case(m.Token.U_POOL_DEGEN_OPERATOR)
@@ -183,16 +178,19 @@ def allowed_test(symbol, before, after):
     )
 
     lexer = lex.Lexer()
+    yadns = [
+        f'{before.yadn}{symbol.yadn}{after.yadn}',
+        f'{before.yadn}{symbol.yadn} {after.yadn}',
+    ]
 
-    # Test without whitespace.
-    yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
-    actual = lexer.lex(yadn)
-    assert actual == expected
-
-    # Test with whitespace.
-    yadn = f'{before.yadn}{symbol.yadn} {after.yadn}'
-    actual = lexer.lex(yadn)
-    assert actual == expected
+    for yadn in yadns:
+        actual = lexer.lex(yadn)
+        try:
+            assert actual == expected
+        except AssertionError as ex:
+            cls = ex.__class__
+            msg = f'{ex}\n{yadn}'
+            raise cls(msg)
 
 
 def disallowed_test(symbol, before, after):
@@ -200,24 +198,18 @@ def disallowed_test(symbol, before, after):
     expected = ValueError
 
     lexer = lex.Lexer()
+    yadns = [
+        f'{before.yadn}{symbol.yadn}{after.yadn}',
+        f'{before.yadn}{symbol.yadn} {after.yadn}',
+    ]
 
-    # Test without whitespace.
-    yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
-    try:
-        pytest.raises(expected, lexer.lex, yadn)
-    except BaseException as ex:
-        cls = ex.__class__
-        msg = f'{ex}\n{yadn}'
-        raise cls(msg)
-
-    # Test with whitespace.
-    yadn = f'{before.yadn}{symbol.yadn} {after.yadn}'
-    try:
-        pytest.raises(expected, lexer.lex, yadn)
-    except BaseException as ex:
-        cls = ex.__class__
-        msg = f'{ex}\n{yadn}'
-        raise cls(msg)
+    for yadn in yadns:
+        try:
+            pytest.raises(expected, lexer.lex, yadn)
+        except BaseException as ex:
+            cls = ex.__class__
+            msg = f'{ex}\n{yadn}'
+            raise cls(msg)
 
 
 def lexer_test(token, before, alloweds):
