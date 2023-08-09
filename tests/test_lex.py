@@ -44,38 +44,22 @@ YADN = namedtuple('YADN', 'yadn tokens')
 
 def get_yadn(token):
     if isinstance(token, YADN):
-        return token
-    symbols = m.yadn_symbols_raw[token].split()
-    for symbol in symbols:
-        yadn = symbol
-        value = symbol
-        if token == m.Token.NUMBER:
-            value = int(value)
-        elif token == m.Token.BOOLEAN:
-            value = True
-            if symbol == 'F':
-                value = False
-        yield YADN(yadn, ((token, value),))
+        yield token
+    else:
+        symbols = m.yadn_symbols_raw[token].split()
+        for symbol in symbols:
+            yadn = symbol
+            value = symbol
+            if token == m.Token.NUMBER:
+                value = int(value)
+            elif token == m.Token.BOOLEAN:
+                value = True
+                if symbol == 'F':
+                    value = False
+            yield YADN(yadn, ((token, value),))
 
 
 # Build the test data for testing each type of token.
-@reg(m.Token.AS_OPERATOR)
-@reg(m.Token.COMPARISON_OPERATOR)
-@reg(m.Token.DICE_OPERATOR)
-@reg(m.Token.EX_OPERATOR)
-@reg(m.Token.MD_OPERATOR)
-@reg(m.Token.POOL_OPERATOR)
-@reg(m.Token.POOL_GEN_OPERATOR)
-@reg(m.Token.ROLL_DELIMITER)
-def build_standard_cases(token):
-    symbols = m.yadn_symbols_raw[token].split()
-    for symbol in symbols:
-        yield YADN(f'{symbol}3', (
-            (token, symbol),
-            (m.Token.NUMBER, 3),
-        ))
-
-
 @reg_case(m.Token.BOOLEAN)
 def build_boolean_cases():
     for yadn in get_yadn(m.Token.BOOLEAN):
@@ -103,6 +87,24 @@ def build_group_cases():
         (m.Token.NUMBER, 3),
         (m.Token.GROUP_CLOSE, ')'),
     ))
+
+
+@reg(m.Token.AS_OPERATOR)
+@reg(m.Token.COMPARISON_OPERATOR)
+@reg(m.Token.DICE_OPERATOR)
+@reg(m.Token.EX_OPERATOR)
+@reg(m.Token.MD_OPERATOR)
+@reg(m.Token.POOL_DEGEN_OPERATOR)
+@reg(m.Token.POOL_GEN_OPERATOR)
+@reg(m.Token.POOL_OPERATOR)
+@reg(m.Token.ROLL_DELIMITER)
+def build_folowed_by_number_cases(token):
+    symbols = m.yadn_symbols_raw[token].split()
+    for symbol in symbols:
+        yield YADN(f'{symbol}3', (
+            (token, symbol),
+            (m.Token.NUMBER, 3),
+        ))
 
 
 @reg_case(m.Token.GROUP_CLOSE)
@@ -157,11 +159,7 @@ def build_pool_cases():
 @reg_case(m.Token.QUALIFIER)
 @reg_case(m.Token.QUALIFIER_DELIMITER)
 def build_qualifier_cases():
-    yadns = [
-        YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),)),
-    ]
-    for yadn in yadns:
-        yield yadn
+    yield YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),))
 
 
 @reg_case(m.Token.U_POOL_DEGEN_OPERATOR)
@@ -177,6 +175,7 @@ def build_u_pool_degeneration_operator_cases():
 
 # Core test code.
 def allowed_test(symbol, before, after):
+    """Test a token that is allowed to follow the given symbol."""
     expected = (
         *before.tokens,
         *symbol.tokens,
@@ -197,17 +196,28 @@ def allowed_test(symbol, before, after):
 
 
 def disallowed_test(symbol, before, after):
+    """Test a token that is not allowed to follow the given symbol"""
     expected = ValueError
 
     lexer = lex.Lexer()
 
     # Test without whitespace.
     yadn = f'{before.yadn}{symbol.yadn}{after.yadn}'
-    pytest.raises(expected, lexer.lex, yadn)
+    try:
+        pytest.raises(expected, lexer.lex, yadn)
+    except BaseException as ex:
+        cls = ex.__class__
+        msg = f'{ex}\n{yadn}'
+        raise cls(msg)
 
     # Test with whitespace.
     yadn = f'{before.yadn}{symbol.yadn} {after.yadn}'
-    pytest.raises(expected, lexer.lex, yadn)
+    try:
+        pytest.raises(expected, lexer.lex, yadn)
+    except BaseException as ex:
+        cls = ex.__class__
+        msg = f'{ex}\n{yadn}'
+        raise cls(msg)
 
 
 def lexer_test(token, before, alloweds):
@@ -216,7 +226,7 @@ def lexer_test(token, before, alloweds):
     disalloweds = [token for token in cases if token not in alloweds]
 
     # Since AS_OPERATORS contain -, the NEGATIVE_SIGN will be allowed
-    # if AS_OPERATORS is allowed.
+    # if AS_OPERATORS are allowed.
     if m.Token.AS_OPERATOR in alloweds:
         disalloweds = [
             token for token in disalloweds
@@ -233,7 +243,14 @@ def lexer_test(token, before, alloweds):
         ]
 
     # NUMBERS next to NUMBERS aren't separate tokens.
-    if token == m.Token.NUMBER:
+    if (
+        token == m.Token.NUMBER
+        or (
+            isinstance(token, YADN)
+            and token.tokens
+            and token.tokens[0][0] == m.Token.NUMBER
+        )
+    ):
         disalloweds = [
             token for token in disalloweds
             if token != m.Token.NUMBER
@@ -427,7 +444,7 @@ def test_number_multiple_digits():
     """Given a number with multiple digits, return the correct tokens
     for the YADN.
     """
-    token = YADN('34', ((m.Token.NUMBER, 34)))
+    token = YADN('34', ((m.Token.NUMBER, 34),))
     before = YADN('', ())
     alloweds = [
         m.Token.AS_OPERATOR,
@@ -561,34 +578,24 @@ def test_u_pool_degen_operator():
 
 
 # Roll test case.
-class StartRollTestCase(BaseTests.LexTestCase):
-    def test_operator_cannot_start_roll(self):
-        """An operator cannot start an expression."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = 'Cannot start with \\+.'
-
-        # Test data and state.
-        data = '+2'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
-
-    def test_operator_cannot_start_roll_whitespace(self):
-        """An operator cannot start an expression."""
-        # Expected values.
-        exp_ex = ValueError
-        exp_msg = 'Cannot start with \\+.'
-
-        # Test data and state.
-        data = ' +2'
-        lexer = lex.Lexer()
-
-        # Run test and determine the result.
-        with self.assertRaisesRegex(exp_ex, exp_msg):
-            _ = lexer.lex(data)
+def test_start_roll():
+    """Given a roll delimiter, return the correct tokens for the YADN."""
+    token = YADN('', ())
+    before = YADN('', ())
+    alloweds = [
+        m.Token.BOOLEAN,
+        m.Token.GROUP_OPEN,
+        m.Token.MAP_OPEN,
+        m.Token.MAP,
+        m.Token.NEGATIVE_SIGN,
+        m.Token.NUMBER,
+        m.Token.POOL,
+        m.Token.POOL_OPEN,
+        m.Token.QUALIFIER,
+        m.Token.QUALIFIER_DELIMITER,
+        m.Token.U_POOL_DEGEN_OPERATOR,
+    ]
+    lexer_test(token, before, alloweds)
 
 
 # Order of operations test case.
