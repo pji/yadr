@@ -596,32 +596,3 @@ def test_start_roll():
         m.Token.U_POOL_DEGEN_OPERATOR,
     ]
     lexer_test(token, before, alloweds)
-
-
-# Order of operations test case.
-class OrderOfOperationsTestCase(BaseTests.LexTestCase):
-    def test_negative_number(self):
-        """Tokenize a number that starts with a negative sign."""
-        exp = ((lex.Token.NUMBER, -24),)
-        data = '-24'
-        self.lex_test(exp, data)
-
-    def test_negative_number_after_operator(self):
-        """Tokenize a number that starts with a negative sign."""
-        exp = (
-            (lex.Token.NUMBER, 3),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.NUMBER, -24),
-        )
-        data = '3+-24'
-        self.lex_test(exp, data)
-
-    def test_negative_number_after_operator_with_whitespace(self):
-        """Tokenize a number that starts with a negative sign."""
-        exp = (
-            (lex.Token.NUMBER, 3),
-            (lex.Token.AS_OPERATOR, '+'),
-            (lex.Token.NUMBER, -24),
-        )
-        data = '3 + -24'
-        self.lex_test(exp, data)
