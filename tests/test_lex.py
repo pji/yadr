@@ -6,11 +6,9 @@ Unit tests for the dice notation lexer.
 """
 from collections import namedtuple
 from functools import partial
-import unittest as ut
 
 import pytest
 
-from tests.common import BaseTests
 from yadr import lex
 from yadr import model as m
 
@@ -26,15 +24,6 @@ class reg:
     def __call__(self, fn):
         new = partial(fn, token=self.key)
         cases[self.key] = new
-        return fn
-
-
-class reg_case:
-    def __init__(self, key):
-        self.key = key
-
-    def __call__(self, fn):
-        cases[self.key] = fn
         return fn
 
 
@@ -65,9 +54,9 @@ def get_yadn(token):
 
 
 # Build the test data for testing each type of token.
-@reg_case(m.Token.CHOICE_OPERATOR)
-def build_choice_operator_cases():
-    yadns = get_yadn(m.Token.CHOICE_OPERATOR)
+@reg(m.Token.CHOICE_OPERATOR)
+def build_choice_operator_cases(token):
+    yadns = get_yadn(token)
     for yadn in yadns:
         yield YADN(f'{yadn.yadn}"spam":"eggs"', (
             *yadn.tokens,
@@ -77,8 +66,8 @@ def build_choice_operator_cases():
         ))
 
 
-@reg_case(m.Token.GROUP_OPEN)
-def build_group_cases():
+@reg(m.Token.GROUP_OPEN)
+def build_group_cases(token):
     yield YADN('(3+3)', (
         (m.Token.GROUP_OPEN, '('),
         (m.Token.NUMBER, 3),
@@ -106,8 +95,8 @@ def build_followed_by_number_cases(token):
         ))
 
 
-@reg_case(m.Token.MAPPING_OPERATOR)
-def build_mapping_operator_cases():
+@reg(m.Token.MAPPING_OPERATOR)
+def build_mapping_operator_cases(token):
     for yadn in build_qualifier_cases():
         yield YADN(f'm{yadn.yadn}', (
             (m.Token.MAPPING_OPERATOR, 'm'),
@@ -115,37 +104,37 @@ def build_mapping_operator_cases():
         ))
 
 
-@reg_case(m.Token.MAP)
-@reg_case(m.Token.MAP_OPEN)
-def build_map_cases():
+@reg(m.Token.MAP)
+@reg(m.Token.MAP_OPEN)
+def build_map_cases(token):
     yield YADN('{"spam"=1:"win",2:"lose"}', ((m.Token.MAP, ('spam', {
         1: 'win',
         2: 'lose',
     })),))
 
 
-@reg_case(m.Token.NEGATIVE_SIGN)
-def build_negative_sign_cases():
+@reg(m.Token.NEGATIVE_SIGN)
+def build_negative_sign_cases(token):
     yield YADN('-2', ((m.Token.NUMBER, -2),))
 
 
-@reg_case(m.Token.OPTIONS_OPERATOR)
-def build_options_operator_cases():
+@reg(m.Token.OPTIONS_OPERATOR)
+def build_options_operator_cases(token):
     yield YADN(':"spam"', (
-        (m.Token.OPTIONS_OPERATOR, ':'),
+        (token, ':'),
         (m.Token.QUALIFIER, 'spam'),
     ))
 
 
-@reg_case(m.Token.POOL)
-@reg_case(m.Token.POOL_OPEN)
-def build_pool_cases():
+@reg(m.Token.POOL)
+@reg(m.Token.POOL_OPEN)
+def build_pool_cases(token):
     yield YADN('[3,3]', ((m.Token.POOL, (3, 3)),))
 
 
-@reg_case(m.Token.QUALIFIER)
-@reg_case(m.Token.QUALIFIER_DELIMITER)
-def build_qualifier_cases():
+@reg(m.Token.QUALIFIER)
+@reg(m.Token.QUALIFIER_DELIMITER)
+def build_qualifier_cases(token=None):
     yield YADN('"spam"', ((m.Token.QUALIFIER, 'spam'),))
 
 
@@ -157,8 +146,8 @@ def build_token_only_case(token):
         yield yadn
 
 
-@reg_case(m.Token.U_POOL_DEGEN_OPERATOR)
-def build_u_pool_degeneration_operator_cases():
+@reg(m.Token.U_POOL_DEGEN_OPERATOR)
+def build_u_pool_degeneration_operator_cases(token):
     symbols = m.yadn_symbols_raw[m.Token.U_POOL_DEGEN_OPERATOR].split()
     for symbol in symbols:
         yadn = f'{symbol}[3, 3]'
