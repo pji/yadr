@@ -4,9 +4,6 @@ test_parse
 
 Unit tests for the yadr.parse module.
 """
-import unittest as ut
-from unittest.mock import patch
-
 from yadr import parser as p
 from yadr.model import Token
 from yadr import operator as yo
@@ -542,176 +539,158 @@ def test_map_result_pool(mocker):
     assert parser.parse(tokens) == exp
 
 
-class ParserTestCase(ut.TestCase):
-    def setUp(self):
-        self.parser = p.Parser()
+# Test rolls and result tests.
+def test_roll_delimiter(mocker):
+    """Return the result of two rolls."""
+    mocker.patch('random.randint', side_effect=(1, 1, 3, 8))
+    exp = ((1, 1, 3), 10)
+    tokens = (
+        (Token.NUMBER, 3),
+        (Token.POOL_GEN_OPERATOR, 'g'),
+        (Token.NUMBER, 8),
+        (Token.ROLL_DELIMITER, ';'),
+        (Token.NUMBER, 1),
+        (Token.DICE_OPERATOR, 'd'),
+        (Token.NUMBER, 10),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 2)
+    )
+    parser_test(exp, tokens)
 
-    def tearDown(self):
-        self.parser = None
 
-    def parser_test(self, exp, tokens):
-        """Return the expected result for the given tokens."""
-        act = self.parser.parse(tokens)
-        self.assertEqual(exp, act)
+def test_roll_delimiter_remove_none_result(mocker):
+    """Return the result of two rolls."""
+    mocker.patch('random.randint', side_effect=(2,))
+    exp = 'lose'
+    tokens = (
+        (Token.MAP, (
+            'spam',
+            {1: "win", 2: "lose"}
+        )),
+        (Token.ROLL_DELIMITER, ';'),
+        (Token.NUMBER, 1),
+        (Token.DICE_OPERATOR, 'd'),
+        (Token.NUMBER, 2),
+        (Token.MAPPING_OPERATOR, 'm'),
+        (Token.QUALIFIER, 'spam')
+    )
+    parser_test(exp, tokens)
 
-    # Tests.
-    # Test rolls and results.
-    @patch('random.randint')
-    def test_roll_delimiter(self, mock_randint):
-        """Return the result of two rolls."""
-        mock_randint.side_effect = (1, 1, 3, 8)
-        exp = ((1, 1, 3), 10)
-        tokens = (
-            (Token.NUMBER, 3),
-            (Token.POOL_GEN_OPERATOR, 'g'),
-            (Token.NUMBER, 8),
-            (Token.ROLL_DELIMITER, ';'),
-            (Token.NUMBER, 1),
-            (Token.DICE_OPERATOR, 'd'),
-            (Token.NUMBER, 10),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 2)
-        )
-        self.parser_test(exp, tokens)
 
-    @patch('random.randint')
-    def test_roll_delimiter_remove_none_result(self, mock_randint):
-        """Return the result of two rolls."""
-        mock_randint.side_effect = (2,)
-        exp = 'lose'
-        tokens = (
-            (Token.MAP, (
-                'spam',
-                {1: "win", 2: "lose"}
-            )),
-            (Token.ROLL_DELIMITER, ';'),
-            (Token.NUMBER, 1),
-            (Token.DICE_OPERATOR, 'd'),
-            (Token.NUMBER, 2),
-            (Token.MAPPING_OPERATOR, 'm'),
-            (Token.QUALIFIER, 'spam')
-        )
-        self.parser_test(exp, tokens)
+# Test order of precedence.
+def test_can_perform_multiple_operations():
+    """The parser can parse statements with multiple operators."""
+    exp = 9
+    tokens = (
+        (Token.NUMBER, 3),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 2),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 4),
+    )
+    parser_test(exp, tokens)
 
-    # Test order of precedence.
-    def test_can_perform_multiple_operations(self):
-        """The parser can parse statements with multiple operators."""
-        exp = 9
-        tokens = (
-            (Token.NUMBER, 3),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 2),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 4),
-        )
-        self.parser_test(exp, tokens)
 
-    def test_exponentiation_before_multiplication(self):
-        """Multiplication should occur before addition."""
-        exp = 48
-        tokens = (
-            (Token.NUMBER, 3),
-            (Token.MD_OPERATOR, '*'),
-            (Token.NUMBER, 2),
-            (Token.EX_OPERATOR, '^'),
-            (Token.NUMBER, 4),
-        )
-        self.parser_test(exp, tokens)
+def test_exponentiation_before_multiplication():
+    """Multiplication should occur before addition."""
+    exp = 48
+    tokens = (
+        (Token.NUMBER, 3),
+        (Token.MD_OPERATOR, '*'),
+        (Token.NUMBER, 2),
+        (Token.EX_OPERATOR, '^'),
+        (Token.NUMBER, 4),
+    )
+    parser_test(exp, tokens)
 
-    def test_multiplication_before_addition(self):
-        """Multiplication should occur before addition."""
-        exp = 11
-        tokens = (
-            (Token.NUMBER, 3),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 2),
-            (Token.MD_OPERATOR, '*'),
-            (Token.NUMBER, 4),
-        )
-        self.parser_test(exp, tokens)
 
-    def test_parens_before_multiplication(self):
-        """Parentheses should occur before multiplication."""
-        exp = 18
-        tokens = (
-            (Token.NUMBER, 3),
-            (Token.MD_OPERATOR, '*'),
-            (Token.GROUP_OPEN, '('),
-            (Token.NUMBER, 2),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 4),
-            (Token.GROUP_CLOSE, ')'),
-        )
-        self.parser_test(exp, tokens)
+def test_multiplication_before_addition():
+    """Multiplication should occur before addition."""
+    exp = 11
+    tokens = (
+        (Token.NUMBER, 3),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 2),
+        (Token.MD_OPERATOR, '*'),
+        (Token.NUMBER, 4),
+    )
+    parser_test(exp, tokens)
 
-    @patch('random.randint')
-    def test_pool_generation_happens_before_pool_degeneration(self, mock_ri):
-        """Pool generation should happen before pool degeneration
-        in order of operations.
-        """
-        # Expected value.
-        exp = 20
 
-        # Test data and state.
-        rand_results = [5, 4, 6, 2, 3]
-        mock_ri.side_effect = rand_results
-        tokens = (
-            (Token.U_POOL_DEGEN_OPERATOR, 'S'),
-            (Token.NUMBER, 5),
-            (Token.POOL_GEN_OPERATOR, 'g'),
-            (Token.NUMBER, 6),
-        )
+def test_parens_before_multiplication():
+    """Parentheses should occur before multiplication."""
+    exp = 18
+    tokens = (
+        (Token.NUMBER, 3),
+        (Token.MD_OPERATOR, '*'),
+        (Token.GROUP_OPEN, '('),
+        (Token.NUMBER, 2),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 4),
+        (Token.GROUP_CLOSE, ')'),
+    )
+    parser_test(exp, tokens)
 
-        # Run test.
-        act = self.parser.parse(tokens)
 
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_pool_generation_happens_before_pool_degeneration(mocker):
+    """Pool generation should happen before pool degeneration
+    in order of operations.
+    """
+    # Expected value.
+    exp = 20
 
-    @patch('random.randint')
-    def test_unary_pool_degeneration_happens_before_operators(self, mock_ri):
-        """Unary pool degeneration should happen before operators
-        in order of operations.
-        """
-        # Expected value.
-        exp = 25
+    # Test data and state.
+    rand_results = [5, 4, 6, 2, 3]
+    mocker.patch('random.randint', side_effect=rand_results)
+    tokens = (
+        (Token.U_POOL_DEGEN_OPERATOR, 'S'),
+        (Token.NUMBER, 5),
+        (Token.POOL_GEN_OPERATOR, 'g'),
+        (Token.NUMBER, 6),
+    )
 
-        # Test data and state.
-        rand_results = [5, 4, 6, 2, 3]
-        mock_ri.side_effect = rand_results
-        tokens = (
-            (Token.U_POOL_DEGEN_OPERATOR, 'S'),
-            (Token.NUMBER, 5),
-            (Token.POOL_GEN_OPERATOR, 'g'),
-            (Token.NUMBER, 6),
-            (Token.AS_OPERATOR, '+'),
-            (Token.NUMBER, 5),
-        )
+    # Run test.
+    parser_test(exp, tokens)
 
-        # Run test.
-        act = self.parser.parse(tokens)
 
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_unary_pool_degeneration_happens_before_operators(mocker):
+    """Unary pool degeneration should happen before operators
+    in order of operations.
+    """
+    # Expected value.
+    exp = 25
 
-    def test_pool_operation_happens_before_pool_degeneration(self):
-        """Pool operations should happen before pool degeneration
-        in order of operations.
-        """
-        # Expected value.
-        exp = 1
+    # Test data and state.
+    rand_results = [5, 4, 6, 2, 3]
+    mocker.patch('random.randint', side_effect=rand_results)
+    tokens = (
+        (Token.U_POOL_DEGEN_OPERATOR, 'S'),
+        (Token.NUMBER, 5),
+        (Token.POOL_GEN_OPERATOR, 'g'),
+        (Token.NUMBER, 6),
+        (Token.AS_OPERATOR, '+'),
+        (Token.NUMBER, 5),
+    )
 
-        # Test data and state.
-        tokens = (
-            (Token.POOL, (5, 4, 6, 2, 3)),
-            (Token.POOL_OPERATOR, 'pb'),
-            (Token.NUMBER, 5),
-            (Token.POOL_DEGEN_OPERATOR, 'ns'),
-            (Token.NUMBER, 5),
-        )
+    # Run test.
+    parser_test(exp, tokens)
 
-        # Run test.
-        act = self.parser.parse(tokens)
 
-        # Determine test result.
-        self.assertEqual(exp, act)
+def test_pool_operation_happens_before_pool_degeneration():
+    """Pool operations should happen before pool degeneration
+    in order of operations.
+    """
+    # Expected value.
+    exp = 1
+
+    # Test data and state.
+    tokens = (
+        (Token.POOL, (5, 4, 6, 2, 3)),
+        (Token.POOL_OPERATOR, 'pb'),
+        (Token.NUMBER, 5),
+        (Token.POOL_DEGEN_OPERATOR, 'ns'),
+        (Token.NUMBER, 5),
+    )
+
+    # Run test.
+    parser_test(exp, tokens)

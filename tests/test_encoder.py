@@ -4,8 +4,6 @@ test_encoder
 
 Unit tests for the yadr.encoder module.
 """
-import unittest as ut
-
 from yadr import encode as e
 from yadr import model as m
 
