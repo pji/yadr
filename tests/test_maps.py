@@ -6,11 +6,9 @@ Unittests for the yadr.maps module.
 """
 from collections import namedtuple
 from functools import partial
-import unittest as ut
 
 import pytest
 
-from tests.common import BaseTests
 from yadr import maps
 from yadr import model as m
 from yadr.model import Token
@@ -67,6 +65,7 @@ def build_kv_delimiter_cases(token):
             (m.Token.MAP_CLOSE, '}'),
         ))
 
+
 @reg(m.Token.NEGATIVE_SIGN)
 def build_negative_sign_cases(token):
     yield YADN('-2', ((m.Token.NUMBER, -2),))
@@ -83,7 +82,6 @@ def build_name_delimiter_cases(token):
             (m.Token.QUALIFIER, 'spam'),
             (m.Token.MAP_CLOSE, '}'),
         ))
-
 
 
 @reg(m.Token.PAIR_DELIMITER)
@@ -350,78 +348,67 @@ def test_qualifier():
 
 
 # Parsing test cases.
-class ParseTestCase(ut.TestCase):
-    def setUp(self):
-        self.parser = maps.Parser()
+def test_parser():
+    """A basic dice mapping can be parsed."""
+    tokens = (
+        (Token.MAP_OPEN, '{'),
+        (Token.QUALIFIER, 'name'),
+        (Token.NAME_DELIMITER, '='),
+        (Token.NUMBER, 1),
+        (Token.KV_DELIMITER, ':'),
+        (Token.QUALIFIER, 'none'),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.NUMBER, 2),
+        (Token.KV_DELIMITER, ':'),
+        (Token.QUALIFIER, 'success'),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.NUMBER, 3),
+        (Token.KV_DELIMITER, ':'),
+        (Token.QUALIFIER, 'success'),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.NUMBER, 4),
+        (Token.KV_DELIMITER, ':'),
+        (Token.QUALIFIER, 'success success'),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.MAP_CLOSE, '}'),
+    )
+    parser = maps.Parser()
+    assert parser.parse(tokens) == (
+        'name',
+        {
+            1: "none",
+            2: "success",
+            3: "success",
+            4: "success success",
+        }
+    )
 
-    def tearDown(self):
-        self.parser = None
 
-    def parser_test(self, exp, tokens):
-        act = self.parser.parse(tokens)
-        self.assertEqual(exp, act)
-
-    # Test cases.
-    def test_parser(self):
-        """A basic dice mapping can be parsed."""
-        exp = (
-            'name',
-            {
-                1: "none",
-                2: "success",
-                3: "success",
-                4: "success success",
-            }
-        )
-        tokens = (
-            (Token.MAP_OPEN, '{'),
-            (Token.QUALIFIER, 'name'),
-            (Token.NAME_DELIMITER, '='),
-            (Token.NUMBER, 1),
-            (Token.KV_DELIMITER, ':'),
-            (Token.QUALIFIER, 'none'),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.NUMBER, 2),
-            (Token.KV_DELIMITER, ':'),
-            (Token.QUALIFIER, 'success'),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.NUMBER, 3),
-            (Token.KV_DELIMITER, ':'),
-            (Token.QUALIFIER, 'success'),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.NUMBER, 4),
-            (Token.KV_DELIMITER, ':'),
-            (Token.QUALIFIER, 'success success'),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.MAP_CLOSE, '}'),
-        )
-        self.parser_test(exp, tokens)
-
-    def test_parser_with_numbers(self):
-        """A basic dice mapping can be parsed."""
-        exp = (
-            'name',
-            {
-                1: -1,
-                2: 0,
-                3: 1,
-            }
-        )
-        tokens = (
-            (Token.MAP_OPEN, '{'),
-            (Token.QUALIFIER, 'name'),
-            (Token.NAME_DELIMITER, '='),
-            (Token.NUMBER, 1),
-            (Token.KV_DELIMITER, ':'),
-            (Token.NUMBER, -1),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.NUMBER, 2),
-            (Token.KV_DELIMITER, ':'),
-            (Token.NUMBER, 0),
-            (Token.PAIR_DELIMITER, ','),
-            (Token.NUMBER, 3),
-            (Token.KV_DELIMITER, ':'),
-            (Token.NUMBER, 1),
-            (Token.MAP_CLOSE, '}'),
-        )
-        self.parser_test(exp, tokens)
+def test_parser_with_numbers():
+    """A basic dice mapping can be parsed."""
+    tokens = (
+        (Token.MAP_OPEN, '{'),
+        (Token.QUALIFIER, 'name'),
+        (Token.NAME_DELIMITER, '='),
+        (Token.NUMBER, 1),
+        (Token.KV_DELIMITER, ':'),
+        (Token.NUMBER, -1),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.NUMBER, 2),
+        (Token.KV_DELIMITER, ':'),
+        (Token.NUMBER, 0),
+        (Token.PAIR_DELIMITER, ','),
+        (Token.NUMBER, 3),
+        (Token.KV_DELIMITER, ':'),
+        (Token.NUMBER, 1),
+        (Token.MAP_CLOSE, '}'),
+    )
+    parser = maps.Parser()
+    assert parser.parse(tokens) == (
+        'name',
+        {
+            1: -1,
+            2: 0,
+            3: 1,
+        }
+    )
