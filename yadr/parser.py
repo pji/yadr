@@ -4,9 +4,9 @@ parse
 
 Parse dice notation.
 """
+import operator
 from collections.abc import Callable, Sequence
 from functools import wraps
-import operator
 from typing import Any, Optional
 
 from yadr import operator as yo
@@ -16,8 +16,8 @@ from yadr.model import (
     Result,
     Token,
     TokenInfo,
-    op_tokens,
-    id_tokens
+    id_tokens,
+    op_tokens
 )
 
 

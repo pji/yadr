@@ -7,7 +7,7 @@ A module for handling :ref:`YADN` pools.
 from typing import Callable, Sequence
 
 from yadr.base import BaseLexer
-from yadr.model import symbols, Token, TokenInfo
+from yadr.model import Token, TokenInfo, symbols
 
 
 class Lexer(BaseLexer):

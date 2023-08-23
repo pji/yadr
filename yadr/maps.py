@@ -7,7 +7,7 @@ A module for handling :ref:`YADN` dice maps.
 from typing import Callable, Optional
 
 from yadr.base import BaseLexer, _mutable
-from yadr.model import NamedMap, Result, symbols, Token, TokenInfo
+from yadr.model import NamedMap, Result, Token, TokenInfo, symbols
 
 
 # Lexing.

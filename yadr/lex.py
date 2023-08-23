@@ -6,16 +6,9 @@ A lexer for `yadr` dice notation.
 """
 from typing import Optional
 
-from yadr import maps
-from yadr import pools
+from yadr import maps, pools
 from yadr.base import BaseLexer, ResultMethod, StateMethod
-from yadr.model import (
-    CompoundResult,
-    Result,
-    Token,
-    TokenInfo,
-    symbols
-)
+from yadr.model import CompoundResult, Result, Token, TokenInfo, symbols
 
 
 # Lexers.

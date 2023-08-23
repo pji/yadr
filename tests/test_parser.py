@@ -4,9 +4,9 @@ test_parse
 
 Unit tests for the yadr.parse module.
 """
+from yadr import operator as yo
 from yadr import parser as p
 from yadr.model import Token
-from yadr import operator as yo
 
 
 # Core test functions.

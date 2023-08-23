@@ -4,9 +4,9 @@ operator
 
 Operators for handling the dice part of dice notation.
 """
-from collections.abc import Callable, Sequence
-import random
 import operator
+import random
+from collections.abc import Callable, Sequence
 
 
 # Types for annotation.

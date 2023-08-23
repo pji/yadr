@@ -5,15 +5,16 @@ yadr
 The core of the :mod:`yadr` package.
 """
 from argparse import ArgumentParser
-from importlib.resources import open_text
+from importlib.resources import files
 from pathlib import Path
 from typing import Optional
 
+import yadr.data
 from yadr import maps as m
 from yadr.encode import Encoder
 from yadr.lex import Lexer
 from yadr.model import CompoundResult, DiceMapping, Result, TokenInfo
-from yadr.parser import dice_map, Parser
+from yadr.parser import Parser, dice_map
 
 
 # Execute YADN.
@@ -134,9 +135,10 @@ def get_default_maps() -> dict[str, DiceMapping]:
         >>> get_default_maps()              # doctest: +ELLIPSIS
         {'sweote boost': {1: '',...
     """
-    default_file = open_text('yadr.data', 'dice_maps.yadn')
-    default_maps_yadn = default_file.read()
-    default_file.close()
+    data_pkg = files(yadr.data)
+    default_file = Path(f'{data_pkg}') / 'dice_maps.yadn'
+    with open(default_file) as fh:
+        default_maps_yadn = fh.read()
     return parse_map(default_maps_yadn)
 
 
