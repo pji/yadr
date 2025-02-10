@@ -68,7 +68,7 @@ def test_parse_cli_with_listing_default_maps(mocker, capsys):
     result = cli_test(cmd, dice, mocker, capsys)
 
     # Build the expected value.
-    default_map_loc = 'yadr/data/dice_maps.yadn'
+    default_map_loc = 'src/yadr/data/dice_maps.yadn'
     with open(default_map_loc) as fh:
         lines = fh.readlines()
     lines = [line for line in lines if '=' in line]

@@ -10,7 +10,7 @@ clean:
 	rm -rf dist
 	rm -rf yadr.egg-info
 	rm -rf tests/__pycache__
-	rm -rf yadr/__pycache__
+	rm -rf src/yadr/__pycache__
 
 .PHONY: docs
 docs:
@@ -26,7 +26,6 @@ pre:
 .PHONY: test
 test:
 	python -m pytest
-
 
 .PHONY: testv
 testv:
