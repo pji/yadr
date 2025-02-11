@@ -9,15 +9,21 @@ import random
 from collections.abc import Callable, Sequence
 
 
-# Types for annotation.
-OptionsOp = Callable[[str, str], tuple[str, str]]
-ChoiceOp = Callable[[bool, tuple[str, str]], str]
-PoolGenOp = Callable[[int, int], tuple[int, ...]]
+# Result types for annotation.
+Options = tuple[str, str]
+Pool = Sequence[int]
+
+
+# Operation types for annotation.
+CompOp = Callable[[int, int], bool]
+OptionsOp = Callable[[str, str], Options]
+ChoiceOp = Callable[[bool, Options], str]
+PoolGenOp = Callable[[int, int], Pool]
 DiceOp = Callable[[int, int], int]
 MathOp = Callable[[int, int], int]
-PoolOp = Callable[[Sequence[int], int], tuple[int, ...]]
-PoolDegenOp = Callable[[Sequence[int], int], int]
-UPoolDegenOp = Callable[[Sequence[int]], int]
+PoolOp = Callable[[Pool, int], Pool]
+PoolDegenOp = Callable[[Pool, int], int]
+UPoolDegenOp = Callable[[Pool], int]
 Operation = Callable
 
 
@@ -62,7 +68,7 @@ class operation:
 
 # Choice operators.
 @operation(':')
-def choice_options(a: str, b: str) -> tuple[str, str]:
+def choice_options(a: str, b: str) -> Options:
     """Create the options for a choice.
 
     :ref:`YADN` reference: :ref:`choice_options`
@@ -81,7 +87,7 @@ def choice_options(a: str, b: str) -> tuple[str, str]:
 
 
 @operation('?')
-def choice(boolean: bool, options: tuple[str, str]) -> str:
+def choice(boolean: bool, options: Options) -> str:
     """Make a choice.
 
     :ref:`YADN` reference: :ref:`choice`
@@ -268,7 +274,7 @@ def wild_die(num: int, size: int) -> int:
 
 # Pool operators.
 @operation('pc')
-def pool_cap(pool: Sequence[int], cap: int) -> tuple[int, ...]:
+def pool_cap(pool: Pool, cap: int) -> Pool:
     """Cap the maximum value in a pool.
 
     :ref:`YADN` reference: :ref:`pool_cap`
@@ -294,7 +300,7 @@ def pool_cap(pool: Sequence[int], cap: int) -> tuple[int, ...]:
 
 
 @operation('pf')
-def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
+def pool_floor(pool: Pool, floor: int) -> Pool:
     """Floor the minimum value in a pool.
 
     :ref:`YADN` reference: :ref:`pool_floor`
@@ -320,7 +326,7 @@ def pool_floor(pool: Sequence[int], floor: int) -> tuple[int, ...]:
 
 
 @operation('pa')
-def pool_keep_above(pool: Sequence[int], floor: int) -> tuple[int, ...]:
+def pool_keep_above(pool: Pool, floor: int) -> Pool:
     """Discard all values in a pool below a given value.
 
     :ref:`YADN` reference: :ref:`pool_keep_above`
@@ -341,7 +347,7 @@ def pool_keep_above(pool: Sequence[int], floor: int) -> tuple[int, ...]:
 
 
 @operation('pb')
-def pool_keep_below(pool: Sequence[int], ceiling: int) -> tuple[int, ...]:
+def pool_keep_below(pool: Pool, ceiling: int) -> Pool:
     """Discard all values in a pool above a given value.
 
     :ref:`YADN` reference: :ref:`pool_keep_below`
@@ -362,7 +368,7 @@ def pool_keep_below(pool: Sequence[int], ceiling: int) -> tuple[int, ...]:
 
 
 @operation('ph')
-def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
+def pool_keep_high(pool: Pool, keep: int) -> Pool:
     """Keep a number of the highest dice.
 
     :ref:`YADN` reference: :ref:`pool_keep_high`
@@ -393,7 +399,7 @@ def pool_keep_high(pool: Sequence[int], keep: int) -> tuple[int, ...]:
 
 
 @operation('pl')
-def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
+def pool_keep_low(pool: Pool, keep: int) -> Pool:
     """Keep a number of the lowest dice.
 
     :ref:`YADN` reference: :ref:`pool_keep_low`
@@ -424,7 +430,7 @@ def pool_keep_low(pool: Sequence[int], keep: int) -> tuple[int, ...]:
 
 
 @operation('p%')
-def pool_modulo(pool: Sequence[int], divisor: int) -> tuple[int, ...]:
+def pool_modulo(pool: Pool, divisor: int) -> Pool:
     """Perform a modulo operation of each member.
 
     :ref:`YADN` reference: :ref:`pool_mod`
@@ -445,7 +451,7 @@ def pool_modulo(pool: Sequence[int], divisor: int) -> tuple[int, ...]:
 
 
 @operation('pr')
-def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
+def pool_remove(pool: Pool, cut: int) -> Pool:
     """Remove members of a pool of the given value.
 
     :ref:`YADN` reference: :ref:`pool_remove`
@@ -467,7 +473,7 @@ def pool_remove(pool: Sequence[int], cut: int) -> tuple[int, ...]:
 
 # Pool degeneration operators.
 @operation('C')
-def pool_concatenate(pool: Sequence[int]) -> int:
+def pool_concatenate(pool: Pool) -> int:
     """Concatenate the dice in the pool.
 
     :ref:`YADN` reference: :ref:`pool_concat`
@@ -488,7 +494,7 @@ def pool_concatenate(pool: Sequence[int]) -> int:
 
 
 @operation('N')
-def pool_count(pool: Sequence[int]) -> int:
+def pool_count(pool: Pool) -> int:
     """Count the dice in the pool.
 
     :ref:`YADN` reference: :ref:`pool_count`
@@ -508,7 +514,7 @@ def pool_count(pool: Sequence[int]) -> int:
 
 
 @operation('S')
-def pool_sum(pool: Sequence[int]) -> int:
+def pool_sum(pool: Pool) -> int:
     """Sum the dice in the pool.
 
     :ref:`YADN` reference: :ref:`pool_sum`
@@ -528,7 +534,7 @@ def pool_sum(pool: Sequence[int]) -> int:
 
 
 @operation('ns')
-def count_successes(pool: Sequence[int], target: int) -> int:
+def count_successes(pool: Pool, target: int) -> int:
     """Count the number of successes in the pool.
 
     :ref:`YADN` reference: :ref:`count_successes`
@@ -550,7 +556,7 @@ def count_successes(pool: Sequence[int], target: int) -> int:
 
 
 @operation('nb')
-def count_successes_with_botch(pool: Sequence[int], target: int) -> int:
+def count_successes_with_botch(pool: Pool, target: int) -> int:
     """Count the number of successes in the pool. Then remove a success
     for each botch.
 
@@ -575,7 +581,7 @@ def count_successes_with_botch(pool: Sequence[int], target: int) -> int:
 
 # Pool generation operator.
 @operation('g')
-def dice_pool(num: int, size: int) -> tuple[int, ...]:
+def dice_pool(num: int, size: int) -> Pool:
     """Roll a dice pool.
 
     :ref:`YADN` reference: :ref:`dice_pool`
@@ -600,7 +606,7 @@ def dice_pool(num: int, size: int) -> tuple[int, ...]:
 
 
 @operation('g!')
-def exploding_pool(num: int, size: int) -> tuple[int, ...]:
+def exploding_pool(num: int, size: int) -> Pool:
     """Roll an exploding dice pool.
 
     :ref:`YADN` reference: :ref:`exploding_pool`
@@ -621,7 +627,7 @@ def exploding_pool(num: int, size: int) -> tuple[int, ...]:
         (1, 1, 3, 5, 5)
 
     """
-    pool: Sequence[int] = dice_pool(num, size)
+    pool: Pool = dice_pool(num, size)
     pool = [_explode(n, size) for n in pool]
     return tuple(pool)
 
