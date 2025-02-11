@@ -2,9 +2,46 @@
 yadr
 ~~~~
 
-The core of the :mod:`yadr` package.
+The core of the :mod:`yadr` package, which contains the public API.
+
+##########
+Public API
+##########
+
+The following are the functions that make up the public API of :mod:`yadr`.
+
+
+Rolling Dice
+============
+:class:`yadr.roll` is the main interface to :mod:`yadr`, and in most
+cases it's all you need.
+
+.. autofunction:: yadr.roll
+
+
+Managing Dice Maps
+==================
+If you're playing a game that uses symbol-based dice rather than ones
+with numbers, you may need to use a dice map to translate the dice
+rolls into those symbols. You can handle that in :ref:`YADN`, but the
+following functions can be useful, too.
+
+.. autofunction:: yadr.add_dice_map
+.. autofunction:: yadr.list_dice_maps
+
+
+#################
+Utility Functions
+#################
+
+The following functions are used within the API, but they are not intended
+for public use. They are only documented here for support purposes.
+
+.. autofunction:: yadr.yadr.get_default_maps
+.. autofunction:: yadr.yadr.read_file
+.. autofunction:: yadr.yadr.parse_maps
+
 """
-from argparse import ArgumentParser
 from importlib.resources import files
 from pathlib import Path
 from typing import Optional
@@ -17,7 +54,45 @@ from yadr.model import CompoundResult, DiceMapping, Result, TokenInfo
 from yadr.parser import Parser, dice_map
 
 
-# Execute YADN.
+# Public API.
+def add_dice_map(loc: str) -> dict[str, DiceMapping]:
+    """Load the dice-maps from a given file.
+
+    :param loc: The location of the file of dice mappings to load.
+    :return: None.
+    :rtype: NoneType
+
+    Usage::
+
+        >>> from yadr import add_dice_map
+        >>>
+        >>> path = 'tests/data/__test_dice_map.txt'
+        >>> add_dice_map(path)              # doctest: +NORMALIZE_WHITESPACE
+        {'spam': {1: 'eggs', 2: 'bacon', 3: 'eggs', 4: 'tomato'}, 'fudge':
+        {1: '-', 2: '', 3: '+'}}
+    """
+    yadn = read_file(loc)
+    return parse_map(yadn)
+
+
+def list_dice_maps() -> str:
+    """Get the list of the default dice maps.
+
+    :return: A :class:`str` object.
+    :rtype: str
+
+    Usage::
+
+        >>> from yadr import list_dice_maps
+        >>>
+        >>> list_dice_maps()                # doctest: +ELLIPSIS
+        'sweote boost...
+    """
+    dice_map = get_default_maps()
+    maps_ = '\n'.join(dice_map)
+    return maps_
+
+
 def roll(
     yadn: str,
     yadn_out: bool = False,
@@ -70,6 +145,27 @@ def roll(
 
 
 # Utility.
+def get_default_maps() -> dict[str, DiceMapping]:
+    """Get the default dice maps.
+
+    :return: The default dice maps as a :class:`dict` of :class:`dict`
+        objects.
+    :rtype: dict
+
+    Usage::
+
+        >>> from yadr.yadr import get_default_maps
+        >>>
+        >>> get_default_maps()              # doctest: +ELLIPSIS
+        {'sweote boost': {1: '',...
+    """
+    data_pkg = files(yadr.data)
+    default_file = Path(f'{data_pkg}') / 'dice_maps.yadn'
+    with open(default_file) as fh:
+        default_maps_yadn = fh.read()
+    return parse_map(default_maps_yadn)
+
+
 def read_file(loc: str | Path) -> str:
     """Read test from a file.
 
@@ -98,106 +194,3 @@ def parse_map(yadn: str) -> dict[str, DiceMapping]:
     tokens = mlexer.lex(yadn)
     name, value = mparser.parse(tokens)
     return {name: value, }
-
-
-# Command parsing.
-def add_dice_map(loc: str) -> dict[str, DiceMapping]:
-    """Load the dice-maps from a given file.
-
-    :param loc: The location of the file of dice mappings to load.
-    :return: None.
-    :rtype: NoneType
-
-    Usage::
-
-        >>> from yadr import add_dice_map
-        >>>
-        >>> path = 'tests/data/__test_dice_map.txt'
-        >>> add_dice_map(path)              # doctest: +NORMALIZE_WHITESPACE
-        {'spam': {1: 'eggs', 2: 'bacon', 3: 'eggs', 4: 'tomato'}, 'fudge':
-        {1: '-', 2: '', 3: '+'}}
-    """
-    yadn = read_file(loc)
-    return parse_map(yadn)
-
-
-def get_default_maps() -> dict[str, DiceMapping]:
-    """Get the default dice maps.
-
-    :return: The default dice maps as a :class:`dict` of :class:`dict`
-        objects.
-    :rtype: dict
-
-    Usage::
-
-        >>> from yadr.yadr import get_default_maps
-        >>>
-        >>> get_default_maps()              # doctest: +ELLIPSIS
-        {'sweote boost': {1: '',...
-    """
-    data_pkg = files(yadr.data)
-    default_file = Path(f'{data_pkg}') / 'dice_maps.yadn'
-    with open(default_file) as fh:
-        default_maps_yadn = fh.read()
-    return parse_map(default_maps_yadn)
-
-
-def list_dice_maps() -> str:
-    """Get the list of the default dice maps.
-
-    :return: A :class:`str` object.
-    :rtype: str
-
-    Usage::
-
-        >>> from yadr import list_dice_maps
-        >>>
-        >>> list_dice_maps()                # doctest: +ELLIPSIS
-        'sweote boost...
-    """
-    dice_map = get_default_maps()
-    maps_ = '\n'.join(dice_map)
-    return maps_
-
-
-def parse_cli() -> None:
-    """Parse command line options."""
-    # Stand up the parser.
-    p = ArgumentParser(
-        description='Execute YADN syntax to roll dice.',
-        prog='yadr'
-    )
-
-    # Define the command line arguments.
-    p.add_argument(
-        'yadn',
-        help='A string of YADN describing the die roll.',
-        action='store',
-        nargs='?',
-        type=str
-    )
-    p.add_argument(
-        '--list_dice_maps', '-l',
-        help='List the names of the default dice maps.',
-        action='store_true'
-    )
-    p.add_argument(
-        '--add_dice_map', '-m',
-        help='Load the dice mappings at the given file location.',
-        nargs=1,
-        action='store',
-        type=str
-    )
-
-    # Parse and execute the command.
-    args = p.parse_args()
-    result = ''
-    dice_map = {}
-    if args.add_dice_map:
-        dice_map = add_dice_map(args.add_dice_map[0])
-    elif args.list_dice_maps:
-        result = list_dice_maps()
-    if args.yadn:
-        raw_result = roll(args.yadn, True, dice_map)
-        result = str(raw_result)
-    print(result)

@@ -20,7 +20,7 @@ classifiers = [
 
 
 [project.scripts]
-blackjack = "yadr.yadr:parse_cli"
+blackjack = "yadr.__main__:parse_cli"
 
 
 [project.urls]

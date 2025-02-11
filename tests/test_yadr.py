@@ -4,7 +4,7 @@ test_yadr
 
 Unit tests for the yadr.yadr module.
 """
-from yadr import yadr
+from yadr import __main__, yadr
 
 
 # Test yadr.roll().
@@ -85,7 +85,7 @@ def cli_test(cmd, dice, mocker, capsys):
     mocker.patch('random.randint', side_effect=dice)
 
     # Run the test.
-    yadr.parse_cli()
+    __main__.parse_cli()
 
     # Capture and return the test result.
     captured = capsys.readouterr()
