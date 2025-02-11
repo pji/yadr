@@ -49,8 +49,8 @@ class BaseLexer(ABC):
         be stored as tokens.
     :param init_state: (Optional.) The initial state of the lexer.
         It defaults to :class:`Token.START`.
-    :return: None.
-    :rtype: NoneType
+    :return: A :class:`yadr.base.BaseLexer` object.
+    :rtype: yadr.base.BaseLexer
 
     :class:`yadr.base.BaseLexer` lexers are state machines used for
     translating a text string into tokens for parsing. It accomplishes
@@ -313,14 +313,15 @@ class BaseLexer(ABC):
     The result map is passed to the `result_map` parameter when the
     :class:`BaseLexer` is initialized.
     """
-    def __init__(self,
-                 state_map: dict[Token, StateMethod],
-                 symbol_map: dict[Token, list[str]],
-                 bracket_states: Optional[dict[Token, Token]] = None,
-                 bracket_ends: Optional[dict[Token, Token]] = None,
-                 result_map: Optional[dict[Token, ResultMethod]] = None,
-                 no_store: Optional[list[Token]] = None,
-                 init_state: Token = Token.START) -> None:
+    def __init__(
+        self, state_map: dict[Token, StateMethod],
+        symbol_map: dict[Token, list[str]],
+        bracket_states: Optional[dict[Token, Token]] = None,
+        bracket_ends: Optional[dict[Token, Token]] = None,
+        result_map: Optional[dict[Token, ResultMethod]] = None,
+        no_store: Optional[list[Token]] = None,
+        init_state: Token = Token.START
+     ) -> None:
         """Initialize an instance of :class:`BaseLexer`."""
         # Assign the passed parameters.
         self.state_map = state_map

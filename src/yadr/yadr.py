@@ -39,7 +39,7 @@ for public use. They are only documented here for support purposes.
 
 .. autofunction:: yadr.yadr.get_default_maps
 .. autofunction:: yadr.yadr.read_file
-.. autofunction:: yadr.yadr.parse_maps
+.. autofunction:: yadr.yadr.parse_map
 
 """
 from importlib.resources import files
