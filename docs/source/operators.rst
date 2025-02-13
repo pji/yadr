@@ -56,3 +56,22 @@ documentation here is just intended for maintenance purposes.
 .. autofunction:: yadr.operator.pool_sum
 .. autofunction:: yadr.operator.count_successes
 .. autofunction:: yadr.operator.count_successes_with_botch
+
+
+The Random Number Generator
+===========================
+The random number generator (RNG) used to generate the die rolls is
+set by the current value of :func:`yadr.operator.roll`. The value of
+:func:`yadr.operator.roll` is a function that uses an RNG to perform
+the die roll and return the result. There are currently two options
+available for use as this rolling function:
+
+*   :func:`yadr.operations._roll_random` (uses :func:`random.randint`)
+*   :func:`yadr.operations._roll_secrets` (uses :func:`secrets.randbelow`)
+
+The default rolling function is :func:`yadr.operations._roll_random`.
+
+.. warning::
+    While you can change the value of :func:`yadr.operations.roll` to
+    change the RNG, doing so may not be thread safe. This probably
+    doesn't matter in most situations but caution is still recommended.

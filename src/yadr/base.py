@@ -321,7 +321,7 @@ class BaseLexer(ABC):
         result_map: Optional[dict[Token, ResultMethod]] = None,
         no_store: Optional[list[Token]] = None,
         init_state: Token = Token.START
-     ) -> None:
+    ) -> None:
         """Initialize an instance of :class:`BaseLexer`."""
         # Assign the passed parameters.
         self.state_map = state_map

@@ -6,6 +6,7 @@ Operators for handling the dice part of dice notation.
 """
 import operator
 import random
+import secrets
 from collections.abc import Callable, Sequence
 
 
@@ -602,7 +603,7 @@ def dice_pool(num: int, size: int) -> Pool:
         (1, 1, 3, 5, 5)
 
     """
-    return tuple(random.randint(1, size) for _ in range(num))
+    return tuple(roll(size) for _ in range(num))
 
 
 @operation('g!')
@@ -627,24 +628,41 @@ def exploding_pool(num: int, size: int) -> Pool:
         (1, 1, 3, 5, 5)
 
     """
-    pool: Pool = dice_pool(num, size)
-    pool = [_explode(n, size) for n in pool]
-    return tuple(pool)
+    return tuple(_explode(size) for n in range(num))
+
+
+# Generation operators that use `secrets` instead of `random`.
+def dice_pool_secrets(num: int, size: int) -> Pool:
+    """Roll a dice pool using :mod:`secrets` instead of :mod:`random`.
+    The extra security provided by :mod:`secrets` is unnecessary for
+    the intended usage of :mod:`yadr`, but it's here if you want it.
+
+    :ref:`YADN` reference: :ref:`dice_pool`
+
+    :param num: The number of dice to roll.
+    :param size: The highest number that can be rolled on a die.
+    :return: The the values as a :class:`tuple`.
+    :rtype: tuple
+    
+    .. warning::
+        This function is experimental and may be removed from future
+        versions of :mod:`yadr` without notice. Use at your own risk.
+    """
+    return tuple(_roll_secrets(size) for _ in range(num))
 
 
 # Utility functions.
-def _explode(value: int, size: int) -> int:
+def _explode(size: int) -> int:
     """Explode the value of a die.
 
-    :param num: The number of dice to roll.
     :param size: The highest number that can be rolled on a die.
     :return: The the values as an :class:`int`.
     :rtype: int
     """
-    if value == size:
-        explode_value = random.randint(1, size)
-        value += _explode(explode_value, size)
-    return value
+    result = roll(size)
+    if result == size:
+        result += _explode(size)
+    return result
 
 
 def _seed(seed: int | str | bytes) -> None:
@@ -659,3 +677,32 @@ def _seed(seed: int | str | bytes) -> None:
     if isinstance(seed, bytes):
         seed = int.from_bytes(seed, 'little')
     random.seed(seed)
+
+
+# Die rolling.
+def _roll_random(size: int) -> int:
+    """Roll a die.
+
+    :param size: The size of the die to roll.
+    :returns: An :class:'int' object.
+    :rtype: int
+    """
+    return random.randint(1, size)
+
+
+def _roll_secrets(size: int) -> int:
+    """Roll a die using :mod:`secrets`.
+
+    :param size: The size of the die to roll.
+    :returns: An :class:'int' object.
+    :rtype: int
+    """
+    return secrets.randbelow(size) + 1
+    
+
+# This sets the function used by the generation operations to roll dice.
+# If you want to use `secrets` instead of `random`, change this to
+# :func:`_roll_secrets`. Since this is happening at the global level,
+# you could, theoretically, run into thread safety issues when changing it,
+# So be cautious.
+roll = _roll_random

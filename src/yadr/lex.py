@@ -86,7 +86,7 @@ class Lexer(BaseLexer):
             return True
         return False
 
-    def _tf_maps(self, value:str) -> tuple[str, dict]:
+    def _tf_maps(self, value: str) -> tuple[str, dict]:
         mlexer = maps.Lexer()
         lexed = mlexer.lex(value)
         mparser = maps.Parser()

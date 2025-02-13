@@ -152,10 +152,23 @@ def test_dice_pool(mocker):
 
 def test_exploding_pool(mocker):
     """Generate a dice pool."""
-    mocker.patch('random.randint', side_effect=(2, 6, 1, 1, 6, 3, 3, 6, 1))
+    rolls = (2, 6, 3, 1, 1, 6, 6, 1, 3)
+    mocker.patch('random.randint', side_effect=rolls)
     num = 6
     size = 6
     assert op.exploding_pool(num, size) == (2, 9, 1, 1, 13, 3)
+
+
+# Pool generation operations using `secrets` test cases.
+def test_dice_pool_secrets(mocker):
+    """When called, :func:`operator.dice_pool_secrets` should use
+    :mod:`secrets` to generate a dice pool.
+    """
+    pool = (3, 5, 1, 10, 8, 4, 3, 8)
+    mocker.patch('secrets.randbelow', side_effect=(n - 1 for n in pool))
+    num = 7
+    size = 10
+    assert op.dice_pool_secrets(num, size) == pool[:num]
 
 
 # Pool operation test cases.
