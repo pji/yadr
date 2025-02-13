@@ -25,7 +25,7 @@ blackjack = "yadr.__main__:parse_cli"
 
 [project.urls]
 "Homepage" = "https://github.com/pji/yadr"
-"Documentation" = "https://github.com/pji/yadr"
+"Documentation" = "https://yadr.readthedocs.io"
 "Source" = "https://github.com/pji/yadr"
 
 
