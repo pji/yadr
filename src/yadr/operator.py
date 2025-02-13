@@ -643,7 +643,7 @@ def dice_pool_secrets(num: int, size: int) -> Pool:
     :param size: The highest number that can be rolled on a die.
     :return: The the values as a :class:`tuple`.
     :rtype: tuple
-    
+
     .. warning::
         This function is experimental and may be removed from future
         versions of :mod:`yadr` without notice. Use at your own risk.
@@ -698,7 +698,7 @@ def _roll_secrets(size: int) -> int:
     :rtype: int
     """
     return secrets.randbelow(size) + 1
-    
+
 
 # This sets the function used by the generation operations to roll dice.
 # If you want to use `secrets` instead of `random`, change this to
